@@ -89,7 +89,7 @@ production:
     <<: *default
     database: upsc_question_production
     username: upsc_question
-    password: <%= ENV["UPSC_QUESTION_DATABASE_PASSWORD"] %>
+    password: <%= ENV["DATABASE_URL"] %>
   cache:
     <<: *primary_production
     database: upsc_question_production_cache
