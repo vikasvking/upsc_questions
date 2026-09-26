@@ -1,0 +1,91 @@
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+
+  <!-- Card 1: Topic-Wise Completion Matrix -->
+  <div class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl flex flex-col justify-between shadow-sm">
+    <div>
+      <div class="flex items-center justify-between mb-4">
+        <h4 class="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Topic Completion</h4>
+        <span class="text-xl">🧩</span>
+      </div>
+      <div class="space-y-4">
+        <div>
+          <div class="flex justify-between text-xs font-semibold mb-1 text-slate-700 dark:text-slate-300">
+            <span>Fundamental Rights</span>
+            <span class="text-rose-800 dark:text-rose-400 font-bold">92%</span>
+          </div>
+          <div class="w-full bg-slate-200 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+            <div class="bg-rose-800 dark:bg-rose-500 h-full" style="width: 92%"></div>
+          </div>
+        </div>
+        <div>
+          <div class="flex justify-between text-xs font-semibold mb-1 text-slate-700 dark:text-slate-300">
+            <span>Directive Principles (DPSP)</span>
+            <span class="text-rose-800 dark:text-rose-400 font-bold">64%</span>
+          </div>
+          <div class="w-full bg-slate-200 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+            <div class="bg-rose-800 dark:bg-rose-500 h-full" style="width: 64%"></div>
+          </div>
+        </div>
+        <div>
+          <div class="flex justify-between text-xs font-semibold mb-1 text-slate-700 dark:text-slate-300">
+            <span>Judiciary & SC Cases</span>
+            <span class="text-rose-800 dark:text-rose-400 font-bold">35%</span>
+          </div>
+          <div class="w-full bg-slate-200 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+            <div class="bg-rose-800 dark:bg-rose-500 h-full" style="width: 35%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mt-4 pt-3 border-t border-slate-200/60 dark:border-slate-800/80">
+      <%= link_to "View Detailed Syllabus Map →", "#", class: "text-xs font-bold text-rose-800 dark:text-rose-400 hover:text-rose-900" %>
+    </div>
+  </div>
+
+  <!-- Card 2: Topper Comparative Benchmarks -->
+  <div class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl flex flex-col justify-between shadow-sm">
+    <div>
+      <div class="flex items-center justify-between mb-3">
+        <h4 class="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Topper Comparison</h4>
+        <span class="text-xl">👑</span>
+      </div>
+      <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-4">Your accuracy threshold versus platform toppers.</p>
+
+      <div class="space-y-2.5">
+        <div class="flex justify-between items-center text-xs p-2 rounded-lg bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-850">
+          <span class="text-slate-600 dark:text-slate-400">Your Accuracy Rate</span>
+          <span class="font-black text-slate-900 dark:text-white">64.2%</span>
+        </div>
+        <div class="flex justify-between items-center text-xs p-2 rounded-lg bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-850">
+          <span class="text-slate-600 dark:text-slate-400">AIR-10 Average Target</span>
+          <span class="font-black text-emerald-600 dark:text-emerald-400">81.5%</span>
+        </div>
+        <div class="flex justify-between items-center text-xs p-2 rounded-lg bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-850">
+          <span class="text-slate-600 dark:text-slate-400">Avg. Timing Variance</span>
+          <span class="font-black text-rose-800 dark:text-rose-400">+12s / question</span>
+        </div>
+      </div>
+    </div>
+    <div class="mt-4 pt-3 border-t border-slate-200/60 dark:border-slate-800/80">
+      <%= link_to "Analyze Performance Gaps →", "#", class: "text-xs font-bold text-rose-800 dark:text-rose-400 hover:text-rose-900" %>
+    </div>
+  </div>
+
+  <!-- Card 3: Dynamic AI Recommendation Engine -->
+  <div class="bg-gradient-to-br from-rose-900 to-rose-950 text-white p-6 rounded-2xl flex flex-col justify-between shadow-md border border-rose-950">
+    <div>
+      <div class="flex items-center justify-between mb-3">
+        <h4 class="text-xs font-bold uppercase tracking-widest text-rose-300">Daily AI Suggestion</h4>
+        <span class="text-base bg-white/10 px-2 py-0.5 rounded text-rose-300 text-[10px] font-bold">Priority Target</span>
+      </div>
+      <p class="text-sm font-bold text-white mb-2 leading-snug">Weak Spot Identified: Article 21 Interpretation</p>
+      <p class="text-xs text-rose-100/80 leading-relaxed">
+        Your accuracy dropped by 14% on recent judicial case questions. The AI engine recommends executing a 10-question focus drill right now to secure your cut-off margins.
+      </p>
+    </div>
+    <div class="mt-6">
+      <%= link_to "Launch AI Focus Drill ⚡", "#", class: "block w-full text-center bg-white text-rose-950 hover:bg-rose-50 text-xs font-black py-2.5 px-4 rounded-xl shadow-sm transition-transform transform hover:-translate-y-0.5" %>
+    </div>
+  </div>
+
+</div>

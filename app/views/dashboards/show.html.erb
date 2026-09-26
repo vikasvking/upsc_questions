@@ -1,25 +1,24 @@
 <div class="py-10 bg-white dark:bg-slate-950 min-h-screen w-full transition-colors duration-200">
-  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-8">
 
-    <!-- Test Breadcrumb navigation bar Info Row -->
-    <div class="flex items-center gap-x-3">
-      <%= link_to "← Quit Practice Session", root_path, class: "text-xs font-bold bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 text-slate-600 dark:text-slate-400 px-3 py-1.5 rounded-lg transition-colors border border-slate-200 dark:border-slate-800" %>
-      <h2 class="text-sm font-bold text-slate-400 dark:text-slate-500">Practice Arena Center</h2>
+    <!-- Workspace Greetings Row Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between border-b border-slate-200 dark:border-slate-800 pb-6 gap-4">
+      <div>
+        <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">Aspirant Workspace</h1>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Track your operational analytics and select a target module to begin practicing.</p>
+      </div>
     </div>
 
-    <!-- 2-Column Side-by-Side Responsive Grid System Layout -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+    <!-- Streak Calendar Strip Component -->
+    <%= render "dashboards/streak_calendar" %>
 
-      <!-- Left Panel Map: Controls, Timers, Questions Numbers (Span 4) -->
-      <div class="lg:col-span-4">
-        <%= render "dashboards/quiz_sidebar" %>
-      </div>
+    <!-- 🚀 NEW ANALYTICS METRIC CARDS ROW -->
+    <%= render "dashboards/analytics_cards" %>
 
-      <!-- Right Panel Map: Active MCQ Interactive Card Arena (Span 8) -->
-      <div class="lg:col-span-8">
-        <%= render "dashboards/quiz_content" %>
-      </div>
-
+    <!-- Main Subject Selection Portfolio Grid -->
+    <div class="space-y-4">
+      <h3 class="text-base font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 text-xs tracking-widest">Syllabus Subjects Portfolio</h3>
+      <%= render "dashboards/subject_grid" %>
     </div>
 
   </div>
