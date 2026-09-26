@@ -87,9 +87,7 @@ test:
 production:
   primary: &primary_production
     <<: *default
-    database: upsc_question_production
-    username: upsc_question
-    password: <%= ENV["DATABASE_URL"] %>
+    url: <%= ENV["DATABASE_URL"] %>
   cache:
     <<: *primary_production
     database: upsc_question_production_cache
