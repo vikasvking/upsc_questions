@@ -1,0 +1,49 @@
+<div class="bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800/80 shadow-md p-6 sm:p-8 flex flex-col justify-between min-h-[500px]">
+
+  <div class="space-y-6">
+    <!-- Active Header Bar Mapping Buttons -->
+    <div class="flex items-center justify-between border-b border-slate-200/60 dark:border-slate-800 pb-4">
+      <%= link_to "← Previous", "#", class: "text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-rose-800 dark:hover:text-rose-400 transition-colors" %>
+      <span class="text-sm font-black text-rose-800 dark:text-rose-400 tracking-wide">Question 30 of 30</span>
+      <%= link_to "Next →", "#", class: "text-xs font-bold text-slate-400 cursor-not-allowed pointer-events-none" %>
+    </div>
+
+    <!-- Active Question Paragraph Text Statement -->
+    <div class="text-slate-900 dark:text-white text-base leading-relaxed font-medium">
+      Consider the following statements regarding the Basic Structure Doctrine of the Constitution of India. If the Supreme Court holds full precedence on Article 21 interpretation, choose the most factually complete inference statement:
+    </div>
+
+    <!-- Multiple Choice Interactive Radio Box Inputs Group -->
+    <%= form_with url: "#", class: "space-y-3 pt-2" do |form| %>
+      <div class="grid grid-cols-1 gap-3">
+
+        <label class="flex items-start gap-x-3.5 p-4 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800/60 cursor-pointer hover:border-rose-800/40 dark:hover:border-rose-500/30 transition-colors group">
+          <%= form.radio_button :answer_choice, "a", class: "mt-1 accent-rose-800 dark:accent-rose-500 h-4 w-4" %>
+          <span class="text-sm text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white leading-normal">Judicial review holds full unalterable parameter thresholds.</span>
+        </label>
+
+        <label class="flex items-start gap-x-3.5 p-4 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800/60 cursor-pointer hover:border-rose-800/40 dark:hover:border-rose-500/30 transition-colors group">
+          <%= form.radio_button :answer_choice, "b", class: "mt-1 accent-rose-800 dark:accent-rose-500 h-4 w-4" %>
+          <span class="text-sm text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white leading-normal">Parliamentary majorities can override structural core vectors.</span>
+        </label>
+
+        <label class="flex items-start gap-x-3.5 p-4 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800/60 cursor-pointer hover:border-rose-800/40 dark:hover:border-rose-500/30 transition-colors group">
+          <%= form.radio_button :answer_choice, "c", class: "mt-1 accent-rose-800 dark:accent-rose-500 h-4 w-4" %>
+          <span class="text-sm text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white leading-normal">Article 368 amendments map cleanly without tracking restrictions.</span>
+        </label>
+
+        <label class="flex items-start gap-x-3.5 p-4 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800/60 cursor-pointer hover:border-rose-800/40 dark:hover:border-rose-500/30 transition-colors group">
+          <%= form.radio_button :answer_choice, "d", class: "mt-1 accent-rose-800 dark:accent-rose-500 h-4 w-4" %>
+          <span class="text-sm text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white leading-normal">Fundamental liberties track exclusively underneath executive orders.</span>
+        </label>
+
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Primary Submit Actions Footer Segment -->
+  <div class="mt-8 flex justify-end border-t border-slate-200 dark:border-slate-800 pt-4">
+    <%= submit_tag "Submit Answer Pass", class: "rounded-lg bg-rose-800 dark:bg-rose-700 hover:bg-rose-900 dark:hover:bg-rose-600 text-white font-bold text-sm px-6 py-3 shadow-md transition-all cursor-pointer transform hover:-translate-y-0.5" %>
+  </div>
+
+</div>

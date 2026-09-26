@@ -1,0 +1,55 @@
+<aside class="fixed inset-y-0 left-0 z-20 w-64 bg-rose-900 dark:bg-slate-950 text-white flex flex-col justify-between border-r border-rose-950 dark:border-slate-800 transition-colors duration-200">
+
+  <div class="p-6 space-y-8">
+
+    <div class="flex items-center gap-x-3">
+      <div class="h-9 w-9 rounded-xl bg-white/10 flex items-center justify-center text-lg font-bold">🎓</div>
+      <div>
+        <h2 class="text-sm font-black tracking-wider uppercase text-white">UPSCOfficer</h2>
+        <p class="text-[9px] text-rose-200 font-semibold tracking-widest">EXAM ENGINE</p>
+      </div>
+    </div>
+
+    <!-- Navigation Options List Group -->
+    <nav class="space-y-1.5">
+      <%= link_to dashboard_path, class: "flex items-center gap-x-3.5 px-4 py-3 rounded-xl text-sm font-bold bg-white/10 text-white shadow-sm transition-all" do %>
+        <span>📊</span> Dashboard
+      <% end %>
+
+      <%= link_to "#", class: "flex items-center gap-x-3.5 px-4 py-3 rounded-xl text-sm font-semibold text-rose-100 hover:bg-white/5 hover:text-white transition-all" do %>
+        <span>👤</span> Biodata
+      <% end %>
+
+      <%= link_to "#", class: "flex items-center gap-x-3.5 px-4 py-3 rounded-xl text-sm font-semibold text-rose-100 hover:bg-white/5 hover:text-white transition-all" do %>
+        <span>📝</span> Test Seleksi
+      <% end %>
+
+      <%= link_to "#", class: "flex items-center gap-x-3.5 px-4 py-3 rounded-xl text-sm font-semibold text-rose-100 hover:bg-white/5 hover:text-white transition-all" do %>
+        <span>📢</span> Pengumuman
+      <% end %>
+
+      <%= link_to "#", class: "flex items-center gap-x-3.5 px-4 py-3 rounded-xl text-sm font-semibold text-rose-100 hover:bg-white/5 hover:text-white transition-all" do %>
+        <span>💳</span> Pembayaran
+      <% end %>
+
+      <%= link_to "#", class: "flex items-center gap-x-3.5 px-4 py-3 rounded-xl text-sm font-semibold text-rose-100 hover:bg-white/5 hover:text-white transition-all" do %>
+        <span>⚙️</span> Akun
+      <% end %>
+    </nav>
+  </div>
+
+  <!-- Footer Action: Session Termination -->
+  <div class="p-6 border-t border-rose-950 dark:border-slate-900 flex items-center justify-between">
+    <div class="flex items-center gap-x-2.5">
+      <!-- Lightweight Dark Mode Action Toggle inside Sidebar base -->
+      <button id="theme-toggle" class="p-2 rounded-lg text-rose-200 hover:bg-white/5 focus:outline-none" aria-label="Toggle dark mode">
+        <svg id="theme-toggle-sun" class="hidden h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 14.121a1 1 0 010-1.414l.707-.707a1 1 0 111.414 1.414l-.707.707a1 1 0 01-1.414 0zm-9.9-4.242a1 1 0 011.415 0l.707.707a1 1 0 11-1.414 1.414l-.707-.707a1 1 0 010-1.414zm1.414-5.657a1 1 0 000 1.414l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 0z"></path></svg>
+        <svg id="theme-toggle-moon" class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+      </button>
+    </div>
+    <%= link_to session_path, data: { turbo_method: :delete }, class: "text-xs font-bold text-rose-200 hover:text-white transition-all flex items-center gap-x-1.5" do %>
+      <span>🚪</span> Keluar
+    <% end %>
+  </div>
+
+</aside>

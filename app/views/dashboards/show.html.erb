@@ -1,92 +1,23 @@
 <div class="py-10 bg-white dark:bg-slate-950 min-h-screen w-full transition-colors duration-200">
-  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-8">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
 
-    <!-- Welcome Header & Active Streak Banner -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between border-b border-slate-200 dark:border-slate-800 pb-6 gap-4">
-      <div>
-        <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">Aspirant Workspace</h1>
-        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Track your operational accuracy metrics across exam portfolios.</p>
-      </div>
-      <div class="flex items-center gap-x-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-900/40 rounded-xl px-4 py-2">
-        <span class="text-xl">🔥</span>
-        <div>
-          <p class="text-[10px] uppercase font-bold text-rose-800 dark:text-rose-400 tracking-wider">Consistency Streak</p>
-          <p class="text-xs font-black text-slate-900 dark:text-white">12 Days Active</p>
-        </div>
-      </div>
+    <!-- Test Breadcrumb navigation bar Info Row -->
+    <div class="flex items-center gap-x-3">
+      <%= link_to "← Quit Practice Session", root_path, class: "text-xs font-bold bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 text-slate-600 dark:text-slate-400 px-3 py-1.5 rounded-lg transition-colors border border-slate-200 dark:border-slate-800" %>
+      <h2 class="text-sm font-bold text-slate-400 dark:text-slate-500">Practice Arena Center</h2>
     </div>
 
-    <!-- Live Performance Metric Cards Grouping -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-      <div class="bg-slate-50 dark:bg-slate-900 p-5 rounded-xl border border-slate-200/60 dark:border-slate-800/80 shadow-sm">
-        <p class="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Questions Solved</p>
-        <p class="text-2xl font-black text-slate-900 dark:text-white mt-1">1,420 <span class="text-xs font-normal text-slate-400">/ 3,500+</span></p>
+    <!-- 2-Column Side-by-Side Responsive Grid System Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+      <!-- Left Panel Map: Controls, Timers, Questions Numbers (Span 4) -->
+      <div class="lg:col-span-4">
+        <%= render "dashboards/quiz_sidebar" %>
       </div>
 
-      <div class="bg-slate-50 dark:bg-slate-900 p-5 rounded-xl border border-slate-200/60 dark:border-slate-800/80 shadow-sm">
-        <p class="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Accuracy Threshold</p>
-        <p class="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">78.4%</p>
-      </div>
-
-      <div class="bg-slate-50 dark:bg-slate-900 p-5 rounded-xl border border-slate-200/60 dark:border-slate-800/80 shadow-sm">
-        <p class="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Avg Response Speed</p>
-        <p class="text-2xl font-black text-slate-900 dark:text-white mt-1">54 <span class="text-xs font-normal text-slate-400">sec/q</span></p>
-      </div>
-
-      <div class="bg-slate-50 dark:bg-slate-900 p-5 rounded-xl border border-slate-200/60 dark:border-slate-800/80 shadow-sm">
-        <p class="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Subscription Tier</p>
-        <p class="text-sm font-bold text-rose-800 dark:text-rose-400 mt-2 bg-rose-100/60 dark:bg-rose-950/40 px-2.5 py-1 rounded-full inline-block">6-Month Premium Pass</p>
-      </div>
-    </div>
-
-    <!-- Main Content Breakdown: Practice Selection Matrix -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-      <!-- Left 2 Columns: Select Exam Portfolios & Modules -->
-      <div class="lg:col-span-2 space-y-6">
-        <h3 class="text-lg font-bold text-slate-900 dark:text-white">Initialize Practice Module</h3>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <!-- UPSC Polity Module Box -->
-          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-xl flex flex-col justify-between group hover:border-rose-800 dark:hover:border-rose-500 transition-colors">
-            <div>
-              <div class="flex items-center justify-between mb-3">
-                <span class="text-xs bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded font-semibold">UPSC</span>
-                <span class="text-xs font-bold text-amber-600">78% Mastered</span>
-              </div>
-              <h4 class="font-bold text-slate-900 dark:text-white">Indian Polity & Governance</h4>
-              <p class="text-xs text-slate-500 mt-1">Fundamental rights, federal structures, constitutional amendments, 15-year PYQs.</p>
-            </div>
-            <%= link_to "Resume Practice →", "#", class: "text-xs font-bold text-rose-800 dark:text-rose-400 group-hover:text-rose-900 mt-4 block" %>
-          </div>
-
-          <!-- SSC General Awareness Module Box -->
-          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-xl flex flex-col justify-between group hover:border-rose-800 dark:hover:border-rose-500 transition-colors">
-            <div>
-              <div class="flex items-center justify-between mb-3">
-                <span class="text-xs bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded font-semibold">SSC</span>
-                <span class="text-xs font-bold text-slate-400">Not Started</span>
-              </div>
-              h4 class="font-bold text-slate-900 dark:text-white">SSC History & Culture</h4>
-              <p class="text-xs text-slate-500 mt-1">Ancient empires, mediaeval tracking systems, national movements focus grids.</p>
-            </div>
-            <%= link_to "Start Module →", "#", class: "text-xs font-bold text-rose-800 dark:text-rose-400 group-hover:text-rose-900 mt-4 block" %>
-          </div>
-        </div>
-      </div>
-
-      <!-- Right Column: AI Suggestion Sidebar Box -->
-      <div class="bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 p-6 rounded-2xl h-fit space-y-4 shadow-sm">
-        <div class="flex items-center gap-x-2 text-xs font-bold text-rose-800 dark:text-rose-400">
-          <span>✨</span> DYNAMIC AI COUNSEL
-        </div>
-        <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-          Based on your last mock attempt, your timing dropped by 24 seconds on <span class="font-semibold text-slate-900 dark:text-white">Parliamentary Procedures</span>.
-        </p>
-        <div class="border-t border-slate-200 dark:border-slate-800 pt-3">
-          <p class="text-[10px] text-slate-400 font-bold uppercase">Recommended Remedial Action</p>
-          <%= link_to "Launch 10-Q Speed Focus Drill", "#", class: "mt-2 block w-full text-center bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white font-bold text-xs py-2 px-3 rounded-md transition-colors" %>
-        </div>
+      <!-- Right Panel Map: Active MCQ Interactive Card Arena (Span 8) -->
+      <div class="lg:col-span-8">
+        <%= render "dashboards/quiz_content" %>
       </div>
 
     </div>

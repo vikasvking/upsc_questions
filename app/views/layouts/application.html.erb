@@ -66,11 +66,25 @@
 
   </head>
 
-  <body class="bg-white dark:bg-slate-950 transition-colors duration-200">
-   <%= render "layouts/navbar" %>
+  <body class="bg-white dark:bg-slate-950 transition-colors duration-200 antialiased">
 
-   <main class="pt-20">
-     <%= yield %>
-   </main>
+   <% if authenticated? %>
+     <!-- Render left-pinned vertical navigation sidebar panel -->
+     <%= render "layouts/side_nav" %>
+
+     <!-- Push primary view content column rightwards by 64 units (w-64 sidebar width offset) -->
+     <main class="pl-64 min-h-screen">
+       <div class="px-6 py-4">
+         <%= yield %>
+       </div>
+     </main>
+   <% else %>
+     <!-- Standard layout template setup for public homepage, login, and registration screens -->
+     <%= render "layouts/navbar" %>
+     <main class="pt-20 min-h-screen">
+       <%= yield %>
+     </main>
+   <% end %>
+
  </body>
 </html>
