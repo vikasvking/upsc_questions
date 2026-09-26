@@ -11,7 +11,7 @@ class RegistrationsController < ApplicationController
     if @user.save
       # Securely stamp session token cookie mapping upon successful sign up
       start_new_session_for @user
-      redirect_to root_path, notice: "Welcome aboard! Your account has been initialized."
+      redirect_to dashboard_path, notice: "Welcome aboard! Your account has been initialized."
     else
       render :new, status: :unprocessable_entity
     end
