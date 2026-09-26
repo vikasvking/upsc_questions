@@ -1,0 +1,21 @@
+<!-- app/views/questions/upload_form.html.erb -->
+<h2>Import UPSC Questions</h2>
+
+<p style="color: red;"><%= alert %></p>
+<p style="color: green;"><%= notice %></p>
+
+<%= form_with url: import_questions_path, multipart: true, local: true do |form| %>
+  <div style="margin-bottom: 15px;">
+    <%= form.label :year, "Exam Year", style: "display: block; font-weight: bold;" %>
+    <%= form.number_field :year, value: Time.current.year, required: true %>
+  </div>
+
+  <div style="margin-bottom: 15px;">
+    <%= form.label :file, "Select Excel File (.xlsx)", style: "display: block; font-weight: bold;" %>
+    <%= form.file_field :file, accept: '.xlsx', required: true %>
+  </div>
+
+  <div>
+    <%= form.submit "Import Data" %>
+  </div>
+<% end %>

@@ -1,0 +1,28 @@
+<!-- app/views/questions/index.html.erb -->
+<h2>Uploaded Questions</h2>
+<p style="color: green;"><%= notice %></p>
+
+<%= link_to "Upload More", upload_form_questions_path %>
+
+<table border="1" style="margin-top: 20px; width: 100%; border-collapse: collapse;">
+  <thead>
+    <tr>
+      <th>Year</th>
+      <th>Q.No</th>
+      <th>Topic</th>
+      <th>Question</th>
+      <th>Correct Answer</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @questions.each do |q| %>
+      <tr>
+        <td><%= q.year %></td>
+        <td><%= q.q_no %></td>
+        <td><%= q.topic %></td>
+        <td><%= q.content.truncate(50) if q.content %></td>
+        <td><%= q.correct_answer %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
