@@ -23,7 +23,7 @@
     <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
     <script>
-  // Script runs instantly on head parsing to avoid light-flickering layout layouts
+  // 1. Core theme applicator function (safe to execute instantly anywhere)
   function applyTheme() {
     if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
       document.documentElement.classList.add('dark');
@@ -36,11 +36,20 @@
     }
   }
 
-  document.addEventListener("DOMContentLoaded", () => {
+  // 2. Instantly parse on initial asset hit to prevent light flash flickering layouts
+  applyTheme();
+
+  // 3. Bind to Turbo page load changes (Forces it to re-evaluate on every single internal click)
+  document.addEventListener("turbo:load", () => {
     applyTheme();
+
     const toggleBtn = document.getElementById('theme-toggle');
     if (toggleBtn) {
-      toggleBtn.addEventListener('click', () => {
+      // CRITICAL FOR TURBO: Remove any existing clone listeners to avoid stacking click events
+      const newToggleBtn = toggleBtn.cloneNode(true);
+      toggleBtn.parentNode.replaceChild(newToggleBtn, toggleBtn);
+
+      newToggleBtn.addEventListener('click', () => {
         if (document.documentElement.classList.contains('dark')) {
           document.documentElement.classList.remove('dark');
           localStorage.setItem('color-theme', 'light');
@@ -53,6 +62,7 @@
     }
   });
 </script>
+
 
   </head>
 
