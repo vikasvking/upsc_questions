@@ -1,6 +1,6 @@
 # config/routes.rb
 Rails.application.routes.draw do
-  root "home#index"
+  root "homes#index"
 
   # Student Practice Dashboard & Quiz Lifecycle Matrix
   get  "dashboard", to: "dashboards#show", as: :dashboard
