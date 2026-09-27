@@ -1,4 +1,9 @@
+# app/controllers/questions_controller.rb
 class QuestionsController < ApplicationController
+  before_action :ensure_teacher_or_admin_access
+  before_action :set_question, only: [:edit, :update]
+  before_action :ensure_modification_permission, only: [:edit, :update]
+
   def index
     @questions = Question.order(year: :desc).order(Arel.sql("q_no::integer ASC"))
   end
@@ -6,23 +11,6 @@ class QuestionsController < ApplicationController
   def upload_form
     # Renders your premium Burgundy data ingestion view
   end
-  # 🚀 NEW METHOD: Compiles and streams a native XML Excel Workbook document (.xlsx standard compatible)
-  # 🚀 FIXED METHOD: Compiles a clean spreadsheet table matrix that Excel opens instantly with no extension warnings
-  # 🚀 FIXED PRODUCTION METHOD: Compiles a clean tab-delimited Excel template that Excel and Roo open with zero errors
-def download_template
-  # Define our required system column sequences
-  headers = ["Q.No", "Topic", "Question", "Option A", "Option B", "Option C", "Option D", "Correct Answer", "Explanation"]
-
-  # Provide an illustrative row example for the admin to follow
-  sample_row = ["1", "Indian Polity", "Who is the executive head of the State in India?", "Governor", "President", "Prime Minister", "Chief Minister", "A", "Article 154 states that the executive power of the State is vested in the Governor."]
-
-  # Join column cells with a literal tab character ("\t") so Excel splits them into distinct columns instantly
-  xls_data = headers.join("\t") + "\n" + sample_row.join("\t")
-
-  # Stream out with an explicit .xls attachment filename token
-  send_data xls_data, filename: "upsc_officer_question_template.xls", type: "application/vnd.ms-excel; charset=utf-8"
-end
-
 
   def import
     file = params[:file]
@@ -34,18 +22,58 @@ end
       return
     end
 
-    # 🚀 EXCEL ENFORCEMENT GATE: Accepts both standard Excel spreadsheet formats seamlessly
     unless file.original_filename.end_with?('.xlsx') || file.original_filename.end_with?('.xls')
       redirect_to upload_form_questions_path, alert: "Invalid format. You must upload a native Excel Workbook sheet (.xlsx or .xls)."
       return
     end
 
     begin
-      Question.import_from_excel(file.path, exam, year)
+      # 🚀 PASSING EXACTLY 4 PARAMETERS: file, exam, year, creator_id
+      Question.import_from_excel(file.path, exam, year, Current.user.id)
+
       redirect_to upload_form_questions_path, notice: "Questions for #{exam} successfully imported into your Question Bank!"
     rescue StandardError => e
       redirect_to upload_form_questions_path, alert: "Error parsing spreadsheet file: #{e.message}"
     end
   end
 
+  def download_template
+    headers = ["Q.No", "Topic", "Question", "Option A", "Option B", "Option C", "Option D", "Correct Answer", "Explanation"]
+    sample_row = ["1", "Physics", "What is the formula for Acceleration?", "MA", "MV", "v/t", "MV2", "C", "Acceleration is the change in velocity per unit time (v/t)."]
+    xls_data = headers.join("\t") + "\n" + sample_row.join("\t")
+    send_data xls_data, filename: "upsc_officer_question_template.xls", type: "application/vnd.ms-excel; charset=utf-8"
+  end
+
+  def edit
+  end
+
+  def update
+    if @question.update(question_params)
+      redirect_to questions_path, notice: "Question sequence updated successfully."
+    else
+      render :edit, status: :unprocessable_entity
+    end
+  end
+
+  private
+
+  def set_question
+    @question = Question.find(params[:id])
+  end
+
+  def ensure_modification_permission
+    unless Current.user.admin? || @question.user_id == Current.user.id
+      redirect_to questions_path, alert: "Access Denied: You can only edit questions that you have personally authored."
+    end
+  end
+
+  def ensure_teacher_or_admin_access
+    unless Current.user&.teacher? || Current.user&.admin?
+      redirect_to dashboard_path, alert: "Access Denied: Only teachers or administrators can view this workspace area."
+    end
+  end
+
+  def question_params
+    params.require(:question).permit(:exam_type, :year, :q_no, :topic, :content, :option_a, :option_b, :option_c, :option_d, :correct_answer, :explanation)
+  end
 end

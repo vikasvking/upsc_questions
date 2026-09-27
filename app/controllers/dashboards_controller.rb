@@ -1,7 +1,7 @@
 class DashboardsController < ApplicationController
   # Runs the global metrics summary computations before handling any active dashboard requests
   before_action :set_global_dashboard_metrics
-
+   before_action :ensure_student_access, only: [:show, :start_test, :submit_answer, :skip_question]
   def show
     if params[:topic].present?
       @topic = params[:topic]
@@ -197,6 +197,12 @@ class DashboardsController < ApplicationController
       @lifetime_wrong_count = 0
       @overall_completion_pct = 0
       @global_accuracy_pct = 0.0
+    end
+  end
+  def ensure_student_access
+    # Grant access to students, but also let admins browse the arena if needed
+    if Current.user&.teacher?
+      redirect_to upload_form_questions_path, notice: "Welcome Teacher! Redirected to your Question Ingestion Hub workspace."
     end
   end
 end

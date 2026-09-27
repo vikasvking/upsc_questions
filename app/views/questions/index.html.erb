@@ -1,156 +1,89 @@
-<!-- 1. HERO MAIN HEADER SECTION -->
-<div class="relative bg-gradient-to-b from-rose-50/40 via-white to-white dark:from-slate-950 dark:via-slate-900 dark:to-slate-900 py-12 transition-colors duration-200">
-  <div class="mx-auto max-w-7xl px-6 lg:px-8 pt-12">
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+<div class="py-10 bg-white dark:bg-slate-950 min-h-screen w-full transition-colors duration-200">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-8">
 
-      <!-- Left Column: Value Copywriting Elements -->
-      <div class="lg:col-span-7 space-y-6">
-        <span class="inline-flex items-center gap-x-2 rounded-full bg-rose-100 dark:bg-rose-950/50 px-3 py-1 text-xs font-semibold text-rose-800 dark:text-rose-300 ring-1 ring-inset ring-rose-700/10">
-          ✨ Powered by Daily AI Suggestions
-        </span>
-        <h1 class="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-6xl lg:leading-tight">
-          Crack Your Exams with <span class="text-rose-800 dark:text-rose-400">Structured Rigour</span>
-        </h1>
-        <p class="text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
-          The ultimate engine built for serious aspirants. Practice 3,500+ high-yield questions, track real-time consistency streaks, analyze 15 years of PYQs, and test yourself against top benchmark metrics.
-        </p>
-
-        <!-- CTA Platform Entry Points -->
-        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 pt-4">
-          <%= link_to "Start Practising Free", "#", class: "w-full sm:w-auto text-center rounded-md bg-rose-800 dark:bg-rose-700 hover:bg-rose-900 dark:hover:bg-rose-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-rose-900/10 transition-all transform hover:-translate-y-0.5" %>
-
-          <!-- Official Google Play Store Badge Vector Link -->
-          <a href="#" class="w-full sm:w-auto inline-flex items-center justify-center gap-x-3 bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white rounded-md px-4 py-2 border border-slate-700 transition-all">
-            <svg class="h-6 w-6 text-white" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M3.609 1.814L13.783 12 3.609 22.186A2.3 2.3 0 013 20.35V3.65c0-.75.25-1.4.609-1.836zm11.23 9.14l3.168-3.168L4.85 2.15c.616-.492 1.554-.42 2.308.064l12.42 7.92c.624.4.954 1.05.954 1.734s-.33 1.334-.954 1.734l-12.42 7.92c-.754.484-1.692.556-2.308.064l13.157-8.91z"/>
-            </svg>
-            <div class="text-left">
-              <p class="text-[10px] uppercase font-semibold text-slate-400 tracking-wider">Get it on</p>
-              <p class="text-xs font-bold font-sans">Google Play</p>
-            </div>
-          </a>
-        </div>
+    <!-- Workspace Header Row Controls -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 dark:border-slate-800 pb-6 gap-4">
+      <div>
+        <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">Question Management Hub</h1>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Total Loaded Repository: <strong class="text-rose-800 dark:text-rose-400"><%= @questions.count %></strong> Questions</p>
       </div>
-
-      <!-- Right Column: Interactive App Interface Preview Card (Mocking Flutter elements) -->
-      <div class="lg:col-span-5 bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-xl border border-slate-100 dark:border-slate-700/60 ring-1 ring-slate-900/5">
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-4 mb-4">
-          <div class="flex items-center gap-x-3">
-            <div class="h-10 w-10 rounded-full bg-rose-100 dark:bg-rose-950 flex items-center justify-center text-lg">🔥</div>
-            <div>
-              <p class="text-xs text-slate-400 dark:text-slate-500 font-medium">STREAK CALCULATOR</p>
-              <h4 class="text-sm font-bold text-slate-900 dark:text-white">12 Days Consistent</h4>
-            </div>
-          </div>
-          <span class="text-xs bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 font-bold px-2.5 py-1 rounded-full">+200 XP Today</span>
-        </div>
-
-        <!-- Metric Dashboard Progress Indicators -->
-        <div class="space-y-4">
-          <div>
-            <div class="flex justify-between text-xs font-semibold mb-1 text-slate-700 dark:text-slate-300">
-              <span>Overall Progress (3,500+ Questions)</span>
-              <span>42% Done</span>
-            </div>
-            <div class="w-full bg-slate-100 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
-              <div class="bg-rose-800 dark:bg-rose-500 h-full w-[42%]" style="width: 42%"></div>
-            </div>
-          </div>
-
-          <div>
-            <div class="flex justify-between text-xs font-semibold mb-1 text-slate-700 dark:text-slate-300">
-              <span>Subject Progress: Indian Polity</span>
-              <span>78%</span>
-            </div>
-            <div class="w-full bg-slate-100 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
-              <div class="bg-amber-600 h-full w-[78%]" style="width: 78%"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Dynamic Simulated AI Suggestion Engine Output -->
-        <div class="mt-5 p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
-          <div class="flex items-center gap-x-2 text-xs font-bold text-rose-800 dark:text-rose-400 mb-1">
-            <span>✨</span> DAILY AI SUGGESTION
-          </div>
-          <p class="text-xs text-slate-600 dark:text-slate-400 leading-normal">
-            Your accuracy dropped by 14% on <span class="font-semibold text-slate-900 dark:text-white">Fundamental Rights (Article 21)</span>. We recommend attempting the 10-question focus set.
-          </p>
-        </div>
-      </div>
-
-    </div>
-  </div>
-</div>
-
-<!-- 2. OTHER SUPPORTED EXAMS HIERARCHY SEGMENT -->
-<div class="bg-slate-50 dark:bg-slate-950 py-16 border-t border-b border-slate-100 dark:border-slate-900 transition-colors duration-200">
-  <div class="mx-auto max-w-7xl px-6 lg:px-8">
-    <div class="text-center max-w-3xl mx-auto mb-10">
-      <h2 class="text-xs font-bold uppercase tracking-widest text-rose-800 dark:text-rose-400">Diverse Streams</h2>
-      <p class="mt-1 text-2xl font-extrabold text-slate-900 dark:text-white">One Subscription. Multiple Target Exams.</p>
+      <%= link_to "Import More Questions 📥", upload_form_questions_path, class: "rounded-xl bg-rose-800 hover:bg-rose-900 dark:bg-rose-700 dark:hover:bg-rose-600 text-white font-bold text-xs px-4 py-2.5 shadow-md text-center transition-all transform hover:-translate-y-0.5 cursor-pointer" %>
     </div>
 
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-5xl mx-auto">
-      <!-- SSC Card Component -->
-      <div class="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200/60 dark:border-slate-800 text-center hover:shadow-md transition-shadow">
-        <div class="text-2xl mb-2">🏛️</div>
-        <h4 class="font-bold text-slate-900 dark:text-white text-base">SSC CGL / CHSL</h4>
-        <p class="text-xs text-slate-500 mt-1">Tier 1 & Tier 2 Quant, Reasoning, English matrices</p>
+    <!-- Active Flash Banner Alerts Notification Display -->
+    <% if notice %>
+      <div class="rounded-xl bg-emerald-50 dark:bg-emerald-950/40 p-4 border border-emerald-200 dark:border-emerald-900/50 animate-fadeIn">
+        <p class="text-xs font-bold text-emerald-800 dark:text-emerald-400 flex items-center gap-x-2"><span>✓</span> <%= notice %></p>
       </div>
+    <% end %>
 
-      <!-- Banking Card Component -->
-      <div class="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200/60 dark:border-slate-800 text-center hover:shadow-md transition-shadow">
-        <div class="text-2xl mb-2">💳</div>
-        <h4 class="font-bold text-slate-900 dark:text-white text-base">Banking Exams</h4>
-        <p class="text-xs text-slate-500 mt-1">SBI, IBPS PO & Clerk detailed question banks</p>
-      </div>
-
-      <!-- CBSE Card Component -->
-      <div class="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200/60 dark:border-slate-800 text-center hover:shadow-md transition-shadow">
-        <div class="text-2xl mb-2">🎒</div>
-        <h4 class="font-bold text-slate-900 dark:text-white text-base">CBSE Boards</h4>
-        <p class="text-xs text-slate-500 mt-1">Classes 10 & 12 chapter-wise NCERT practices</p>
-      </div>
-
-      <!-- JEE Card Component -->
-      <div class="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200/60 dark:border-slate-800 text-center hover:shadow-md transition-shadow">
-        <div class="text-2xl mb-2">🚀</div>
-        <h4 class="font-bold text-slate-900 dark:text-white text-base">IIT JEE Main</h4>
-        <p class="text-xs text-slate-500 mt-1">Advanced Physics, Chemistry, Math analytical modules</p>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- 3. COMPLETE TOPPER COMPARISON DATA MATRIX (FULLY RENDERED) -->
-<div class="bg-white dark:bg-slate-900 py-20 transition-colors duration-200">
-  <div class="mx-auto max-w-7xl px-6 lg:px-8">
-    <div class="mx-auto max-w-3xl text-center mb-12">
-      <h2 class="text-base font-bold uppercase tracking-wider text-rose-800 dark:text-rose-400">Benchmark Your Score</h2>
-      <p class="mt-2 text-3xl font-extrabold text-slate-900 dark:text-white sm:text-4xl">Real-Time Topper Comparative Analytics</p>
-      <p class="mt-4 text-sm text-slate-600 dark:text-slate-400">Measure your progress metrics alongside the benchmark thresholds required to pass the top ranks.</p>
-    </div>
-
-    <!-- Data Metric Matrix Table -->
-    <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-      <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-left text-sm">
+    <!-- Questions Management Table Matrix Container -->
+    <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900">
+      <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-left text-xs">
         <thead class="bg-slate-50 dark:bg-slate-950 font-bold text-slate-900 dark:text-slate-300">
           <tr>
-            <th class="px-6 py-4">Metric Parameters</th>
-            <th class="px-6 py-4 text-rose-800 dark:text-rose-400">Your Current Status</th>
-            <th class="px-6 py-4 text-amber-600">AIR-10 Avg Threshold</th>
-            <th class="px-6 py-4 text-slate-500">Overall Platform Avg</th>
+            <th class="px-4 py-3.5">Portfolio</th>
+            <th class="px-4 py-3.5">Year</th>
+            <th class="px-4 py-3.5">Q.No</th>
+            <th class="px-4 py-3.5">Syllabus Topic Category</th>
+            <th class="px-6 py-3.5">Question Prompt Content Snippet</th>
+            <th class="px-4 py-3.5 text-center">Correct Key</th>
+            <th class="px-4 py-3.5 texe-right"> Actions</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-700 dark:text-slate-400 bg-white dark:bg-slate-900">
-          <tr>
-            <td class="px-6 py-4 font-semibold text-slate-900 dark:text-white">Correct Answers count</td>
-            <td class="px-6 py-4 bg-rose-50/30 dark:bg-rose-950/10 font-bold">142 Questions</td>
-            <td class="px-6 py-4 font-medium">310 Questions</td>
-            <td class="px-6 py-4">88 Questions</td>
-          </tr>
-          <tr>
-            <td class="px-6 py-4 font-semibold text-slate-900 dark:text-white">Avg. Timing Per Question</td>
-            <td class="px-6 py-4 bg-rose-50/30 dark:bg-rose-950/10 font-bold">54 Seconds</td>
-            <td class="px-6 py-4 font-medium text-emerald-600 dark:text-emerald-400">42 Seconds ⚡</td>
+        <tbody class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-700 dark:text-slate-400">
+          <% if @questions.any? %>
+            <% @questions.each do |question| %>
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-950/30 transition-colors">
+                <!-- Exam Type Portfolio Capsule -->
+                <td class="px-4 py-3.5 font-bold">
+                  <span class="inline-block px-2 py-0.5 rounded text-[10px] font-black tracking-wide bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-400 border border-rose-200/40">
+                    <%= question.exam_type %>
+                  </span>
+                </td>
+
+                <!-- Exam Year -->
+                <td class="px-4 py-3.5 font-bold font-mono text-slate-900 dark:text-white">
+                  <%= question.year.presence || "Mock" %>
+                </td>
+
+                <!-- Question Number -->
+                <td class="px-4 py-3.5 font-bold font-mono text-rose-800 dark:text-rose-400">
+                  <%= question.q_no %>
+                </td>
+
+                <!-- Topic Capsule -->
+                <td class="px-4 py-3.5">
+                  <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                    <%= question.topic %>
+                  </span>
+                </td>
+
+                <!-- Content Prompt Snippet -->
+                <td class="px-6 py-3.5 max-w-md truncate font-medium text-slate-600 dark:text-slate-400" title="<%= question.content %>">
+                  <%= question.content %>
+                </td>
+
+                <!-- Correct Answer Key -->
+                <td class="px-4 py-3.5 text-center font-black text-emerald-600 dark:text-emerald-400 bg-slate-50/30 dark:bg-slate-950/10">
+                  <%= question.correct_answer %>
+                </td>
+                <td class="px-4 py-3.5 text-right whitespace-nowrap">
+                  <%= link_to "Edit 📝", edit_question_path(question), class: "text-xs font-black text-rose-800 dark:text-rose-400 hover:text-rose-900 dark:hover:text-rose-300 transition-colors bg-rose-50 dark:bg-rose-950/40 px-2.5 py-1 rounded-lg border border-rose-200/40 shadow-sm" %>
+                </td>
+              </tr>
+            <% end %>
+          <% else %>
+            <!-- Fallback Empty State Display Matrix -->
+            <tr>
+              <td colspan="6" class="text-center py-12 text-slate-400 font-medium bg-slate-50/50 dark:bg-slate-950/10">
+                The question repository is currently empty. Click the button on top to ingest your Excel question sets.
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>

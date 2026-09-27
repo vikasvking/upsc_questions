@@ -13,7 +13,7 @@ Rails.application.routes.draw do
   get  "dashboard/results", to: "dashboards#results", as: :test_results_dashboard
 
   # Questions Management Routing Table Block
-  resources :questions, only: [:index] do
+  resources :questions, only: [:index,:edit,:update] do
     collection do
       get  :upload_form
       post :import

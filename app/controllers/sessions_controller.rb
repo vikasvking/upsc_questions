@@ -8,7 +8,11 @@ class SessionsController < ApplicationController
   def create
     if user = User.authenticate_by(params.permit(:email_address, :password))
       start_new_session_for user
+      if user.teacher? || user.admin?
+        redirect_to upload_form_questions_path,notice: "Welcome Faculty"
+      else
       redirect_to dashboard_path,notice: "Signed in successfully"
+    end
     else
       redirect_to new_session_path, alert: "Try another email address or password."
     end
