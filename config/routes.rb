@@ -5,10 +5,13 @@ Rails.application.routes.draw do
   get "dashboard", to: "dashboards#show", as: :dashboard
   get "question_bank", to: "questionbanks#show", as: :question_bank
 
-  resources :test_sessions, only: [:index, :new, :create,:show] do
+  resources :test_sessions, only: [:index, :new, :create,:show,:edit] do
     collection do
       get  :join, to: "test_sessions#join_form"
       post :verify_pin
+      get  :upload_form
+      post :import
+      get  :download_template
     end
   end
 

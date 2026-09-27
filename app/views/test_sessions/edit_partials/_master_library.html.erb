@@ -1,0 +1,32 @@
+<div class="space-y-4 bg-slate-50/50 dark:bg-slate-900/50 p-5 rounded-2xl border border-slate-200 dark:border-slate-800">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div>
+      <h3 class="text-base font-extrabold text-slate-900 dark:text-white">Master Question Library</h3>
+      <p class="text-xs text-slate-400">Browse your uploaded inventory bank and check boxes to include them in the paper.</p>
+    </div>
+    <input type="text" id="library-search-field" placeholder="🔍 Search library..." class="rounded-xl border border-slate-200 dark:border-slate-800 text-xs py-1.5 px-3 bg-white dark:bg-slate-950 text-slate-900 dark:text-white w-full sm:w-48 shadow-sm focus:ring-2 focus:ring-rose-800" />
+  </div>
+
+  <div id="master-library-container" class="space-y-3 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin">
+    <% @questions.each do |q| %>
+      <% next if @test_session.question_ids.include?(q.id) %>
+
+      <label class="library-row-item flex items-start gap-4 p-4 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-850 cursor-pointer hover:border-rose-800/40 transition-colors block group">
+        <!-- Locate your check_box_tag line inside your @questions loop (around line 14) and change it to this: -->
+  <div class="mt-1">
+    <!-- 🚀 FIX: Name updated to test_session[question_ids][] -->
+    <%= check_box_tag "test_session[question_ids][]", q.id.to_s, false, class: "library-repository-checkbox accent-rose-800 h-4 w-4 rounded" %>
+  </div>
+
+        <div class="space-y-1.5 flex-1">
+          <div class="flex items-center gap-x-2 flex-wrap gap-y-1">
+            <span class="inline-block px-2 py-0.5 rounded text-[9px] font-black uppercase bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"><%= q.exam_type %></span>
+            <span class="inline-block px-2 py-0.5 rounded-full text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 filter-topic-token"><%= q.topic %></span>
+            <span class="text-[10px] font-bold font-mono text-slate-400 ml-auto">Q.No <%= q.q_no %></span>
+          </div>
+          <p class="text-xs font-semibold text-slate-900 dark:text-white leading-relaxed filter-content-token"><%= q.content %></p>
+        </div>
+      </label>
+    <% end %>
+  </div>
+</div>

@@ -1,0 +1,22 @@
+<div class="bg-slate-50 dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-4 shadow-sm">
+  <div class="sm:col-span-2">
+    <%= f.label :title, "Examination Paper Title", class: "text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider" %>
+    <%= f.text_field :title, required: true, class: "mt-1.5 block w-full rounded-xl border-0 py-2.5 px-3 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-rose-800" %>
+  </div>
+
+  <div>
+    <%= f.label :exam_type, "Exam Category Portfolio Target", class: "text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider" %>
+    <%= f.select :exam_type, [["UPSC Civil Services", "UPSC"], ["SSC CGL", "SSC"], ["CBSE Class X", "CBSE"], ["IIT JEE Main", "JEE"]], {}, class: "mt-1.5 block w-full rounded-xl border-0 py-2.5 px-3 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-sm text-slate-900 dark:text-white" %>
+  </div>
+
+  <div class="grid grid-cols-2 gap-3">
+    <div>
+      <%= f.label :duration_minutes, "Time (Minutes)", class: "text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider" %>
+      <%= f.number_field :duration_minutes, class: "mt-1.5 block w-full rounded-xl border-0 py-2.5 px-3 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-sm text-slate-900 dark:text-white" %>
+    </div>
+    <div>
+      <%= f.label :pass_mark_percentage, "Passing Mark %", class: "text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider" %>
+      <%= f.number_field :pass_mark_percentage, class: "mt-1.5 block w-full rounded-xl border-0 py-2.5 px-3 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-sm text-slate-900 dark:text-white" %>
+    </div>
+  </div>
+</div>
