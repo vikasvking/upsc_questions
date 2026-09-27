@@ -1,5 +1,10 @@
 # config/routes.rb
 Rails.application.routes.draw do
+  get "announcements/show",to: "announcements#show", as: :announcement
+  get "questionbanks/show",to: "questionbanks#show", as: :questionbanks
+  get "profiles/show"
+  get "profiles/edit"
+  get "profiles/update"
   root "homes#index"
 
   # Student Practice Dashboard & Quiz Lifecycle Matrix
@@ -10,6 +15,8 @@ Rails.application.routes.draw do
   post "dashboard/finish_test", to: "dashboards#finish_test", as: :finish_test_dashboard
   get  "dashboard/results", to: "dashboards#results", as: :test_results_dashboard
 
+
+  resource :profile, only: [ :show, :edit, :update ]
   # Authentication Management Rails
   resource :session
   resources :passwords, param: :token
