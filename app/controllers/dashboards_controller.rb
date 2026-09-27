@@ -150,6 +150,11 @@ class DashboardsController < ApplicationController
   # Dynamically iterates backwards across logs to quantify accurate consecutive target fulfillment totals
   def calculate_active_streak
     return 0 unless Current.user
+
+    # 🚀 SAFEGUARD FIX: If the user has zero responses logged, immediately return 0
+    # to break what would otherwise be a critical server-crashing infinite loop block
+    return 0 if Current.user.user_responses.count.zero?
+
     streak = 0
     check_date = Date.current
 

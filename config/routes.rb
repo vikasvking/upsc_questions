@@ -19,6 +19,7 @@ Rails.application.routes.draw do
       post :import
       # 🚀 ADD THIS FALLBACK LINE: Intercepts accidental browser reloads safely
       get  :import, to: "questions#upload_form"
+      get  :download_template
     end
   end
 
