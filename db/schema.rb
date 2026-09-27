@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_26_160143) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_27_053240) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -38,6 +38,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_26_160143) do
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 
+  create_table "user_responses", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "question_id", null: false
+    t.string "chosen_option", null: false
+    t.boolean "is_correct", default: false, null: false
+    t.integer "duration_seconds", default: 0
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "test_session_token"
+    t.index ["question_id"], name: "index_user_responses_on_question_id"
+    t.index ["user_id", "question_id"], name: "index_user_responses_on_user_id_and_question_id"
+    t.index ["user_id"], name: "index_user_responses_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "email_address", null: false
     t.string "password_digest", null: false
@@ -47,4 +61,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_26_160143) do
   end
 
   add_foreign_key "sessions", "users"
+  add_foreign_key "user_responses", "questions"
+  add_foreign_key "user_responses", "users"
 end

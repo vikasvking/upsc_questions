@@ -35,7 +35,8 @@
           <div class="bg-rose-800 dark:bg-rose-500 h-full rounded-full transition-all duration-500" style="width: <%= meta[:mastered] %>%"></div>
         </div>
 
-        <%= link_to "Practice Questions →", "#", class: "mt-4 text-xs font-black text-rose-800 dark:text-rose-400 block group-hover:text-rose-900" %>
+        <!-- 🚀 QUOTES REMOVED BELOW: It is now evaluated as a core Ruby command -->
+        <%= link_to "Practice Questions →", dashboard_path(topic: subject_name), class: "mt-4 text-xs font-black text-rose-800 dark:text-rose-400 block group-hover:text-rose-900 cursor-pointer" %>
       </div>
     </div>
   <% end %>

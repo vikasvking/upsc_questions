@@ -1,6 +1,8 @@
 
   # app/models/question.rb
 class Question < ApplicationRecord
+  has_many :user_responses,dependent: :destroy
+  validates :q_no, :topic, :content, :correct_answer, presence: true
   def self.import_from_excel(file_path, year)
     xlsx = Roo::Spreadsheet.open(file_path)
     header = xlsx.row(1)

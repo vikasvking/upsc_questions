@@ -1,0 +1,29 @@
+<div class="py-10 bg-white dark:bg-slate-950 min-h-screen w-full transition-colors duration-200">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
+
+    <!-- Test Breadcrumb Return Area Line -->
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-x-3">
+        <%= link_to "← Exit Arena", dashboard_path, class: "text-xs font-bold bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 text-slate-600 dark:text-slate-400 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800" %>
+        <h2 class="text-sm font-black text-rose-800 dark:text-rose-400 uppercase tracking-wider"><%= @topic %> Module</h2>
+      </div>
+      <span class="text-xs bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 font-mono px-3 py-1.5 rounded-lg">Source Year: <%= @question&.year %></span>
+    </div>
+
+    <!-- Active Grid Shell Mapping -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+      <!-- Left Panel Navigation Grid (Span 4) -->
+      <div class="lg:col-span-4">
+        <%= render "dashboards/quiz_sidebar" %>
+      </div>
+
+      <!-- Right Panel Content Grid Card (Span 8) -->
+      <div class="lg:col-span-8">
+        <%= render "dashboards/quiz_content" %>
+      </div>
+
+    </div>
+
+  </div>
+</div>

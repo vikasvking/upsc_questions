@@ -1,62 +1,38 @@
 <div class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm mb-8 transition-colors duration-200">
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
     <div>
-      <h3 class="text-sm font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Daily Practice Streak</h3>
-      <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Maintain your rhythm to unlock premium AI mock assessments.</p>
+      <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Daily Practice Streak</h3>
+      <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Solve 25+ questions daily to preserve your rhythm engine.</p>
     </div>
     <div class="text-right">
-      <span class="text-2xl font-black text-rose-800 dark:text-rose-400 font-mono">12 Days 🔥</span>
+      <span class="text-2xl font-black text-rose-800 dark:text-rose-400 font-mono"><%= @current_streak_count %> Days 🔥</span>
     </div>
   </div>
 
-  <!-- Horizontal Streak Calendar Strip -->
+  <!-- Horizontal Rolling Calendar Strip -->
   <div class="grid grid-cols-7 gap-2 sm:gap-4 max-w-3xl mx-auto pt-2">
-    <!-- Day 1: Completed Streak -->
-    <div class="flex flex-col items-center justify-center p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 shadow-sm relative group">
-      <span class="text-[10px] font-bold text-rose-800 dark:text-rose-400 uppercase">Mon</span>
-      <span class="text-sm font-black text-slate-900 dark:text-white mt-1">21</span>
-      <div class="absolute -top-2 text-xs filter drop-shadow">🔥</div>
-    </div>
-
-    <!-- Day 2: Completed Streak -->
-    <div class="flex flex-col items-center justify-center p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 shadow-sm relative group">
-      <span class="text-[10px] font-bold text-rose-800 dark:text-rose-400 uppercase">Tue</span>
-      <span class="text-sm font-black text-slate-900 dark:text-white mt-1">22</span>
-      <div class="absolute -top-2 text-xs filter drop-shadow">🔥</div>
-    </div>
-
-    <!-- Day 3: Completed Streak -->
-    <div class="flex flex-col items-center justify-center p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 shadow-sm relative group">
-      <span class="text-[10px] font-bold text-rose-800 dark:text-rose-400 uppercase">Wed</span>
-      <span class="text-sm font-black text-slate-900 dark:text-white mt-1">23</span>
-      <div class="absolute -top-2 text-xs filter drop-shadow">🔥</div>
-    </div>
-
-    <!-- Day 4: Completed Streak -->
-    <div class="flex flex-col items-center justify-center p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 shadow-sm relative group">
-      <span class="text-[10px] font-bold text-rose-800 dark:text-rose-400 uppercase">Thu</span>
-      <span class="text-sm font-black text-slate-900 dark:text-white mt-1">24</span>
-      <div class="absolute -top-2 text-xs filter drop-shadow">🔥</div>
-    </div>
-
-    <!-- Day 5: Completed Streak -->
-    <div class="flex flex-col items-center justify-center p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 shadow-sm relative group">
-      <span class="text-[10px] font-bold text-rose-800 dark:text-rose-400 uppercase">Fri</span>
-      <span class="text-sm font-black text-slate-900 dark:text-white mt-1">25</span>
-      <div class="absolute -top-2 text-xs filter drop-shadow">🔥</div>
-    </div>
-
-    <!-- Day 6: Today (Active Highlight) -->
-    <div class="flex flex-col items-center justify-center p-3 rounded-xl bg-rose-800 dark:bg-rose-700 shadow-md ring-2 ring-offset-2 ring-rose-800 dark:ring-offset-slate-950 relative group">
-      <span class="text-[10px] font-black text-rose-200 uppercase">Sat</span>
-      <span class="text-sm font-black text-white mt-1">26</span>
-      <div class="absolute -top-3 text-sm animate-bounce filter drop-shadow-lg">🔥</div>
-    </div>
-
-    <!-- Day 7: Tomorrow (Pending / Rest State) -->
-    <div class="flex flex-col items-center justify-center p-3 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800/80">
-      <span class="text-[10px] font-bold text-slate-400 uppercase">Sun</span>
-      <span class="text-sm font-bold text-slate-400 mt-1">27</span>
-    </div>
+    <% @streak_days.each do |day| %>
+      <% if day[:target_fulfilled] %>
+        <!-- Target Met State: Rich burgundy highlight container with activated flame indicator -->
+        <div class="flex flex-col items-center justify-center p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border-2 border-rose-800 dark:border-rose-500 shadow-sm relative group" title="<%= day[:solved_count] %> questions completed">
+          <span class="text-[10px] font-bold text-rose-800 dark:text-rose-400 uppercase"><%= day[:day_name] %></span>
+          <span class="text-sm font-black text-slate-900 dark:text-white mt-1"><%= day[:day_number] %></span>
+          <div class="absolute -top-2.5 text-xs filter drop-shadow <%= 'animate-bounce' if day[:is_today] %>">🔥</div>
+        </div>
+      <% elsif day[:is_today] %>
+        <!-- Today's State (Target not met yet): Dashed active marker layout displaying real-time fraction counts -->
+        <div class="flex flex-col items-center justify-center p-3 rounded-xl bg-white dark:bg-slate-950 border-2 border-dashed border-rose-800/40 text-slate-700 dark:text-slate-300 relative" title="<%= day[:solved_count] %>/25 questions solved today">
+          <span class="text-[10px] font-black uppercase tracking-wide text-rose-800 dark:text-rose-400">Today</span>
+          <span class="text-sm font-black text-slate-900 dark:text-white mt-0.5"><%= day[:day_number] %></span>
+          <span class="text-[8px] font-mono text-slate-400 mt-1"><%= day[:solved_count] %>/25</span>
+        </div>
+      <% else %>
+        <!-- Missed Target Day: Muted empty gray box interface color map -->
+        <div class="flex flex-col items-center justify-center p-3 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800/80" title="<%= day[:solved_count] %> questions completed">
+          <span class="text-[10px] font-bold text-slate-400 uppercase"><%= day[:day_name] %></span>
+          <span class="text-sm font-medium text-slate-400 mt-1"><%= day[:day_number] %></span>
+        </div>
+      <% end %>
+    <% end %>
   </div>
 </div>

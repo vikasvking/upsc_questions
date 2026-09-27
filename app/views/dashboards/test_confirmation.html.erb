@@ -1,0 +1,22 @@
+<div class="py-16 bg-white dark:bg-slate-950 min-h-screen flex items-center justify-center transition-colors duration-200 w-full">
+  <div class="mx-auto max-w-xl px-6 text-center space-y-6">
+    <div class="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/40 text-3xl shadow-sm">⏱️</div>
+
+    <div class="space-y-2">
+      <h1 class="text-3xl font-black tracking-tight text-slate-900 dark:text-white"><%= @topic %> Session</h1>
+      <p class="text-sm text-slate-500 dark:text-slate-400">Review rules before opening the diagnostic module queue.</p>
+    </div>
+
+    <div class="bg-slate-50 dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 text-left space-y-3.5 text-xs text-slate-600 dark:text-slate-400 leading-relaxed shadow-sm">
+      <p class="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-[10px] text-rose-800 dark:text-rose-400">Testing Regulations:</p>
+      <div class="flex gap-x-2"><span>•</span> <span>Contains <strong><%= @total_q_count %> questions</strong> mapped precisely from active repository rows.</span></div>
+      <div class="flex gap-x-2"><span>•</span> <span>An internal stop-timer initialization is bound onto the workspace layout.</span></div>
+      <div class="flex gap-x-2"><span>•</span> <span>Exiting prematurely flags non-submitted items as skipped steps.</span></div>
+    </div>
+
+    <div class="flex gap-4 pt-2">
+      <%= link_to "Cancel & Go Back", dashboard_path, class: "flex-1 text-center font-bold text-sm border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-950 px-4 py-3 rounded-xl hover:bg-slate-100 transition-colors shadow-sm" %>
+      <%= button_to "Initialize Test Mode", start_test_dashboard_path(topic: @topic), method: :post, class: "flex-1 text-center font-bold text-sm bg-rose-800 hover:bg-rose-900 text-white px-4 py-3 rounded-xl transition-all shadow-md cursor-pointer transform hover:-translate-y-0.5" %>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,68 @@
+<div class="py-10 bg-white dark:bg-slate-950 min-h-screen w-full transition-colors duration-200">
+  <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 space-y-8">
+
+    <!-- Evaluation Header Link -->
+    <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-6">
+      <div>
+        <h1 class="text-3xl font-black text-slate-900 dark:text-white"><%= @topic %> Results</h1>
+        <p class="text-sm text-slate-500 mt-1">Syllabus diagnostic feedback scorecard summary metrics.</p>
+      </div>
+      <%= link_to "Return to Workspace Dashboard", dashboard_path, class: "text-xs font-bold bg-rose-800 text-white px-4 py-2.5 rounded-xl hover:bg-rose-900 shadow-md" %>
+    </div>
+
+    <!-- Diagnostic Score Stats Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
+      <div class="bg-emerald-50/40 dark:bg-emerald-950/10 p-5 rounded-2xl border border-emerald-100 dark:border-emerald-900/40">
+        <p class="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Correct Answers</p>
+        <p class="text-3xl font-black text-emerald-600 mt-1"><%= @correct_count %></p>
+      </div>
+      <div class="bg-rose-50/40 dark:bg-rose-950/10 p-5 rounded-2xl border border-rose-100 dark:border-rose-900/40">
+        <p class="text-[10px] font-bold text-rose-800 dark:text-rose-400 uppercase tracking-wider">Incorrect Answers</p>
+        <p class="text-3xl font-black text-rose-800 mt-1"><%= @wrong_count %></p>
+      </div>
+      <div class="bg-slate-50 dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800">
+        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Questions</p>
+        <p class="text-3xl font-black text-slate-900 dark:text-white mt-1"><%= @questions.count %></p>
+      </div>
+    </div>
+
+    <!-- Correct Answers Evaluation List Matrix Blocks -->
+    <div class="space-y-6">
+      <h3 class="text-lg font-extrabold text-slate-900 dark:text-white">Review Evaluation Sheet</h3>
+
+      <% @questions.each do |q| %>
+        <% resp = @responses[q.id] %>
+        <div class="p-6 rounded-2xl border bg-slate-50/50 dark:bg-slate-900/30 <%= resp&.is_correct ? 'border-emerald-200 dark:border-emerald-900/50' : 'border-slate-200 dark:border-slate-800' %>">
+          <div class="flex justify-between items-start gap-4 mb-3">
+            <span class="text-xs font-black bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 px-2.5 py-1 rounded-lg text-slate-700 dark:text-slate-300">Q.No <%= q.q_no %></span>
+
+            <!-- Dynamic Badges -->
+            <% if resp.nil? %>
+              <span class="text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-0.5 rounded-full">Unattempted</span>
+            <% elsif resp.chosen_option == "SKIPPED" %>
+              <span class="text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200 px-2.5 py-0.5 rounded-full">Skipped Field</span>
+            <% elsif resp.is_correct %>
+              <span class="text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full">✓ Correct</span>
+            <% else %>
+              <span class="text-[10px] font-bold bg-rose-50 text-rose-800 border border-rose-200 px-2.5 py-0.5 rounded-full">✗ Wrong choice</span>
+            <% end %>
+          </div>
+
+          <p class="text-sm font-semibold text-slate-900 dark:text-white leading-relaxed mb-4"><%= q.content %></p>
+
+          <!-- Key evaluation display mapping text attributes -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs mb-4">
+            <div class="p-2 rounded bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-850"><strong class="text-rose-800 dark:text-rose-400">Correct Option Key:</strong> <%= q.correct_answer %></div>
+            <div class="p-2 rounded bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-850"><strong class="text-slate-500">Your Selection:</strong> <%= resp&.chosen_option || "None" %></div>
+          </div>
+
+          <div class="p-4 rounded-xl bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-850 space-y-1">
+            <p class="text-[10px] font-black uppercase text-rose-800 dark:text-rose-400 tracking-wider">Syllabus Explanation Breakdown:</p>
+            <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-mono"><%= q.explanation %></p>
+          </div>
+        </div>
+      <% end %>
+    </div>
+
+  </div>
+</div>
