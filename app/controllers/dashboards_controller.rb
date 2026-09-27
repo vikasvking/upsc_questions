@@ -2,33 +2,39 @@ class DashboardsController < ApplicationController
   # Runs the global metrics summary computations before handling any active dashboard requests
   before_action :set_global_dashboard_metrics
    before_action :ensure_student_access, only: [:show, :start_test, :submit_answer, :skip_question]
-  def show
-    if params[:topic].present?
-      @topic = params[:topic]
+   def show
+   if params[:topic].present?
+     @topic = params[:topic]
 
-      # Enforce pre-test instruction validation constraints if the user session hasn't initialized the quiz
-      if session[:active_test_topic] != @topic
-        @total_q_count = Question.where(topic: @topic).count
-        render :test_confirmation and return
-      end
+     # Enforce pre-test instruction validation constraints if the user session hasn't initialized the quiz
+     if session[:active_test_topic] != @topic
+       @total_q_count = Question.where(topic: @topic).count
+       render :test_confirmation and return
+     end
 
-      # Load up all questions inside this topic explicitly typecasted via native PostgreSQL integers
-      @questions = Question.where(topic: @topic).order(Arel.sql("q_no::integer ASC"))
-      current_q_no = params[:q_no].presence || 1
-      @question = @questions.find_by(q_no: current_q_no) || @questions.first
+     # Load up all questions inside this topic explicitly typecasted via native PostgreSQL integers
+     @questions = Question.where(topic: @topic).order(Arel.sql("q_no::integer ASC"))
+     current_q_no = params[:q_no].presence || 1
+     @question = @questions.find_by(q_no: current_q_no) || @questions.first
 
-      # Securely check if the user has already loaded a choice response map inside this isolated testing block
-      if Current.user && @question
-        @previous_attempt = Current.user.user_responses.where(question: @question, test_session_token: session[:active_test_token]).last
-      end
+     # Securely check if the user has already loaded a choice response map inside this isolated testing block
+     if Current.user && @question
+       @previous_attempt = Current.user.user_responses.where(question: @question, test_session_token: session[:active_test_token]).last
+     end
 
-      render :quiz_arena
-    else
-      # Mode B: Standard Main Dashboard Selection View Panel Hub
-      @streak_days = generate_streak_calendar_data
-      render :show
-    end
-  end
+     render :quiz_arena
+   else
+     # Mode B: Standard Main Dashboard Selection View Panel Hub
+     @streak_days = generate_streak_calendar_data
+
+     # 🚀 NEW METRICS: Gather all platform test options available for the student dashboard
+     @available_subjects = Question.pluck(:topic).uniq.compact
+     @custom_teacher_tests = TestSession.order(created_at: :desc)
+
+     render :show
+   end
+ end
+
 
   # Initializes session tokens and tracking timestamps
   def start_test

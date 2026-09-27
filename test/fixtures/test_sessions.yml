@@ -1,0 +1,17 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  user: one
+  title: MyString
+  exam_type: MyString
+  duration_minutes: 1
+  pass_mark_percentage: 1
+  pin_code: MyString
+
+two:
+  user: two
+  title: MyString
+  exam_type: MyString
+  duration_minutes: 1
+  pass_mark_percentage: 1
+  pin_code: MyString

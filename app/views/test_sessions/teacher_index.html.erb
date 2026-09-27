@@ -1,0 +1,53 @@
+<div class="py-10 bg-white dark:bg-slate-950 min-h-screen w-full transition-colors duration-200">
+  <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 space-y-6">
+
+    <!-- Header Block Component -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 dark:border-slate-800 pb-6 gap-4">
+      <div>
+        <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">Custom Test Suites</h1>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Monitor active student examination parameters, deployment codes, and performance data.</p>
+      </div>
+      <%= link_to "Compile Custom Test ➕", new_test_session_path, class: "rounded-xl bg-rose-800 hover:bg-rose-900 text-white font-bold text-xs px-4 py-2.5 shadow-md transition-all text-center transform hover:-translate-y-0.5 cursor-pointer" %>
+    </div>
+
+    <!-- Active List Grid Row Matrix -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <% if @test_sessions.any? %>
+        <% @test_sessions.each do |session| %>
+
+          <!-- 🚀 CLICKABLE CARD CONTAINER: Links straight into deep performance analytics dashboard view -->
+          <%= link_to test_session_path(session), class: "bg-slate-50 dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 flex justify-between items-center shadow-sm hover:border-rose-800 dark:hover:border-rose-500 transition-all hover:-translate-y-0.5 group block" do %>
+            <div>
+              <h4 class="text-base font-black text-slate-900 dark:text-white group-hover:text-rose-800 dark:group-hover:text-rose-400 transition-colors">
+                <%= session.title %>
+              </h4>
+              <p class="text-xs text-slate-400 dark:text-slate-500 mt-1.5 leading-relaxed">
+                Portfolio: <span class="font-bold text-slate-700 dark:text-slate-300"><%= session.exam_type %></span><br>
+                Hand-Picked Pool: <strong class="text-rose-800 dark:text-rose-400"><%= session.questions.count %> Questions</strong>
+              </p>
+              <span class="text-[10px] text-rose-800/80 dark:text-rose-400/80 font-black block mt-3 uppercase tracking-wider group-hover:underline">
+                View Performance Analytics →
+              </span>
+            </div>
+
+            <div class="text-right flex flex-col justify-center pl-4 border-l border-slate-200/60 dark:border-slate-800">
+              <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block">Access PIN</span>
+              <span class="text-lg font-black text-rose-800 dark:text-rose-400 font-mono bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 px-3 py-1 rounded-xl mt-1.5 inline-block shadow-sm border-dashed border-rose-800/30 select-all">
+                <%= session.pin_code %>
+              </span>
+            </div>
+          <% end %>
+
+        <% end %>
+      <% else %>
+        <!-- Fallback Empty State Display Matrix -->
+        <div class="md:col-span-2 text-center py-16 text-slate-400 dark:text-slate-500 font-medium bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-inner">
+          <div class="text-3xl mb-2">🔐</div>
+          <p class="text-sm font-bold text-slate-700 dark:text-slate-300">No Custom Test Suites Found</p>
+          <p class="text-xs text-slate-400 mt-1">Click the button on top to pick custom questions and deploy your first classroom passcode PIN.</p>
+        </div>
+      <% end %>
+    </div>
+
+  </div>
+</div>

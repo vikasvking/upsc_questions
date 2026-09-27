@@ -1,0 +1,83 @@
+<div class="py-10 bg-white dark:bg-slate-950 min-h-screen w-full transition-colors duration-200">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-8">
+
+    <!-- Title Section Header Controls Row -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 dark:border-slate-800 pb-6 gap-4">
+      <div>
+        <%= link_to "← Back to Test Manager", test_sessions_path, class: "text-[10px] font-bold uppercase tracking-wider text-rose-800 dark:text-rose-400 hover:underline" %>
+        <h1 class="text-2xl font-black text-slate-900 dark:text-white sm:text-3xl mt-1"><%= @test_session.title %> Analytics</h1>
+        <p class="text-sm text-slate-500 mt-0.5">Exam Access PIN: <span class="font-mono font-bold text-rose-800 bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded-md select-all"><%= @test_session.pin_code %></span></p>
+      </div>
+    </div>
+
+    <!-- Telemetry Counters Row Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
+
+      <!-- 1. Total Attempts Counter -->
+      <div class="bg-slate-50 dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center min-h-[110px]">
+        <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Total Attempts Logged</p>
+        <p class="text-3xl font-black text-slate-900 dark:text-white mt-1"><%= @total_participants %> Students</p>
+      </div>
+
+      <!-- 2. Class Average Score Percentage -->
+      <div class="bg-slate-50 dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center min-h-[110px]">
+        <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Class Average Score</p>
+        <p class="text-3xl font-black text-rose-800 dark:text-rose-400 mt-1"><%= @class_average_pct %>%</p>
+      </div>
+
+      <!-- 3. Highest Mark Holder Profile Card -->
+      <div class="bg-slate-50 dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center min-h-[110px]">
+        <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">🏆 Highest Mark Holder</p>
+        <p class="text-xs font-black text-emerald-600 dark:text-emerald-400 mt-2 truncate max-w-xs mx-auto" title="<%= @topper_email %>">
+          <%= @topper_email %>
+        </p>
+      </div>
+
+    </div>
+
+    <!-- Student Score Tracking Sheet List Matrix Table -->
+    <div class="space-y-4">
+      <h3 class="text-base font-extrabold text-slate-900 dark:text-white">Student Evaluation Rankings</h3>
+
+      <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900">
+        <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-left text-xs">
+          <thead class="bg-slate-50 dark:bg-slate-950 font-bold text-slate-900 dark:text-slate-300">
+            <tr>
+              <th class="px-6 py-3.5">Rank</th>
+              <th class="px-6 py-3.5">Student Account Email</th>
+              <th class="px-4 py-3.5 text-center">Correct Items</th>
+              <th class="px-4 py-3.5 text-center">Final Score Pct</th>
+              <th class="px-6 py-3.5 text-right">Status Profile</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-700 dark:text-slate-400">
+            <% if @student_performance_list.any? %>
+              <% @student_performance_list.each_with_index do |student, index| %>
+                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-950/30 transition-colors">
+                  <td class="px-6 py-3.5 font-bold font-mono text-slate-900 dark:text-white">#<%= index + 1 %></td>
+                  <td class="px-6 py-3.5 font-semibold text-slate-800 dark:text-slate-200"><%= student[:email] %></td>
+                  <td class="px-4 py-3.5 text-center font-mono font-medium"><%= student[:correct] %> / <%= student[:total] %></td>
+                  <td class="px-4 py-3.5 text-center font-black text-slate-900 dark:text-white font-mono bg-slate-50/30 dark:bg-slate-950/10"><%= student[:percentage] %>%</td>
+                  <td class="px-6 py-3.5 text-right whitespace-nowrap">
+                    <% if student[:passed] %>
+                      <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 border border-emerald-200/40">✓ Passed</span>
+                    <% else %>
+                      <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-50 dark:bg-rose-950/40 text-rose-800 border border-rose-200/40">✗ Failed</span>
+                    <% end %>
+                  </td>
+                </tr>
+              <% end %>
+            <% else %>
+              <tr>
+                <td colspan="5" class="text-center py-12 text-slate-400 font-medium bg-slate-50/50 dark:bg-slate-950/10">
+                  No submissions processed for this passcode PIN yet. Student attempts appear automatically as they hit the 'Finish Session' form action.
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>

@@ -5,6 +5,13 @@ Rails.application.routes.draw do
   get "dashboard", to: "dashboards#show", as: :dashboard
   get "question_bank", to: "questionbanks#show", as: :question_bank
 
+  resources :test_sessions, only: [:index, :new, :create,:show] do
+    collection do
+      get  :join, to: "test_sessions#join_form"
+      post :verify_pin
+    end
+  end
+
   # Quiz lifecycle engines
   post "dashboard/start_test", to: "dashboards#start_test", as: :start_test_dashboard
   post "dashboard/submit_answer", to: "dashboards#submit_answer", as: :submit_answer_dashboard

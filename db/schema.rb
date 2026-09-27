@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_27_094502) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_27_095931) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -41,6 +41,28 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_27_094502) do
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 
+  create_table "test_questions", force: :cascade do |t|
+    t.bigint "test_session_id", null: false
+    t.bigint "question_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["question_id"], name: "index_test_questions_on_question_id"
+    t.index ["test_session_id"], name: "index_test_questions_on_test_session_id"
+  end
+
+  create_table "test_sessions", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "title", null: false
+    t.string "exam_type", null: false
+    t.integer "duration_minutes", default: 60
+    t.integer "pass_mark_percentage", default: 50
+    t.string "pin_code", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["pin_code"], name: "index_test_sessions_on_pin_code", unique: true
+    t.index ["user_id"], name: "index_test_sessions_on_user_id"
+  end
+
   create_table "user_responses", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "question_id", null: false
@@ -66,6 +88,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_27_094502) do
 
   add_foreign_key "questions", "users"
   add_foreign_key "sessions", "users"
+  add_foreign_key "test_questions", "questions"
+  add_foreign_key "test_questions", "test_sessions"
+  add_foreign_key "test_sessions", "users"
   add_foreign_key "user_responses", "questions"
   add_foreign_key "user_responses", "users"
 end
