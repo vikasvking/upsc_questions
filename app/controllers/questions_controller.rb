@@ -1,16 +1,17 @@
-# app/controllers/questions_controller.rb
 class QuestionsController < ApplicationController
   def index
-    @questions = Question.order(year: :desc, q_no: :asc)
+    # 🚀 FIX: Correctly formats the SQL casting block without stray characters
+    @questions = Question.order(year: :desc).order(Arel.sql("q_no::integer ASC"))
   end
 
   def upload_form
+    # Renders the admin ingestion template view
   end
 
   def import
     if params[:file].present? && params[:year].present?
       begin
-        Question.import_from_excel(params[:file].tempfile.path, params[:year])
+        Question.import_from_excel(params[:file].path, params[:year])
         redirect_to questions_path, notice: "Questions for #{params[:year]} imported successfully."
       rescue StandardError => e
         redirect_to upload_form_questions_path, alert: "Error importing file: #{e.message}"
