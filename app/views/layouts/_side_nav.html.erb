@@ -38,6 +38,12 @@
           <span>📊</span> Dashboard
         <% end %>
 
+        <!-- Student All Tests Link -->
+        <% tests_active = current_page?(all_tests_dashboard_path) ? "bg-white/10 text-white shadow-sm font-bold" : "text-brand-100 hover:bg-white/5 hover:text-white font-semibold" %>
+        <%= link_to all_tests_dashboard_path, class: "flex items-center gap-x-3.5 px-4 py-3 rounded-xl text-sm transition-all #{tests_active}" do %>
+          <span>🗒️</span> All Tests
+        <% end %>
+
         <!-- Student Question Bank Link -->
         <% qbank_active = current_page?(question_bank_path) ? "bg-white/10 text-white shadow-sm font-bold" : "text-brand-100 hover:bg-white/5 hover:text-white font-semibold" %>
         <%= link_to question_bank_path, class: "flex items-center gap-x-3.5 px-4 py-3 rounded-xl text-sm transition-all #{qbank_active}" do %>

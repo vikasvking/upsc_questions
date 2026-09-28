@@ -17,6 +17,12 @@
       </div>
     <% end %>
 
+    <% if alert %>
+      <div class="rounded-xl bg-red-50 dark:bg-red-950/40 p-4 border border-red-200 dark:border-red-900/50">
+        <p class="text-xs font-bold text-red-800 dark:text-red-400 flex items-center gap-x-2"><span>🔒</span> <%= alert %></p>
+      </div>
+    <% end %>
+
     <!-- Questions Management Table Matrix Container -->
     <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900">
       <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-left text-xs">
@@ -69,14 +75,22 @@
                   <%= question.correct_answer %>
                 </td>
                 <td class="px-4 py-3.5 text-right whitespace-nowrap">
-                  <%= link_to "Edit 📝", edit_question_path(question), class: "text-xs font-black text-brand-800 dark:text-brand-400 hover:text-brand-900 dark:hover:text-brand-300 transition-colors bg-brand-50 dark:bg-brand-950/40 px-2.5 py-1 rounded-lg border border-brand-200/40 shadow-sm" %>
+                  <% if Current.user.admin? || question.user_id == Current.user.id %>
+                    <%= link_to "Edit 📝", edit_question_path(question), class: "text-xs font-black text-brand-800 dark:text-brand-400 hover:text-brand-900 dark:hover:text-brand-300 transition-colors bg-brand-50 dark:bg-brand-950/40 px-2.5 py-1 rounded-lg border border-brand-200/40 shadow-sm" %>
+                  <% else %>
+                    <button type="button"
+                            data-creator="<%= question.user&.email_address || "another teacher" %>"
+                            onclick="window.showNotCreator(this.dataset.creator)"
+                            title="Only the creator or an admin can edit this question"
+                            class="text-xs font-black text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 cursor-not-allowed">🔒 Edit</button>
+                  <% end %>
                 </td>
               </tr>
             <% end %>
           <% else %>
             <!-- Fallback Empty State Display Matrix -->
             <tr>
-              <td colspan="6" class="text-center py-12 text-slate-400 font-medium bg-slate-50/50 dark:bg-slate-950/10">
+              <td colspan="7" class="text-center py-12 text-slate-400 font-medium bg-slate-50/50 dark:bg-slate-950/10">
                 The question repository is currently empty. Click the button on top to ingest your Excel question sets.
               </td>
             </tr>
@@ -87,3 +101,23 @@
 
   </div>
 </div>
+
+<!-- Pop-up shown when a teacher tries to edit someone else's question -->
+<dialog id="not-creator-dialog" class="rounded-2xl p-0 shadow-2xl backdrop:bg-slate-900/50 max-w-sm w-[90vw] m-auto">
+  <div class="p-6 space-y-3 bg-white dark:bg-slate-900">
+    <p class="text-2xl">🔒</p>
+    <h3 class="text-base font-black text-slate-900 dark:text-white">You are not the creator of this question</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Only <strong id="not-creator-name"></strong> or an admin can edit it.</p>
+    <form method="dialog" class="pt-2">
+      <button class="w-full rounded-xl bg-brand-800 hover:bg-brand-900 text-white text-xs font-bold py-2.5 cursor-pointer">OK</button>
+    </form>
+  </div>
+</dialog>
+
+<script>
+  window.showNotCreator = function (creator) {
+    const dialog = document.getElementById("not-creator-dialog");
+    document.getElementById("not-creator-name").textContent = creator; // textContent keeps it escaped
+    dialog.showModal();
+  };
+</script>

@@ -1,0 +1,58 @@
+<div class="py-10 bg-white dark:bg-slate-950 min-h-screen w-full transition-colors duration-200">
+  <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 space-y-6">
+
+    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
+      <div>
+        <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">All Tests</h1>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Every test from your teachers. Live tests are listed first.</p>
+      </div>
+      <%= link_to "🎟️ Have a PIN?", join_test_sessions_path, class: "shrink-0 text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-2 rounded-lg" %>
+    </div>
+
+    <!-- Filters: changing a dropdown reloads the list -->
+    <%= form_with url: all_tests_dashboard_path, method: :get, id: "test-filters", class: "flex flex-col sm:flex-row gap-3 sm:items-end bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800" do %>
+      <div class="flex-1">
+        <%= label_tag :exam, "Exam", class: "text-[10px] font-bold uppercase tracking-wider text-slate-400" %>
+        <%= select_tag :exam, options_for_select(@exam_options, @exam), include_blank: "All exams",
+              class: "mt-1 block w-full rounded-xl border-0 py-2 px-3 bg-white dark:bg-slate-950 ring-1 ring-inset ring-slate-200 dark:ring-slate-800 text-sm text-slate-900 dark:text-white" %>
+      </div>
+      <div class="flex-1">
+        <%= label_tag :subject, "Subject", class: "text-[10px] font-bold uppercase tracking-wider text-slate-400" %>
+        <%= select_tag :subject, options_for_select(@subject_options, @subject), include_blank: "All subjects",
+              class: "mt-1 block w-full rounded-xl border-0 py-2 px-3 bg-white dark:bg-slate-950 ring-1 ring-inset ring-slate-200 dark:ring-slate-800 text-sm text-slate-900 dark:text-white" %>
+      </div>
+      <div class="flex gap-2">
+        <%= submit_tag "Filter", name: nil, class: "rounded-xl bg-rose-800 hover:bg-rose-900 text-white text-xs font-bold px-4 py-2.5 cursor-pointer" %>
+        <% if @exam || @subject %>
+          <%= link_to "Clear", all_tests_dashboard_path, class: "rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold px-4 py-2.5 bg-white dark:bg-slate-950" %>
+        <% end %>
+      </div>
+    <% end %>
+
+    <p class="text-xs text-slate-500 dark:text-slate-400">
+      <%= pluralize(@tests.size, "test") %>
+      <%= "in #{@exam}" if @exam %><%= " with #{@subject} questions" if @subject %>
+    </p>
+
+    <% if @tests.any? %>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <% @tests.each do |test| %>
+          <%= render "dashboards/test_card", test: test, mine: @my_attempts_by_test[test.id], subjects: @subjects_by_test[test.id] %>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="text-center py-12 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
+        <p class="text-sm font-bold text-slate-700 dark:text-slate-300">No tests match these filters</p>
+        <%= link_to "Show all tests", all_tests_dashboard_path, class: "text-xs font-bold text-rose-800 dark:text-rose-400 mt-1 inline-block" %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const form = document.getElementById("test-filters");
+    if (!form) return;
+    form.querySelectorAll("select").forEach((s) => s.addEventListener("change", () => form.requestSubmit()));
+  })();
+</script>

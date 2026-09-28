@@ -36,23 +36,28 @@ class TestSession < ApplicationRecord
     questions.reorder("test_questions.id ASC")
   end
 
+  # Accepts a real Excel file (.xlsx) or the tab-separated .xls template from the download button
   def self.import_from_excel(file_path, creator_id)
-    raw_content = File.read(file_path, mode: "rb")
+    if File.extname(file_path).downcase == ".xlsx"
+      xlsx = Roo::Spreadsheet.open(file_path, extension: :xlsx)
+    else
+      raw_content = File.read(file_path, mode: "rb")
 
-    normalized_text =
-      if raw_content.start_with?("\xFF\xFE".b)
-        raw_content.force_encoding("UTF-16LE").encode("UTF-8", invalid: :replace, undef: :replace, replace: "")
-      elsif raw_content.dup.force_encoding("UTF-8").valid_encoding?
-        raw_content.force_encoding("UTF-8")
-      else
-        raw_content.force_encoding("ISO-8859-1").encode("UTF-8", invalid: :replace, undef: :replace, replace: "")
-      end
+      normalized_text =
+        if raw_content.start_with?("\xFF\xFE".b)
+          raw_content.force_encoding("UTF-16LE").encode("UTF-8", invalid: :replace, undef: :replace, replace: "")
+        elsif raw_content.dup.force_encoding("UTF-8").valid_encoding?
+          raw_content.force_encoding("UTF-8")
+        else
+          raw_content.force_encoding("ISO-8859-1").encode("UTF-8", invalid: :replace, undef: :replace, replace: "")
+        end
 
-    temp_cleaned_file = Tempfile.new(["sanitized_test_import", ".xls"])
-    temp_cleaned_file.write(normalized_text)
-    temp_cleaned_file.rewind
+      temp_cleaned_file = Tempfile.new(["sanitized_test_import", ".xls"])
+      temp_cleaned_file.write(normalized_text)
+      temp_cleaned_file.rewind
 
-    xlsx = Roo::Spreadsheet.open(temp_cleaned_file.path, extension: :csv, csv_options: { col_sep: "\t" })
+      xlsx = Roo::Spreadsheet.open(temp_cleaned_file.path, extension: :csv, csv_options: { col_sep: "\t" })
+    end
 
     settings_row = Hash[[xlsx.row(1).map { |h| h.to_s.strip }, xlsx.row(2)].transpose]
     access = settings_row["Access (Open/PIN)"].to_s.strip.downcase
@@ -103,9 +108,17 @@ class TestSession < ApplicationRecord
   end
 
   # Accepts "2026-10-05 10:00" style text; blank means "no limit"
+  # Accepts "2026-10-05 10:00" text or a real Excel date/time cell. Blank means "no limit".
+  # Excel cells have no time zone, so they are read as India time.
   def self.parse_time(value)
     return nil if value.blank?
-    Time.zone.parse(value.to_s)
+    if value.respond_to?(:strftime)
+      Time.zone.local(value.year, value.month, value.day,
+                      value.respond_to?(:hour) ? value.hour : 0,
+                      value.respond_to?(:min) ? value.min : 0)
+    else
+      Time.zone.parse(value.to_s)
+    end
   end
 
   private

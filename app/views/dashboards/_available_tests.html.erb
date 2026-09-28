@@ -1,16 +1,4 @@
-<%
-  # Small helper for the status line on each teacher test card
-  window_label = lambda do |test|
-    case test.window_status
-    when :upcoming then ["Opens #{l(test.starts_at, format: :short)}", "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400"]
-    when :closed   then ["Closed", "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"]
-    else
-      test.ends_at ? ["Live · closes #{l(test.ends_at, format: :short)}", "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"] :
-                     ["Live", "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"]
-    end
-  end
-%>
-<div class="space-y-6 pt-2">
+<div class="space-y-4 pt-2">
   <% if alert %>
     <div class="rounded-xl bg-red-50 dark:bg-red-950/40 p-3 border border-red-200 dark:border-red-900/40 text-xs text-red-800 dark:text-red-300 font-bold"><%= alert %></div>
   <% end %>
@@ -18,91 +6,25 @@
     <div class="rounded-xl bg-emerald-50 dark:bg-emerald-950/40 p-3 border border-emerald-200 dark:border-emerald-900/40 text-xs text-emerald-800 dark:text-emerald-300 font-bold"><%= notice %></div>
   <% end %>
 
-  <div>
-    <h3 class="text-sm font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Available Tests</h3>
-    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Practise any topic, start an open test, or enter your teacher's PIN.</p>
+  <div class="flex items-end justify-between gap-4">
+    <div>
+      <h3 class="text-sm font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Latest Tests</h3>
+      <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">The newest tests that are live or opening soon.</p>
+    </div>
+    <%= link_to "View all tests →", all_tests_dashboard_path, class: "shrink-0 text-xs font-black text-rose-800 dark:text-rose-400 hover:underline" %>
   </div>
 
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-
-    <!-- Practice topics -->
-    <div class="space-y-3 bg-slate-50/50 dark:bg-slate-900/30 p-5 rounded-2xl border border-slate-200/60 dark:border-slate-800">
-      <h4 class="text-xs font-black uppercase tracking-wider text-rose-800 dark:text-rose-400 flex items-center gap-x-2"><span>📚</span> Topic Practice</h4>
-      <div class="space-y-2">
-        <% if @subject_counts.any? %>
-          <% @subject_counts.each do |subject, total_q| %>
-            <div class="bg-white dark:bg-slate-950 p-4 rounded-xl border border-slate-200/60 dark:border-slate-800 flex items-center justify-between shadow-sm">
-              <div>
-                <span class="inline-block text-[8px] font-black bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded tracking-wide mb-1 uppercase"><%= @subject_exam_types[subject] || "GEN" %></span>
-                <h5 class="text-sm font-bold text-slate-900 dark:text-white"><%= subject %></h5>
-                <p class="text-[10px] text-slate-400 mt-0.5"><%= total_q %> questions</p>
-              </div>
-              <%= link_to "Open →", dashboard_path(topic: subject), class: "text-xs font-black text-rose-800 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-3 py-1.5 rounded-lg border border-rose-100 dark:border-rose-900/40" %>
-            </div>
-          <% end %>
-        <% else %>
-          <p class="text-xs text-slate-400 italic py-4 pl-2">No questions uploaded yet.</p>
-        <% end %>
-      </div>
+  <% if @latest_tests.any? %>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <% @latest_tests.each do |test| %>
+        <%= render "dashboards/test_card", test: test, mine: @my_attempts_by_test[test.id], subjects: @subjects_by_test[test.id] %>
+      <% end %>
     </div>
-
-    <!-- Open (free) teacher tests -->
-    <div class="space-y-3 bg-slate-50/50 dark:bg-slate-900/30 p-5 rounded-2xl border border-slate-200/60 dark:border-slate-800">
-      <h4 class="text-xs font-black uppercase tracking-wider text-rose-800 dark:text-rose-400 flex items-center gap-x-2"><span>🟢</span> Open Tests (no PIN)</h4>
-      <div class="space-y-2">
-        <% if @open_tests.any? %>
-          <% @open_tests.each do |test| %>
-            <% label, label_class = window_label.call(test) %>
-            <% mine = @my_attempts_by_test[test.id] %>
-            <div class="bg-white dark:bg-slate-950 p-4 rounded-xl border border-slate-200/60 dark:border-slate-800 flex items-center justify-between gap-3 shadow-sm">
-              <div class="min-w-0">
-                <span class="inline-block text-[8px] font-black px-1.5 py-0.5 rounded tracking-wide mb-1 uppercase <%= label_class %>"><%= label %></span>
-                <h5 class="text-sm font-bold text-slate-900 dark:text-white truncate"><%= test.title %></h5>
-                <p class="text-[10px] text-slate-400 mt-0.5"><%= test.exam_type %> · <%= test.duration_minutes %> min · by <%= test.user.email_address.split("@").first.capitalize %></p>
-              </div>
-              <% if mine&.finished? %>
-                <%= link_to "Result", test_results_dashboard_path(token: mine.token), class: "shrink-0 text-xs font-black text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg" %>
-              <% elsif test.window_status == :closed && mine.nil? %>
-                <span class="shrink-0 text-xs font-bold text-slate-400">Missed</span>
-              <% else %>
-                <%= link_to (mine ? "Resume →" : "View →"), test_intro_dashboard_path(test), class: "shrink-0 text-xs font-black text-rose-800 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-3 py-1.5 rounded-lg border border-rose-100 dark:border-rose-900/40" %>
-              <% end %>
-            </div>
-          <% end %>
-        <% else %>
-          <p class="text-xs text-slate-400 italic py-4 pl-2">No open tests right now.</p>
-        <% end %>
-      </div>
+  <% else %>
+    <div class="text-center py-8 bg-slate-50/50 dark:bg-slate-900/30 rounded-xl border border-slate-200/60 dark:border-slate-800">
+      <p class="text-xs text-slate-400">No live or upcoming tests right now.
+        <%= link_to "See past tests", all_tests_dashboard_path, class: "font-bold text-rose-800 dark:text-rose-400" %>
+        or <%= link_to "practise by subject", question_bank_path, class: "font-bold text-rose-800 dark:text-rose-400" %>.</p>
     </div>
-
-    <!-- PIN-protected teacher tests -->
-    <div class="space-y-3 bg-slate-50/50 dark:bg-slate-900/30 p-5 rounded-2xl border border-slate-200/60 dark:border-slate-800">
-      <h4 class="text-xs font-black uppercase tracking-wider text-rose-800 dark:text-rose-400 flex items-center gap-x-2"><span>🔐</span> PIN Tests</h4>
-      <div class="space-y-2">
-        <% if @pin_tests.any? %>
-          <% @pin_tests.each do |test| %>
-            <% label, label_class = window_label.call(test) %>
-            <% mine = @my_attempts_by_test[test.id] %>
-            <div class="bg-white dark:bg-slate-950 p-4 rounded-xl border border-slate-200/60 dark:border-slate-800 flex items-center justify-between gap-3 shadow-sm">
-              <div class="min-w-0">
-                <span class="inline-block text-[8px] font-black px-1.5 py-0.5 rounded tracking-wide mb-1 uppercase <%= label_class %>"><%= label %></span>
-                <h5 class="text-sm font-bold text-slate-900 dark:text-white truncate"><%= test.title %></h5>
-                <p class="text-[10px] text-slate-400 mt-0.5"><%= test.exam_type %> · <%= test.duration_minutes %> min · by <%= test.user.email_address.split("@").first.capitalize %></p>
-              </div>
-              <% if mine&.finished? %>
-                <%= link_to "Result", test_results_dashboard_path(token: mine.token), class: "shrink-0 text-xs font-black text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg" %>
-              <% elsif mine %>
-                <%= link_to "Resume →", test_intro_dashboard_path(test), class: "shrink-0 text-xs font-black text-rose-800 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-3 py-1.5 rounded-lg border border-rose-100 dark:border-rose-900/40" %>
-              <% else %>
-                <%= link_to "🔑 Enter PIN", join_test_sessions_path, class: "shrink-0 text-xs font-bold text-slate-500 hover:text-rose-800 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-1.5 rounded-lg" %>
-              <% end %>
-            </div>
-          <% end %>
-        <% else %>
-          <p class="text-xs text-slate-400 italic py-4 pl-2">No PIN tests right now.</p>
-        <% end %>
-      </div>
-    </div>
-
-  </div>
+  <% end %>
 </div>

@@ -1,20 +1,21 @@
-<!-- app/views/question_banks/show.html.erb -->
 <div class="py-10 bg-white dark:bg-slate-950 min-h-screen w-full transition-colors duration-200">
   <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-8">
 
-    <!-- Title Header Row -->
-    <div class="border-b border-slate-200 dark:border-slate-800 pb-6">
-      <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">Question Bank Repository</h1>
-      <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Select an active testing stream from the grid below to initialize adaptive mock challenges.</p>
+    <div class="border-b border-slate-200 dark:border-slate-800 pb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">Question Bank</h1>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Every topic and your progress. A topic is completed when you have answered every question in it correctly at least once.</p>
+      </div>
+      <div class="shrink-0 text-right">
+        <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Topics completed</p>
+        <p class="text-2xl font-black text-rose-800 dark:text-rose-400"><%= @progress.topics_completed_count %> / <%= @topics.size %></p>
+      </div>
     </div>
 
-    <!-- Syllabus Portfolio Block -->
-    <div class="space-y-4">
-      <h3 class="text-base font-extrabold uppercase text-slate-400 dark:text-slate-500 text-xs tracking-widest">Syllabus Subjects Portfolio</h3>
+    <% if alert %>
+      <div class="rounded-xl bg-red-50 dark:bg-red-950/40 p-3 border border-red-200 dark:border-red-900/40 text-xs text-red-800 dark:text-red-300 font-bold"><%= alert %></div>
+    <% end %>
 
-      <!-- 🚀 FIX: Change "dashboards/subject_grid" if it's stored in dashboards, or keep it explicitly mapped like this: -->
-      <%= render "subject_grid" %>
-    </div>
-
+    <%= render "subject_grid" %>
   </div>
 </div>

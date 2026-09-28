@@ -5,7 +5,7 @@ class QuestionsController < ApplicationController
   before_action :ensure_modification_permission, only: [:edit, :update]
 
   def index
-    @questions = Question.in_order
+    @questions = Question.includes(:user).in_order
   end
 
   def upload_form
@@ -63,7 +63,8 @@ class QuestionsController < ApplicationController
 
   def ensure_modification_permission
     unless Current.user.admin? || @question.user_id == Current.user.id
-      redirect_to questions_path, alert: "Access Denied: You can only edit questions that you have personally authored."
+      creator = @question.user&.email_address || "another teacher"
+      redirect_to questions_path, alert: "You are not the creator of this question. Only #{creator} or an admin can edit it."
     end
   end
 

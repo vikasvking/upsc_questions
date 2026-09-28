@@ -96,8 +96,8 @@ class TestSessionsController < ApplicationController
 
   def import
     file = params[:file]
-    if file.blank? || !file.original_filename.downcase.end_with?(".xls")
-      redirect_to upload_form_test_sessions_path, alert: "Please upload the .xls template downloaded from this page."
+    if file.blank? || !file.original_filename.downcase.end_with?(".xls", ".xlsx")
+      redirect_to upload_form_test_sessions_path, alert: "Please upload an Excel file (.xlsx) or the .xls template from this page."
       return
     end
 

@@ -4,6 +4,7 @@ Rails.application.routes.draw do
 
   get "dashboard", to: "dashboards#show", as: :dashboard
   get "question_bank", to: "questionbanks#show", as: :question_bank
+  get "question_bank/topic", to: "questionbanks#topic", as: :question_bank_topic
 
   # Teacher tests (now includes :update, which was missing and broke "Edit Paper")
   resources :test_sessions, only: [:index, :new, :create, :show, :edit, :update] do
@@ -17,6 +18,7 @@ Rails.application.routes.draw do
   end
 
   # Quiz lifecycle
+  get  "dashboard/all_tests",      to: "dashboards#all_tests",     as: :all_tests_dashboard
   get  "dashboard/tests/:id",      to: "dashboards#test_intro",    as: :test_intro_dashboard
   post "dashboard/start_test",     to: "dashboards#start_test",    as: :start_test_dashboard
   get  "dashboard/arena/:token",   to: "dashboards#arena",         as: :arena_dashboard

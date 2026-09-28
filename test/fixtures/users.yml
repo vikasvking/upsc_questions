@@ -15,3 +15,7 @@ admin:
   email_address: admin@example.com
   password_digest: <%= password_digest %>
   role: admin
+teacher_two:
+  email_address: teacher2@example.com
+  password_digest: <%= password_digest %>
+  role: teacher

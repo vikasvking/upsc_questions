@@ -1,0 +1,93 @@
+<% labels = { "all" => "All", "solved" => "Solved", "wrong" => "Not yet correct", "not_attempted" => "Not attempted" } %>
+<div class="py-10 bg-white dark:bg-slate-950 min-h-screen w-full transition-colors duration-200">
+  <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 space-y-6">
+
+    <div class="border-b border-slate-200 dark:border-slate-800 pb-6 space-y-4">
+      <%= link_to "← Question Bank", question_bank_path, class: "text-[10px] font-bold uppercase tracking-wider text-rose-800 dark:text-rose-400 hover:underline" %>
+      <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+        <div>
+          <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl"><%= topic_icon(@topic) %> <%= @topic %></h1>
+          <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            <%= @stat.solved %> of <%= @stat.total %> solved · <%= pluralize(@stat.attempts, "attempt") %>
+            <% if @stat.accuracy_pct %> · <%= @stat.accuracy_pct %>% accuracy<% end %>
+            <% if @stat.completed? %> · <span class="font-bold text-emerald-700 dark:text-emerald-400">✓ Completed</span><% end %>
+          </p>
+        </div>
+        <%= link_to "Practice this topic →", dashboard_path(topic: @topic), class: "shrink-0 text-center text-xs font-black text-white bg-rose-800 hover:bg-rose-900 px-4 py-2.5 rounded-xl shadow-md" %>
+      </div>
+      <div class="h-2 w-full rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+        <div class="h-full rounded-full <%= @stat.completed? ? "bg-emerald-600" : "bg-rose-800 dark:bg-rose-500" %>" style="width: <%= @stat.progress_pct %>%"></div>
+      </div>
+    </div>
+
+    <!-- Filter tabs -->
+    <div class="flex flex-wrap gap-2">
+      <% labels.each do |key, label| %>
+        <%= link_to question_bank_topic_path(name: @topic, filter: key),
+              class: "text-xs font-bold px-3 py-1.5 rounded-full border #{@filter == key ? "bg-rose-800 text-white border-rose-800" : "bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800"}" do %>
+          <%= label %> (<%= @filter_counts[key] %>)
+        <% end %>
+      <% end %>
+    </div>
+
+    <% if @questions.empty? %>
+      <p class="text-sm text-slate-500 py-8 text-center">No questions in this list.</p>
+    <% end %>
+
+    <div class="space-y-4">
+      <% @questions.each do |q| %>
+        <% s = @question_stats[q.id] %>
+        <% last = s.last_response %>
+        <div class="p-5 rounded-2xl border bg-slate-50/50 dark:bg-slate-900/30 <%= s.solved? ? "border-emerald-200 dark:border-emerald-900/50" : "border-slate-200 dark:border-slate-800" %>">
+          <div class="flex flex-wrap items-center gap-2 mb-3">
+            <span class="text-xs font-black bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 px-2.5 py-1 rounded-lg text-slate-700 dark:text-slate-300">#<%= @numbers[q.id] %></span>
+            <span class="text-[10px] font-mono text-slate-400"><%= [q.exam_type, q.year, "Q.No #{q.q_no}"].compact_blank.join(" · ") %></span>
+            <span class="ml-auto text-[10px] font-bold px-2.5 py-0.5 rounded-full
+              <%= if s.solved? then "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                  elsif s.attempted? then "bg-red-50 text-red-700 border border-red-200"
+                  else "bg-slate-100 text-slate-500 border border-slate-200" end %>">
+              <% if s.attempted? %>
+                Attempted <%= pluralize(s.attempts, "time") %> · correct <%= s.correct_attempts %>
+              <% else %>
+                Not attempted
+              <% end %>
+            </span>
+          </div>
+
+          <p class="text-sm font-semibold text-slate-900 dark:text-white leading-relaxed"><%= q.content %></p>
+
+          <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+            <% [["A", q.option_a], ["B", q.option_b], ["C", q.option_c], ["D", q.option_d]].each do |letter, text| %>
+              <% next if text.blank? %>
+              <%
+                box = "bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300"
+                if s.attempted?
+                  if letter == q.correct_answer
+                    box = "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-300 font-bold"
+                  elsif last && letter == last.chosen_option
+                    box = "bg-red-50 dark:bg-red-950/30 border-red-300 dark:border-red-800 text-red-800 dark:text-red-300"
+                  end
+                end
+              %>
+              <div class="p-2.5 rounded-lg border <%= box %>"><strong><%= letter %>.</strong> <%= text %></div>
+            <% end %>
+          </div>
+
+          <% if s.attempted? %>
+            <p class="mt-3 text-xs text-slate-500 dark:text-slate-400">
+              Your last answer: <strong><%= last&.chosen_option %></strong> · Correct answer: <strong class="text-emerald-700 dark:text-emerald-400"><%= q.correct_answer %></strong>
+            </p>
+            <% if q.explanation.present? %>
+              <div class="mt-3 p-3 rounded-xl bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
+                <p class="text-[10px] font-black uppercase text-rose-800 dark:text-rose-400 tracking-wider">Explanation</p>
+                <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed mt-1"><%= q.explanation %></p>
+              </div>
+            <% end %>
+          <% else %>
+            <p class="mt-3 text-[11px] text-slate-400">Answer and explanation appear after you attempt this question in a practice or test.</p>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

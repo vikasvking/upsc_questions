@@ -16,13 +16,34 @@ class DashboardsController < ApplicationController
 
     set_global_dashboard_metrics
     @streak_days = generate_streak_calendar_data
-    @subject_counts = Question.where.not(topic: nil).group(:topic).order(:topic).count
-    @subject_exam_types = Question.where.not(topic: nil).group(:topic).minimum(:exam_type)
+    @progress    = StudentProgress.new(Current.user)
+    @comparison  = Leaderboard.comparison_for(Current.user)
 
-    tests = TestSession.includes(:user).newest_first.to_a
-    @open_tests = tests.select(&:open_access?)
-    @pin_tests  = tests.select(&:pin_required?)
-    @my_attempts_by_test = Current.user.test_attempts.where.not(test_session_id: nil).index_by(&:test_session_id)
+    # Only the 3 newest tests that are live or opening soon; the rest are on "All Tests"
+    @latest_tests = TestSession.includes(:user)
+                               .where("test_sessions.ends_at IS NULL OR test_sessions.ends_at > ?", Time.current)
+                               .newest_first.limit(3).to_a
+    load_card_data(@latest_tests)
+  end
+
+  # GET /dashboard/all_tests?exam=UPSC&subject=Physics
+  def all_tests
+    @exam    = params[:exam].presence
+    @subject = params[:subject].presence
+
+    @exam_options    = TestSession.distinct.order(:exam_type).pluck(:exam_type)
+    @subject_options = Question.joins(:test_questions).where.not(topic: [nil, ""]).distinct.order(:topic).pluck(:topic)
+
+    scope = TestSession.includes(:user)
+    scope = scope.where(exam_type: @exam) if @exam
+    if @subject
+      scope = scope.where(id: TestQuestion.joins(:question).where(questions: { topic: @subject }).select(:test_session_id))
+    end
+
+    # Live first, then opening soon, then closed; newest first inside each group
+    rank = { live: 0, upcoming: 1, closed: 2 }
+    @tests = scope.newest_first.to_a.sort_by.with_index { |t, i| [rank[t.window_status], i] }
+    load_card_data(@tests)
   end
 
   # GET /dashboard/tests/:id -> rules page for a teacher test
@@ -107,6 +128,18 @@ class DashboardsController < ApplicationController
   end
 
   private
+
+  # Attempts and subject names for a list of test cards (2 queries in total)
+  def load_card_data(tests)
+    ids = tests.map(&:id)
+    @my_attempts_by_test = Current.user.test_attempts.where(test_session_id: ids).index_by(&:test_session_id)
+    @subjects_by_test = TestQuestion.joins(:question)
+                                    .where(test_session_id: ids)
+                                    .distinct
+                                    .order("questions.topic")
+                                    .pluck(:test_session_id, "questions.topic")
+                                    .each_with_object(Hash.new { |h, k| h[k] = [] }) { |(id, topic), h| h[id] << topic if topic.present? }
+  end
 
   # ---------- starting ----------
 
