@@ -39,6 +39,26 @@
   // 2. Instantly parse on initial asset hit to prevent light flash flickering layouts
   applyTheme();
 
+  // Small-screen sidebar: open with the menu button, close with ✕, the dark backdrop, Esc or any link.
+  // Listeners sit on document, so they keep working across Turbo page changes.
+  function setSidebar(open) {
+    const sidebar = document.getElementById("app-sidebar");
+    const backdrop = document.getElementById("sidebar-backdrop");
+    const button = document.getElementById("sidebar-open");
+    if (!sidebar) return;
+    sidebar.classList.toggle("-translate-x-full", !open);
+    backdrop?.classList.toggle("hidden", !open);
+    button?.setAttribute("aria-expanded", open ? "true" : "false");
+    document.body.classList.toggle("overflow-hidden", open);
+  }
+  document.addEventListener("click", (e) => {
+    if (e.target.closest("#sidebar-open")) setSidebar(true);
+    else if (e.target.closest("#sidebar-close") || e.target.id === "sidebar-backdrop") setSidebar(false);
+    else if (e.target.closest("#app-sidebar a")) setSidebar(false);
+  });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") setSidebar(false); });
+  document.addEventListener("turbo:before-cache", () => setSidebar(false));
+
   // 3. Bind to Turbo page load changes (Forces it to re-evaluate on every single internal click)
   document.addEventListener("turbo:load", () => {
     applyTheme();
@@ -69,11 +89,21 @@
   <body data-role="<%= authenticated? ? Current.user.role : "guest" %>" class="bg-white dark:bg-slate-950 transition-colors duration-200 antialiased">
 
    <% if authenticated? %>
-     <!-- Render left-pinned vertical navigation sidebar panel -->
+     <!-- Small screens: top bar with a menu button (the sidebar slides in over the page) -->
+     <div class="lg:hidden sticky top-0 z-30 flex items-center gap-3 h-14 px-4 bg-brand-900 dark:bg-brand-950 text-white shadow">
+       <button type="button" id="sidebar-open" aria-label="Open menu" aria-controls="app-sidebar" aria-expanded="false" class="p-2 -ml-2 rounded-lg hover:bg-white/10">
+         <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+       </button>
+       <span class="text-sm font-black tracking-wider uppercase">UPSCOfficer</span>
+       <span class="ml-auto text-[10px] font-black uppercase tracking-wider bg-white text-brand-900 rounded-full px-2 py-0.5"><%= Current.user.role.humanize %></span>
+     </div>
+     <div id="sidebar-backdrop" class="hidden lg:hidden fixed inset-0 z-30 bg-slate-900/50"></div>
+
+     <!-- Left sidebar: always visible on large screens, slide-in on small screens -->
      <%= render "layouts/side_nav" %>
 
-     <!-- Push primary view content column rightwards by 64 units (w-64 sidebar width offset) -->
-     <main class="pl-64 min-h-screen">
+     <!-- Content column: pushed right by the sidebar width on large screens only -->
+     <main class="lg:pl-64 min-h-screen">
        <div class="px-6 py-4">
          <%= yield %>
        </div>

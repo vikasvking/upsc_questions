@@ -18,7 +18,7 @@
 #   active_days      days with at least one answer in the last 7 days
 class Leaderboard
   TOP_N = 10
-  CACHE_FOR = 5.minutes
+  STALE_AFTER = 15.minutes # the scheduler refreshes every 10 minutes; older than this is recomputed on the spot
 
   POINTS_BY_TRY = { 1 => 10, 2 => 6 }.freeze
   POINTS_LATER_TRY = 3
@@ -50,11 +50,26 @@ class Leaderboard
     base + bonus
   end
 
-  # All students with at least one answer, best first. Cached briefly because it scans every answer.
+  # All students with at least one answer, best first.
+  # Read from the latest snapshot saved by RefreshLeaderboardJob; if the scheduler isn't
+  # running (or the snapshot is old), compute now and save a fresh snapshot.
   def self.rows
-    Rails.cache.fetch(["leaderboard-v2", UserResponse.maximum(:updated_at), Question.count], expires_in: CACHE_FOR) do
-      build_rows
+    snapshot = LeaderboardSnapshot.latest
+    return snapshot.to_rows if snapshot && snapshot.computed_at > STALE_AFTER.ago
+    refresh!
+  end
+
+  def self.refresh!
+    fresh = build_rows
+    LeaderboardSnapshot.transaction do
+      LeaderboardSnapshot.delete_all
+      LeaderboardSnapshot.create!(rows: fresh.map(&:to_h), computed_at: Time.current)
     end
+    fresh
+  end
+
+  def self.computed_at
+    LeaderboardSnapshot.latest&.computed_at
   end
 
   def self.build_rows

@@ -1,6 +1,9 @@
-<aside class="fixed inset-y-0 left-0 z-20 w-64 bg-brand-900 dark:bg-brand-950 text-white flex flex-col justify-between border-r border-brand-950 dark:border-slate-800 transition-colors duration-200">
+<aside id="app-sidebar" aria-label="Main menu" class="fixed inset-y-0 left-0 z-40 w-64 overflow-y-auto -translate-x-full lg:translate-x-0 transition-transform duration-200 ease-out bg-brand-900 dark:bg-brand-950 text-white flex flex-col justify-between border-r border-brand-950 dark:border-slate-800 transition-colors duration-200">
 
   <div class="p-6 space-y-8">
+    <button type="button" id="sidebar-close" aria-label="Close menu" class="lg:hidden absolute top-4 right-4 p-2 rounded-lg text-brand-100 hover:bg-white/10">
+      <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+    </button>
 
     <div class="space-y-4">
       <%# Links dynamically to the proper control hub root based on active roles %>
@@ -68,6 +71,12 @@
         <% upload_active = current_page?(upload_form_questions_path) ? "bg-white/10 text-white shadow-sm font-bold" : "text-brand-100 hover:bg-white/5 hover:text-white font-semibold" %>
         <%= link_to upload_form_questions_path, class: "flex items-center gap-x-3.5 px-4 py-3 rounded-xl text-sm transition-all #{upload_active}" do %>
           <span>📥</span> Ingest Questions
+        <% end %>
+
+        <!-- Teacher Add One Question Link -->
+        <% add_q_active = current_page?(new_question_path) ? "bg-white/10 text-white shadow-sm font-bold" : "text-brand-100 hover:bg-white/5 hover:text-white font-semibold" %>
+        <%= link_to new_question_path, class: "flex items-center gap-x-3.5 px-4 py-3 rounded-xl text-sm transition-all #{add_q_active}" do %>
+          <span>➕</span> Add Question
         <% end %>
 
         <!-- Teacher Manage Question Bank Table Link -->

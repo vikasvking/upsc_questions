@@ -28,7 +28,7 @@ Rails.application.routes.draw do
   post "dashboard/finish_test",    to: "dashboards#finish_test",   as: :finish_test_dashboard
   get  "dashboard/results",        to: "dashboards#results",       as: :test_results_dashboard
 
-  resources :questions, only: [:index, :edit, :update] do
+  resources :questions, only: [:index, :new, :create, :edit, :update] do
     collection do
       get  :upload_form
       post :import

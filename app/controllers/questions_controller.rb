@@ -44,6 +44,32 @@ class QuestionsController < ApplicationController
     send_data xls_data, filename: "upsc_officer_question_template.xls", type: "application/vnd.ms-excel; charset=utf-8"
   end
 
+  # Add one question by hand (goes straight into the question bank)
+  def new
+    @question = Question.new(
+      exam_type: params[:exam_type].presence || "UPSC",
+      year: params[:year].presence,
+      topic: params[:topic].presence,
+      correct_answer: "A"
+    )
+    @question.q_no = next_question_number(@question)
+  end
+
+  def create
+    @question = Question.new(question_params.merge(user: Current.user))
+
+    if @question.save
+      if params[:add_another]
+        redirect_to new_question_path(exam_type: @question.exam_type, year: @question.year, topic: @question.topic),
+                    notice: "Saved Q.No #{@question.q_no} in #{@question.topic}. Add the next one."
+      else
+        redirect_to questions_path, notice: "Question added to the #{@question.topic} question bank."
+      end
+    else
+      render :new, status: :unprocessable_entity
+    end
+  end
+
   def edit
   end
 
@@ -56,6 +82,12 @@ class QuestionsController < ApplicationController
   end
 
   private
+
+  # One more than the highest numeric Q.No for the same exam and year (1 if none)
+  def next_question_number(question)
+    numbers = Question.where(exam_type: question.exam_type, year: question.year).pluck(:q_no)
+    (numbers.map { |n| n.to_s[/\d+/].to_i }.max || 0) + 1
+  end
 
   def set_question
     @question = Question.find(params[:id])
