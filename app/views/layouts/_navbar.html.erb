@@ -1,10 +1,10 @@
 <header class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-850 fixed inset-x-0 top-0 z-50 transition-colors duration-200">
-  <nav class="mx-auto flex max-w-7xl items-center justify-between p-4 lg:px-8" aria-label="Global">
+  <nav class="mx-auto flex max-w-6xl items-center justify-between p-4 lg:px-8" aria-label="Global">
     <!-- Branding -->
     <div class="flex lg:flex-1">
       <%= link_to root_path, class: "-m-1.5 p-1.5 flex items-center gap-x-2" do %>
         <span class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-          UPSC<span class="text-rose-800 dark:text-rose-400">Officer</span>
+          UPSC<span class="text-brand-800 dark:text-brand-400">Officer</span>
         </span>
       <% end %>
     </div>
@@ -18,11 +18,11 @@
   </button>
 
   <% if authenticated? %>
-    <%= link_to "Dashboard", dashboard_path, class: "text-sm font-semibold text-slate-900 dark:text-slate-300 hover:text-rose-800" %>
-    <%= link_to "Sign Out", session_path, data: { turbo_method: :delete }, class: "text-sm font-semibold leading-6 text-slate-900 dark:text-slate-300 hover:text-rose-800" %>
+    <%= link_to "Dashboard", dashboard_path, class: "text-sm font-semibold text-slate-900 dark:text-slate-300 hover:text-brand-800" %>
+    <%= link_to "Sign Out", session_path, data: { turbo_method: :delete }, class: "text-sm font-semibold leading-6 text-slate-900 dark:text-slate-300 hover:text-brand-800" %>
   <% else %>
-    <%= link_to "Log In", new_session_path, class: "text-sm font-semibold leading-6 text-slate-900 dark:text-slate-300 hover:text-rose-800" %>
-    <%= link_to "Sign Up", new_registration_path, class: "rounded-md bg-rose-800 hover:bg-rose-900 dark:bg-rose-700 dark:hover:bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition-colors" %>
+    <%= link_to "Log In", new_session_path, class: "text-sm font-semibold leading-6 text-slate-900 dark:text-slate-300 hover:text-brand-800" %>
+    <%= link_to "Sign Up", new_registration_path, class: "rounded-md bg-brand-800 hover:bg-brand-900 dark:bg-brand-700 dark:hover:bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors" %>
   <% end %>
 </div>
   </nav>

@@ -26,7 +26,7 @@ class QuestionBankTest < ActionDispatch::IntegrationTest
     sign_in_as users(:one)
     get dashboard_path
     assert_response :success
-    assert_match "Topper Comparison", response.body
+    assert_match "You vs top", response.body
     assert_no_match "AIR-10", response.body
   end
 

@@ -1,7 +1,7 @@
-<div class="py-10 bg-white dark:bg-slate-950 min-h-screen w-full transition-colors duration-200">
+<div class="py-10 min-h-screen w-full transition-colors duration-200">
   <div class="mx-auto max-w-2xl px-4 space-y-8">
     <div class="border-b border-slate-200 dark:border-slate-800 pb-6">
-      <h1 class="text-2xl font-black text-slate-900 dark:text-white">Bulk Test Spreadsheet Ingestion</h1>
+      <h1 class="text-2xl font-semibold text-slate-900 dark:text-white">Bulk Test Spreadsheet Ingestion</h1>
       <p class="text-sm text-slate-500 mt-1">Generate entire exam sessions and populate their question lists at once from an Excel file.</p>
     </div>
 
@@ -11,7 +11,7 @@
       </div>
     <% end %>
 
-    <div class="text-xs text-slate-500 dark:text-slate-400 space-y-1 bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+    <div class="text-xs text-slate-500 dark:text-slate-400 space-y-1 bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
       <p><strong>Access (Open/PIN):</strong> write <code>Open</code> for a free test anyone can start, or <code>PIN</code> to require a code. Blank means PIN.</p>
       <p><strong>Starts At / Ends At:</strong> optional, India time, like <code>2026-10-05 10:00</code>. Leave blank for no time window.</p>
     </div>
@@ -21,10 +21,10 @@
         <span class="text-xl">📋</span>
         <p class="text-xs font-bold text-slate-900 dark:text-white">Download our custom layout format first before uploading.</p>
       </div>
-      <%= link_to "Download Template File 📥", download_template_test_sessions_path, class: "text-xs font-black text-white bg-brand-800 hover:bg-brand-900 px-3.5 py-2 rounded-xl text-center" %>
+      <%= link_to "Download Template File 📥", download_template_test_sessions_path, class: "text-xs font-semibold text-white bg-brand-800 hover:bg-brand-900 px-3.5 py-2 rounded-xl text-center" %>
     </div>
 
-    <div class="bg-slate-50 dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
+    <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
       <%= form_with url: import_test_sessions_path, multipart: true, local: true, class: "space-y-6" do |form| %>
         <div class="mt-2 flex justify-center rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 px-6 py-10 bg-white dark:bg-slate-950/30 relative group">
           <div class="text-center space-y-2">

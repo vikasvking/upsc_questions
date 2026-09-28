@@ -1,44 +1,44 @@
-<div class="py-10 bg-white dark:bg-slate-950 min-h-screen w-full transition-colors duration-200">
+<div class="py-10 min-h-screen w-full transition-colors duration-200">
   <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 space-y-8">
 
     <!-- Header Block Component -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 dark:border-slate-800 pb-6 gap-4">
       <div>
-        <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">Aspirant Profile</h1>
+        <h1 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-3xl">Aspirant Profile</h1>
         <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage your identity, core details, and security metrics.</p>
       </div>
-      <%= link_to "Edit Profile Data 📝", edit_profile_path, class: "rounded-xl bg-brand-800 hover:bg-brand-900 dark:bg-brand-700 dark:hover:bg-brand-600 text-white font-bold text-xs px-4 py-2.5 shadow-md text-center transition-all transform hover:-translate-y-0.5 cursor-pointer" %>
+      <%= link_to "Edit Profile Data 📝", edit_profile_path, class: "rounded-xl bg-brand-800 hover:bg-brand-900 dark:bg-brand-700 dark:hover:bg-brand-600 text-white font-bold text-xs px-4 py-2.5 shadow-sm text-center transition-all cursor-pointer" %>
     </div>
 
     <!-- Main Biodata Grid Layout Card -->
-    <div class="bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-sm space-y-6">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-sm space-y-6">
       <div class="flex items-center gap-x-4 border-b border-slate-200/60 dark:border-slate-800 pb-6">
         <div class="h-16 w-16 rounded-full bg-brand-800/10 dark:bg-brand-500/10 border border-brand-800/30 flex items-center justify-center text-2xl">👤</div>
         <div>
-          <h3 class="text-lg font-extrabold text-slate-900 dark:text-white"><%= @user.email_address %></h3>
-          <p class="text-xs text-brand-800 dark:text-brand-400 font-bold uppercase mt-0.5 tracking-wider">Verified Account Tier</p>
+          <h3 class="text-lg font-semibold text-slate-900 dark:text-white"><%= @user.email_address %></h3>
+          <p class="text-xs text-brand-800 dark:text-brand-400 font-bold mt-0.5">Verified Account Tier</p>
         </div>
       </div>
 
       <!-- Information Fields Matrix Layout -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm">
         <div class="space-y-1">
-          <span class="text-xs font-bold text-slate-400 uppercase tracking-wider text-[10px]">Registered Email</span>
+          <span class="text-xs font-bold text-slate-400 text-xs">Registered Email</span>
           <p class="font-medium text-slate-900 dark:text-white bg-white dark:bg-slate-950 p-3 rounded-xl border border-slate-200/60 dark:border-slate-850"><%= @user.email_address %></p>
         </div>
 
         <div class="space-y-1">
-          <span class="text-xs font-bold text-slate-400 uppercase tracking-wider text-[10px]">Primary Exam Target</span>
+          <span class="text-xs font-bold text-slate-400 text-xs">Primary Exam Target</span>
           <p class="font-medium text-slate-900 dark:text-white bg-white dark:bg-slate-950 p-3 rounded-xl border border-slate-200/60 dark:border-slate-850">UPSC Civil Services (Prelims)</p>
         </div>
 
         <div class="space-y-1">
-          <span class="text-xs font-bold text-slate-400 uppercase tracking-wider text-[10px]">Account Created On</span>
+          <span class="text-xs font-bold text-slate-400 text-xs">Account Created On</span>
           <p class="font-medium text-slate-900 dark:text-white bg-white dark:bg-slate-950 p-3 rounded-xl border border-slate-200/60 dark:border-slate-850"><%= @user.created_at.strftime("%B %d, %Y") %></p>
         </div>
 
         <div class="space-y-1">
-          <span class="text-xs font-bold text-slate-400 uppercase tracking-wider text-[10px]">Security Lock Mode</span>
+          <span class="text-xs font-bold text-slate-400 text-xs">Security Lock Mode</span>
           <p class="font-medium text-emerald-600 bg-white dark:bg-slate-950 p-3 rounded-xl border border-slate-200/60 dark:border-slate-850 flex items-center gap-x-2">
             <span class="h-2 w-2 rounded-full bg-emerald-500"></span> Native Rails 8 Enforced
           </p>

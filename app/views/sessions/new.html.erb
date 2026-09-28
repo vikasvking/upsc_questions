@@ -1,10 +1,10 @@
 <div class="flex min-h-[80vh] flex-col justify-center px-6 py-12 lg:px-8 bg-white dark:bg-slate-950 transition-colors duration-200 w-full">
   <div class="sm:mx-auto sm:w-full sm:max-w-md">
     <div class="text-center">
-      <span class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-        UPSC<span class="text-rose-800 dark:text-rose-400">Officer</span>
+      <span class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
+        UPSC<span class="text-brand-800 dark:text-brand-400">Officer</span>
       </span>
-      <h2 class="mt-6 text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Welcome back</h2>
+      <h2 class="mt-6 text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">Welcome back</h2>
       <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
         Sign in to maintain your consistency streak and daily targets.
       </p>
@@ -12,7 +12,7 @@
   </div>
 
   <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-    <div class="bg-slate-50 dark:bg-slate-900 px-6 py-8 shadow-xl rounded-2xl border border-slate-200/60 dark:border-slate-800/80">
+    <div class="bg-white dark:bg-slate-900 px-6 py-8 shadow-sm rounded-2xl border border-slate-200/60 dark:border-slate-800/80">
 
       <% if alert %>
         <div class="mb-4 rounded-md bg-red-50 dark:bg-red-950/40 p-3 border border-red-200 dark:border-red-900/50">
@@ -30,7 +30,7 @@
         <div>
           <%= form.label :email_address, "Email Address", class: "block text-sm font-semibold leading-6 text-slate-900 dark:text-slate-200" %>
           <div class="mt-2">
-            <%= form.email_field :email_address, value: params[:email_address], required: true, autofocus: true, autocomplete: "email", class: "block w-full rounded-md border-0 py-2.5 px-3 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-rose-800 dark:focus:ring-rose-500 bg-white dark:bg-slate-950 text-slate-900 dark:text-white sm:text-sm sm:leading-6" %>
+            <%= form.email_field :email_address, value: params[:email_address], required: true, autofocus: true, autocomplete: "email", class: "block w-full rounded-md border-0 py-2.5 px-3 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-brand-800 dark:focus:ring-brand-500 bg-white dark:bg-slate-950 text-slate-900 dark:text-white sm:text-sm sm:leading-6" %>
           </div>
         </div>
 
@@ -38,22 +38,22 @@
           <div class="flex items-center justify-between">
             <%= form.label :password, "Password", class: "block text-sm font-semibold leading-6 text-slate-900 dark:text-slate-200" %>
             <div class="text-sm">
-              <%= link_to "Forgot password?", new_password_path, class: "font-semibold text-rose-800 dark:text-rose-400 hover:text-rose-900" %>
+              <%= link_to "Forgot password?", new_password_path, class: "font-semibold text-brand-800 dark:text-brand-400 hover:text-brand-900" %>
             </div>
           </div>
           <div class="mt-2">
-            <%= form.password_field :password, required: true, autocomplete: "current-password", class: "block w-full rounded-md border-0 py-2.5 px-3 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-rose-800 dark:focus:ring-rose-500 bg-white dark:bg-slate-950 text-slate-900 dark:text-white sm:text-sm sm:leading-6" %>
+            <%= form.password_field :password, required: true, autocomplete: "current-password", class: "block w-full rounded-md border-0 py-2.5 px-3 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-brand-800 dark:focus:ring-brand-500 bg-white dark:bg-slate-950 text-slate-900 dark:text-white sm:text-sm sm:leading-6" %>
           </div>
         </div>
 
         <div>
-          <%= form.submit "Sign In to Dashboard", class: "flex w-full justify-center rounded-md bg-rose-800 dark:bg-rose-700 px-3 py-3 text-sm font-bold text-white shadow-md hover:bg-rose-900 dark:hover:bg-rose-600 transition-colors cursor-pointer transform hover:-translate-y-0.5" %>
+          <%= form.submit "Sign In to Dashboard", class: "flex w-full justify-center rounded-md bg-brand-800 dark:bg-brand-700 px-3 py-3 text-sm font-bold text-white shadow-sm hover:bg-brand-900 dark:hover:bg-brand-600 transition-colors cursor-pointer" %>
         </div>
       <% end %>
 
       <div class="mt-6 text-center text-sm">
         <span class="text-slate-500 dark:text-slate-400">New to the platform?</span>
-        <%= link_to "Sign up free", new_registration_path, class: "font-semibold leading-6 text-rose-800 dark:text-rose-400 hover:text-rose-900" %>
+        <%= link_to "Sign up free", new_registration_path, class: "font-semibold leading-6 text-brand-800 dark:text-brand-400 hover:text-brand-900" %>
       </div>
     </div>
   </div>

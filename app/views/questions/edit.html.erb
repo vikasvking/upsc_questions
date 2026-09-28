@@ -1,12 +1,12 @@
-<div class="py-10 bg-white dark:bg-slate-950 min-h-screen w-full transition-colors duration-200">
+<div class="py-10 min-h-screen w-full transition-colors duration-200">
   <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 space-y-8">
 
     <div>
-      <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">Modify Question Asset</h1>
+      <h1 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-3xl">Modify Question Asset</h1>
       <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Make changes below to update this question's options, correct answer, or explanation rationale.</p>
     </div>
 
-    <div class="bg-slate-50 dark:bg-slate-900 px-6 py-8 shadow-xl rounded-2xl border border-slate-200 dark:border-slate-800">
+    <div class="bg-white dark:bg-slate-900 px-6 py-8 shadow-sm rounded-2xl border border-slate-200 dark:border-slate-800">
 
       <% if @question.errors.any? %>
         <div class="mb-6 rounded-xl bg-red-50 dark:bg-red-950/40 p-4 border border-red-200 dark:border-red-900/50">
@@ -24,7 +24,7 @@
         <!-- Form Button Controls Row -->
         <div class="flex gap-4 pt-4 border-t border-slate-200 dark:border-slate-800">
           <%= link_to "Discard Changes", questions_path, class: "flex-1 text-center font-bold text-xs border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-950 px-4 py-3 rounded-xl hover:bg-slate-100 transition-colors shadow-sm" %>
-          <%= form.submit "Apply Repository Changes", class: "flex-1 justify-center rounded-xl bg-brand-800 dark:bg-brand-700 px-4 py-3 text-xs font-bold text-white shadow-md hover:bg-brand-900 dark:hover:bg-brand-600 transition-colors cursor-pointer transform hover:-translate-y-0.5" %>
+          <%= form.submit "Apply Repository Changes", class: "flex-1 justify-center rounded-xl bg-brand-800 dark:bg-brand-700 px-4 py-3 text-xs font-bold text-white shadow-sm hover:bg-brand-900 dark:hover:bg-brand-600 transition-colors cursor-pointer" %>
         </div>
 
       <% end %>

@@ -1,15 +1,15 @@
-<div class="py-10 bg-white dark:bg-slate-950 min-h-screen w-full transition-colors duration-200">
-  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-8">
+<div class="py-10 min-h-screen w-full transition-colors duration-200">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-8">
 
     <!-- Workspace Header Row Controls -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 dark:border-slate-800 pb-6 gap-4">
       <div>
-        <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">Question Management Hub</h1>
+        <h1 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-3xl">Question Management Hub</h1>
         <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Total Loaded Repository: <strong class="text-brand-800 dark:text-brand-400"><%= @questions.count %></strong> Questions</p>
       </div>
       <div class="flex flex-wrap gap-2">
       <%= link_to "Add Question ➕", new_question_path, class: "rounded-xl border border-brand-800 text-brand-800 dark:text-brand-300 bg-white dark:bg-slate-950 font-bold text-xs px-4 py-2.5 shadow-sm text-center" %>
-      <%= link_to "Import More Questions 📥", upload_form_questions_path, class: "rounded-xl bg-brand-800 hover:bg-brand-900 dark:bg-brand-700 dark:hover:bg-brand-600 text-white font-bold text-xs px-4 py-2.5 shadow-md text-center transition-all transform hover:-translate-y-0.5 cursor-pointer" %>
+      <%= link_to "Import More Questions 📥", upload_form_questions_path, class: "rounded-xl bg-brand-800 hover:bg-brand-900 dark:bg-brand-700 dark:hover:bg-brand-600 text-white font-bold text-xs px-4 py-2.5 shadow-sm text-center transition-all cursor-pointer" %>
       </div>
     </div>
 
@@ -45,7 +45,7 @@
               <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-950/30 transition-colors">
                 <!-- Exam Type Portfolio Capsule -->
                 <td class="px-4 py-3.5 font-bold">
-                  <span class="inline-block px-2 py-0.5 rounded text-[10px] font-black tracking-wide bg-brand-50 dark:bg-brand-950/40 text-brand-800 dark:text-brand-400 border border-brand-200/40">
+                  <span class="inline-block px-2 py-0.5 rounded text-xs font-semibold bg-brand-50 dark:bg-brand-950/40 text-brand-800 dark:text-brand-400 border border-brand-200/40">
                     <%= question.exam_type %>
                   </span>
                 </td>
@@ -58,7 +58,7 @@
 
                 <!-- Topic Capsule -->
                 <td class="px-4 py-3.5">
-                  <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                  <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                     <%= question.topic %>
                   </span>
                 </td>
@@ -69,18 +69,18 @@
                 </td>
 
                 <!-- Correct Answer Key -->
-                <td class="px-4 py-3.5 text-center font-black text-emerald-600 dark:text-emerald-400 bg-slate-50/30 dark:bg-slate-950/10">
+                <td class="px-4 py-3.5 text-center font-semibold text-emerald-600 dark:text-emerald-400 bg-slate-50/30 dark:bg-slate-950/10">
                   <%= question.correct_answer %>
                 </td>
                 <td class="px-4 py-3.5 text-right whitespace-nowrap">
                   <% if Current.user.admin? || question.user_id == Current.user.id %>
-                    <%= link_to "Edit 📝", edit_question_path(question), class: "text-xs font-black text-brand-800 dark:text-brand-400 hover:text-brand-900 dark:hover:text-brand-300 transition-colors bg-brand-50 dark:bg-brand-950/40 px-2.5 py-1 rounded-lg border border-brand-200/40 shadow-sm" %>
+                    <%= link_to "Edit 📝", edit_question_path(question), class: "text-xs font-semibold text-brand-800 dark:text-brand-400 hover:text-brand-900 dark:hover:text-brand-300 transition-colors bg-brand-50 dark:bg-brand-950/40 px-2.5 py-1 rounded-lg border border-brand-200/40 shadow-sm" %>
                   <% else %>
                     <button type="button"
                             data-creator="<%= question.user&.email_address || "another teacher" %>"
                             onclick="window.showNotCreator(this.dataset.creator)"
                             title="Only the creator or an admin can edit this question"
-                            class="text-xs font-black text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 cursor-not-allowed">🔒 Edit</button>
+                            class="text-xs font-semibold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 cursor-not-allowed">🔒 Edit</button>
                   <% end %>
                 </td>
               </tr>
@@ -104,7 +104,7 @@
 <dialog id="not-creator-dialog" class="rounded-2xl p-0 shadow-2xl backdrop:bg-slate-900/50 max-w-sm w-[90vw] m-auto">
   <div class="p-6 space-y-3 bg-white dark:bg-slate-900">
     <p class="text-2xl">🔒</p>
-    <h3 class="text-base font-black text-slate-900 dark:text-white">You are not the creator of this question</h3>
+    <h3 class="text-base font-semibold text-slate-900 dark:text-white">You are not the creator of this question</h3>
     <p class="text-sm text-slate-600 dark:text-slate-400">Only <strong id="not-creator-name"></strong> or an admin can edit it.</p>
     <form method="dialog" class="pt-2">
       <button class="w-full rounded-xl bg-brand-800 hover:bg-brand-900 text-white text-xs font-bold py-2.5 cursor-pointer">OK</button>

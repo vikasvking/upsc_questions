@@ -1,6 +1,6 @@
 <div class="space-y-4 bg-brand-50/20 dark:bg-brand-950/10 p-5 rounded-2xl border border-brand-100 dark:border-brand-900/30">
   <div>
-    <h3 class="text-base font-extrabold text-brand-900 dark:text-brand-400 flex items-center gap-x-2">
+    <h3 class="text-base font-semibold text-brand-900 dark:text-brand-400 flex items-center gap-x-2">
       <span>📋</span> In This Test (<span id="active-selected-counter"><%= @test_session.questions.size %></span> selected)
     </h3>
     <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Untick a question to remove it when you save.</p>
@@ -14,9 +14,9 @@
         </div>
         <div class="space-y-1.5 flex-1">
           <div class="flex items-center gap-x-2 flex-wrap gap-y-1">
-            <span class="inline-block px-2 py-0.5 rounded text-[9px] font-black uppercase bg-brand-100 dark:bg-brand-950 text-brand-800 dark:text-brand-400"><%= q.exam_type %></span>
-            <span class="inline-block px-2 py-0.5 rounded-full text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"><%= q.topic %></span>
-            <span class="text-[10px] font-bold font-mono text-slate-400 ml-auto"><%= q.year %></span>
+            <span class="inline-block px-2 py-0.5 rounded text-xs font-semibold bg-brand-100 dark:bg-brand-950 text-brand-800 dark:text-brand-400"><%= q.exam_type %></span>
+            <span class="inline-block px-2 py-0.5 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"><%= q.topic %></span>
+            <span class="text-xs font-bold font-mono text-slate-400 ml-auto"><%= q.year %></span>
           </div>
           <p class="text-xs font-semibold text-slate-900 dark:text-white leading-relaxed"><%= q.content %></p>
         </div>

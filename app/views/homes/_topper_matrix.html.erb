@@ -2,17 +2,17 @@
 <% top = Leaderboard.average(rows.first(Leaderboard::TOP_N)) %>
 <% all = Leaderboard.average(rows) %>
 <div class="bg-white dark:bg-slate-900 py-20 transition-colors duration-200">
-  <div class="mx-auto max-w-7xl px-6 lg:px-8">
+  <div class="mx-auto max-w-6xl px-6 lg:px-8">
     <div class="mx-auto max-w-3xl text-center mb-12">
-      <h2 class="text-base font-bold uppercase tracking-wider text-rose-800 dark:text-rose-400">Benchmark Your Score</h2>
-      <p class="mt-2 text-3xl font-extrabold text-slate-900 dark:text-white sm:text-4xl">How Toppers Practise</p>
+      <h2 class="text-base font-bold text-brand-800 dark:text-brand-400">Benchmark Your Score</h2>
+      <p class="mt-2 text-3xl font-semibold text-slate-900 dark:text-white sm:text-4xl">How Toppers Practise</p>
       <p class="mt-4 text-sm text-slate-600 dark:text-slate-400">Live numbers from students on this platform. Sign in to see where you stand.</p>
     </div>
 
     <% if rows.any? %>
       <div class="mx-auto max-w-3xl overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
         <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-sm">
-          <thead class="bg-slate-50 dark:bg-slate-950 text-left text-xs font-bold uppercase tracking-wider text-slate-500">
+          <thead class="bg-slate-50 dark:bg-slate-950 text-left text-xs font-bold text-slate-500">
             <tr>
               <th class="px-6 py-3">Metric</th>
               <th class="px-6 py-3 text-right">Top <%= [rows.size, Leaderboard::TOP_N].min %> average</th>
@@ -23,7 +23,7 @@
             <% Leaderboard::METRICS.each do |key, label, _| %>
               <tr>
                 <td class="px-6 py-3 font-semibold"><%= label %></td>
-                <td class="px-6 py-3 text-right font-black text-rose-800 dark:text-rose-400"><%= metric_value(key, top[key]) %></td>
+                <td class="px-6 py-3 text-right font-semibold text-brand-800 dark:text-brand-400"><%= metric_value(key, top[key]) %></td>
                 <td class="px-6 py-3 text-right"><%= metric_value(key, all[key]) %></td>
               </tr>
             <% end %>

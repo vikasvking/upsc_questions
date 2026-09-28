@@ -1,23 +1,51 @@
-<div class="py-10 bg-white dark:bg-slate-950 min-h-screen w-full transition-colors duration-200">
-  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-8">
+<%
+  first_name  = Current.user.email_address.split("@").first.split(/[._\d-]+/).reject(&:blank?).first.to_s.capitalize
+  greeting    = case Time.current.hour when 5..11 then "Good morning" when 12..16 then "Good afternoon" else "Good evening" end
+  today_count = @streak_days.last&.dig(:solved_count).to_i
+  left_today  = [25 - today_count, 0].max
+  focus       = @progress.focus_topic
+  cmp         = @comparison
+  card        = "bg-white dark:bg-slate-900 rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 shadow-[0_1px_2px_rgba(15,23,42,0.04)]"
+%>
+<div class="py-8 sm:py-10">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-8">
 
-    <!-- Workspace Greetings Row Header -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between border-b border-slate-200 dark:border-slate-800 pb-6 gap-4">
+    <header class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">Aspirant Workspace</h1>
-        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Track your operational analytics and select a target module to begin practicing.</p>
+        <p class="text-sm text-slate-500"><%= l(Date.current, format: "%A, %-d %B") %></p>
+        <h1 class="mt-1 text-2xl font-semibold tracking-tight text-slate-900 dark:text-white"><%= greeting %><%= ", #{first_name}" if first_name.present? %></h1>
+        <p class="mt-1 text-slate-500">
+          <% if @current_streak_count.positive? %>You're on a <%= @current_streak_count %>-day streak. <% end %>
+          <%= left_today.zero? ? "Today's target of 25 questions is done 🎉" : "#{left_today} more #{"question".pluralize(left_today)} to reach today's target." %>
+        </p>
       </div>
-    </div>
+      <%= link_to "Continue practice", (focus ? dashboard_path(topic: focus.topic) : question_bank_path),
+            class: "shrink-0 self-start sm:self-auto rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-brand-800" %>
+    </header>
 
-    <!-- Streak Calendar Strip Component -->
-    <%= render "dashboards/streak_calendar" %>
-      <%= render "dashboards/profile_metrics" %>
-       <%= render "dashboards/available_tests" %>
-    <!-- 🚀 NEW ANALYTICS METRIC CARDS ROW -->
+    <% if alert %>
+      <div class="rounded-xl bg-red-50 dark:bg-red-950/40 px-4 py-3 ring-1 ring-red-200 dark:ring-red-900/40 text-sm text-red-800 dark:text-red-300"><%= alert %></div>
+    <% end %>
+    <% if notice %>
+      <div class="rounded-xl bg-emerald-50 dark:bg-emerald-950/40 px-4 py-3 ring-1 ring-emerald-200 dark:ring-emerald-900/40 text-sm text-emerald-800 dark:text-emerald-300"><%= notice %></div>
+    <% end %>
+
+    <section class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <% [
+           ["Questions solved", number_with_delimiter(@lifetime_correct_count), "of #{number_with_delimiter(@bank_total)} in the bank"],
+           ["Accuracy", "#{@global_accuracy_pct}%", "#{@lifetime_wrong_count} answered wrong"],
+           ["Streak", pluralize(@current_streak_count, "day"), "25+ questions a day"],
+           ["Rank", (cmp[:rank] ? "##{cmp[:rank]}" : "—"), (cmp[:rank] ? "of #{cmp[:students]} students" : "answer a question to get ranked")]
+         ].each do |label, value, sub| %>
+        <div class="<%= card %> p-5">
+          <p class="text-sm text-slate-500"><%= label %></p>
+          <p class="mt-1 text-2xl font-semibold text-slate-900 dark:text-white tabular-nums"><%= value %></p>
+          <p class="mt-1 text-xs text-slate-400"><%= sub %></p>
+        </div>
+      <% end %>
+    </section>
+
+    <%= render "dashboards/available_tests" %>
     <%= render "dashboards/analytics_cards" %>
-
-    <!-- Main Subject Selection Portfolio Grid -->
-
-
   </div>
 </div>

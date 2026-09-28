@@ -1,106 +1,104 @@
-<% topics  = @progress.topic_stats %>
-<% started = topics.select(&:started?).sort_by { |t| [-t.progress_pct, t.topic] } %>
-<% focus   = @progress.focus_topic %>
-<% cmp     = @comparison %>
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+<%
+  topics  = @progress.topic_stats
+  shown   = (topics.select(&:started?).sort_by { |t| [-t.progress_pct, t.topic] } + topics.reject(&:started?)).first(3)
+  focus   = @progress.focus_topic
+  cmp     = @comparison
+  top_score = cmp[:top][:score]
+  my_score  = cmp[:me].score.to_f
+  bar_pct   = top_score.to_f.positive? ? [(my_score / top_score * 100).round, 100].min : 0
+  card    = "bg-white dark:bg-slate-900 rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 shadow-[0_1px_2px_rgba(15,23,42,0.04)] p-5"
+%>
+<section class="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
-  <!-- Card 1: Topic completion (real numbers) -->
-  <div class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl flex flex-col justify-between shadow-sm">
-    <div>
-      <div class="flex items-center justify-between mb-1">
-        <h4 class="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Topic Completion</h4>
-        <span class="text-xl">🧩</span>
-      </div>
-      <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">
-        <strong class="text-slate-900 dark:text-white"><%= @progress.topics_completed_count %> of <%= topics.size %></strong> topics completed (every question answered correctly).
-      </p>
-      <div class="space-y-4">
-        <% if started.any? %>
-          <% started.first(4).each do |t| %>
-            <div>
-              <div class="flex justify-between text-xs font-semibold mb-1 text-slate-700 dark:text-slate-300">
-                <span class="truncate pr-2"><%= t.topic %><%= " ✓" if t.completed? %></span>
-                <span class="shrink-0"><%= t.solved %>/<%= t.total %> · <%= t.progress_pct %>%</span>
-              </div>
-              <div class="h-1.5 w-full rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
-                <div class="h-full rounded-full <%= t.completed? ? "bg-emerald-600" : "bg-rose-800 dark:bg-rose-500" %>" style="width: <%= t.progress_pct %>%"></div>
-              </div>
-            </div>
-          <% end %>
-        <% else %>
-          <p class="text-xs text-slate-400 italic">Start practising a topic to see your progress here.</p>
-        <% end %>
-      </div>
+  <!-- This week -->
+  <div class="<%= card %> space-y-4">
+    <div class="flex items-baseline justify-between">
+      <h2 class="font-semibold text-slate-900 dark:text-white">This week</h2>
+      <span class="text-sm text-slate-500">target 25/day</span>
     </div>
-    <%= link_to "All topics in Question Bank →", question_bank_path, class: "mt-5 text-xs font-bold text-rose-800 dark:text-rose-400 hover:text-rose-900" %>
+    <div class="flex justify-between">
+      <% @streak_days.each do |day| %>
+        <%
+          circle =
+            if day[:target_fulfilled] then "bg-brand-700 text-white font-medium"
+            elsif day[:is_today] then "ring-2 ring-brand-300 text-brand-800 dark:text-brand-200 font-medium"
+            else "bg-slate-100 dark:bg-slate-800 text-slate-400"
+            end
+        %>
+        <div class="flex flex-col items-center gap-1.5" title="<%= day[:solved_count] %> questions">
+          <span class="text-xs text-slate-400"><%= day[:day_name] %></span>
+          <span class="grid h-9 w-9 place-items-center rounded-full text-sm <%= circle %>"><%= day[:day_number] %></span>
+        </div>
+      <% end %>
+    </div>
+    <p class="text-sm text-slate-500">Today: <span class="font-medium text-slate-900 dark:text-white"><%= @streak_days.last&.dig(:solved_count).to_i %></span> answered</p>
   </div>
 
-  <!-- Card 2: You vs Top 10 vs platform -->
-  <div class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl flex flex-col justify-between shadow-sm">
-    <div>
-      <div class="flex items-center justify-between mb-1">
-        <h4 class="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Topper Comparison</h4>
-        <span class="text-xl">👑</span>
-      </div>
-      <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">
-        <% if cmp[:rank] %>
-          Your rank: <strong class="text-slate-900 dark:text-white">#<%= cmp[:rank] %></strong> of <%= cmp[:students] %> students.
-        <% else %>
-          Answer a few questions to get a rank.
-        <% end %>
+  <!-- Topic progress -->
+  <div class="<%= card %> space-y-4">
+    <div class="flex items-baseline justify-between">
+      <h2 class="font-semibold text-slate-900 dark:text-white">Topic progress</h2>
+      <span class="text-sm text-slate-500"><%= @progress.topics_completed_count %> of <%= topics.size %> done</span>
+    </div>
+    <% if shown.any? %>
+      <% shown.each do |t| %>
+        <div>
+          <div class="flex justify-between text-sm">
+            <span class="text-slate-700 dark:text-slate-300 truncate pr-2"><%= t.topic %><% if t.completed? %> <span class="text-emerald-600">✓</span><% end %></span>
+            <span class="text-slate-500 tabular-nums shrink-0"><%= t.solved %>/<%= t.total %></span>
+          </div>
+          <div class="mt-1.5 h-1.5 rounded-full bg-slate-100 dark:bg-slate-800">
+            <div class="h-1.5 rounded-full <%= t.completed? ? "bg-emerald-500" : "bg-brand-600" %>" style="width: <%= t.progress_pct %>%"></div>
+          </div>
+        </div>
+      <% end %>
+    <% else %>
+      <p class="text-sm text-slate-500">No questions uploaded yet.</p>
+    <% end %>
+    <%= link_to "All topics →", question_bank_path, class: "inline-block text-sm font-medium text-brand-700 dark:text-brand-300" %>
+  </div>
+
+  <!-- You vs top 10 -->
+  <div class="<%= card %> space-y-3">
+    <div class="flex items-baseline justify-between">
+      <h2 class="font-semibold text-slate-900 dark:text-white">You vs top <%= cmp[:top_count].positive? ? cmp[:top_count] : Leaderboard::TOP_N %></h2>
+      <span class="text-sm text-slate-500">rank score</span>
+    </div>
+    <div class="flex items-end gap-3">
+      <p class="text-3xl font-semibold text-slate-900 dark:text-white tabular-nums"><%= number_with_delimiter(my_score.round) %></p>
+      <p class="pb-1 text-sm text-slate-500">top avg <%= top_score ? number_with_delimiter(top_score.round) : "—" %></p>
+    </div>
+    <div class="h-2 rounded-full bg-slate-100 dark:bg-slate-800"><div class="h-2 rounded-full bg-brand-600" style="width: <%= bar_pct %>%"></div></div>
+    <% if focus %>
+      <p class="text-sm text-slate-500">Focus next:
+        <%= link_to focus.topic, dashboard_path(topic: focus.topic), class: "font-medium text-brand-700 dark:text-brand-300" %>
+        <%= focus.started? ? "(#{focus.accuracy_pct}% accuracy)" : "(not started)" %>
       </p>
-      <table class="w-full text-xs">
-        <thead>
-          <tr class="text-[10px] uppercase tracking-wider text-slate-400">
-            <th class="text-left font-bold pb-2"></th>
-            <th class="text-right font-bold pb-2">You</th>
-            <th class="text-right font-bold pb-2">Top <%= cmp[:top_count] %></th>
-            <th class="text-right font-bold pb-2">All</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+    <% end %>
+
+    <details class="group text-sm">
+      <summary class="cursor-pointer text-slate-500 hover:text-slate-900 dark:hover:text-white list-none">
+        <span class="group-open:hidden">Show full comparison ▾</span><span class="hidden group-open:inline">Hide ▴</span>
+      </summary>
+      <table class="mt-3 w-full text-sm">
+        <thead><tr class="text-xs text-slate-400"><th class="text-left font-normal pb-1"></th><th class="text-right font-normal pb-1">You</th><th class="text-right font-normal pb-1">Top</th><th class="text-right font-normal pb-1">All</th></tr></thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
           <% Leaderboard::METRICS.each do |key, label, _| %>
             <% mine = cmp[:me][key] %>
             <% better = metric_better?(key, mine, cmp[:top][key]) %>
             <tr>
-              <td class="py-1.5 text-slate-600 dark:text-slate-400"><%= label %></td>
-              <td class="py-1.5 text-right font-black <%= better.nil? ? "text-slate-900 dark:text-white" : (better ? "text-emerald-600" : "text-red-700 dark:text-red-400") %>"><%= metric_value(key, mine) %></td>
-              <td class="py-1.5 text-right font-semibold text-slate-700 dark:text-slate-300"><%= metric_value(key, cmp[:top][key]) %></td>
-              <td class="py-1.5 text-right text-slate-500"><%= metric_value(key, cmp[:platform][key]) %></td>
+              <td class="py-1.5 text-slate-500"><%= label %></td>
+              <td class="py-1.5 text-right font-medium <%= better.nil? ? "text-slate-900 dark:text-white" : (better ? "text-emerald-600" : "text-red-600") %>"><%= metric_value(key, mine) %></td>
+              <td class="py-1.5 text-right text-slate-700 dark:text-slate-300"><%= metric_value(key, cmp[:top][key]) %></td>
+              <td class="py-1.5 text-right text-slate-400"><%= metric_value(key, cmp[:platform][key]) %></td>
             </tr>
           <% end %>
         </tbody>
       </table>
-    </div>
-    <details class="mt-4 text-[10px] text-slate-500 dark:text-slate-400">
-      <summary class="cursor-pointer font-bold">How rank score works<% if (at = Leaderboard.computed_at) %> · updated <%= time_ago_in_words(at) %> ago<% end %></summary>
-      <p class="mt-1 leading-relaxed">Each question you solve earns points by the try you first got it right: 1st try 10, 2nd try 6, later 3. Plus up to 2 bonus points for speed (full at 30 s or less, none at 2 min). Top <%= Leaderboard::TOP_N %> = highest rank scores. Green = better than the toppers' average, red = behind it.</p>
+      <p class="mt-2 text-xs text-slate-400 leading-relaxed">
+        Each solved question earns 10 points on the 1st try, 6 on the 2nd, 3 after that, plus up to 2 for speed (full at 30 s, none at 2 min).
+        <% if (at = Leaderboard.computed_at) %>Updated <%= time_ago_in_words(at) %> ago.<% end %>
+      </p>
     </details>
   </div>
-
-  <!-- Card 3: Focus suggestion (rule-based: weakest topic, or first one not started) -->
-  <div class="bg-gradient-to-br from-rose-900 to-rose-950 text-white p-6 rounded-2xl flex flex-col justify-between shadow-md border border-rose-950">
-    <div>
-      <div class="flex items-center justify-between mb-3">
-        <h4 class="text-xs font-bold uppercase tracking-widest text-rose-300">Focus Next</h4>
-        <span class="bg-white/10 px-2 py-0.5 rounded text-rose-300 text-[10px] font-bold">Suggested</span>
-      </div>
-      <% if focus %>
-        <p class="text-lg font-black"><%= focus.topic %></p>
-        <p class="text-xs text-rose-200 mt-2 leading-relaxed">
-          <% if focus.started? %>
-            Your weakest topic: <%= focus.accuracy_pct %>% accuracy over <%= pluralize(focus.attempts, "attempt") %>, <%= focus.solved %> of <%= focus.total %> solved.
-          <% else %>
-            You haven't started this topic yet (<%= pluralize(focus.total, "question") %>).
-          <% end %>
-        </p>
-      <% else %>
-        <p class="text-lg font-black">All caught up 🎉</p>
-        <p class="text-xs text-rose-200 mt-2">Every topic is completed or going well. Try a test from the list above.</p>
-      <% end %>
-    </div>
-    <% if focus %>
-      <%= link_to "Practise #{focus.topic} →", dashboard_path(topic: focus.topic), class: "mt-5 block w-full text-center bg-white text-rose-950 hover:bg-rose-50 text-xs font-black py-2.5 px-4 rounded-xl shadow-sm" %>
-    <% end %>
-  </div>
-</div>
+</section>

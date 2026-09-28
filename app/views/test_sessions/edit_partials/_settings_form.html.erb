@@ -1,5 +1,5 @@
 <% input_class = "mt-1.5 block w-full rounded-xl border-0 py-2.5 px-3 bg-white dark:bg-slate-950 ring-1 ring-inset ring-slate-200 dark:ring-slate-800 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-800" %>
-<% label_class = "text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider" %>
+<% label_class = "text-xs font-bold text-slate-400 dark:text-slate-500" %>
 
 <% if @test_session.errors.any? %>
   <div class="rounded-xl bg-red-50 dark:bg-red-950/40 p-4 border border-red-200 dark:border-red-900/50">
@@ -11,7 +11,7 @@
   </div>
 <% end %>
 
-<div class="bg-slate-50 dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-4 shadow-sm">
+<div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-4 shadow-sm">
   <div class="sm:col-span-2">
     <%= f.label :title, "Test Title", class: label_class %>
     <%= f.text_field :title, required: true, placeholder: "e.g., Weekly Polity Mock", class: input_class %>

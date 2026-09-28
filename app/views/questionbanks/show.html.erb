@@ -1,14 +1,14 @@
-<div class="py-10 bg-white dark:bg-slate-950 min-h-screen w-full transition-colors duration-200">
-  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-8">
+<div class="py-10 min-h-screen w-full transition-colors duration-200">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-8">
 
     <div class="border-b border-slate-200 dark:border-slate-800 pb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">Question Bank</h1>
+        <h1 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-3xl">Question Bank</h1>
         <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Every topic and your progress. A topic is completed when you have answered every question in it correctly at least once.</p>
       </div>
       <div class="shrink-0 text-right">
-        <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Topics completed</p>
-        <p class="text-2xl font-black text-rose-800 dark:text-rose-400"><%= @progress.topics_completed_count %> / <%= @topics.size %></p>
+        <p class="text-xs font-bold text-slate-400">Topics completed</p>
+        <p class="text-2xl font-semibold text-brand-800 dark:text-brand-400"><%= @progress.topics_completed_count %> / <%= @topics.size %></p>
       </div>
     </div>
 

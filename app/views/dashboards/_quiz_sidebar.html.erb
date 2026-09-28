@@ -1,37 +1,37 @@
 <div class="space-y-6">
   <!-- Test info -->
-  <div class="bg-slate-50 dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/60 dark:border-slate-800 shadow-sm">
-    <p class="text-[10px] font-bold uppercase tracking-wider text-rose-800 dark:text-rose-400"><%= @attempt.test_session ? "Teacher Test" : "Topic Practice" %></p>
+  <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/60 dark:border-slate-800 shadow-sm">
+    <p class="text-xs font-bold text-brand-800 dark:text-brand-400"><%= @attempt.test_session ? "Teacher Test" : "Topic Practice" %></p>
     <h3 class="text-base font-bold text-slate-900 dark:text-white mt-1"><%= @attempt.title %></h3>
     <p class="text-xs text-slate-500 dark:text-slate-400 mt-1"><%= @responses.size %> of <%= @questions.size %> answered</p>
   </div>
 
   <!-- Timer -->
-  <div class="bg-slate-50 dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/60 dark:border-slate-800 shadow-sm">
-    <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400"><%= @attempt.timed? ? "Time Left" : "Time Elapsed" %></p>
+  <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/60 dark:border-slate-800 shadow-sm">
+    <p class="text-xs font-bold text-slate-400"><%= @attempt.timed? ? "Time Left" : "Time Elapsed" %></p>
     <p id="quiz-clock"
-       class="text-2xl font-black text-rose-800 dark:text-rose-400 mt-1 font-mono tracking-tight"
+       class="text-2xl font-semibold text-brand-800 dark:text-brand-400 mt-1 font-mono tracking-tight"
        data-mode="<%= @attempt.timed? ? "countdown" : "stopwatch" %>"
        data-seconds="<%= @attempt.timed? ? @attempt.seconds_left : (Time.current - @attempt.started_at).to_i %>">--:--:--</p>
 
     <%= button_to "Finish & Submit 📥", finish_test_dashboard_path(token: @attempt.token), method: :post,
                   form: { id: "finish-test-form" },
                   data: { turbo_confirm: "Submit the test now? You cannot change answers afterwards." },
-                  class: "w-full mt-4 text-center font-bold text-xs bg-white dark:bg-slate-950 text-rose-800 dark:text-rose-400 border border-rose-800/30 dark:border-slate-800/80 hover:bg-rose-50 dark:hover:bg-rose-950/20 py-2.5 rounded-xl transition-all shadow-sm cursor-pointer" %>
+                  class: "w-full mt-4 text-center font-bold text-xs bg-white dark:bg-slate-950 text-brand-800 dark:text-brand-400 border border-brand-800/30 dark:border-slate-800/80 hover:bg-brand-50 dark:hover:bg-brand-950/20 py-2.5 rounded-xl transition-all shadow-sm cursor-pointer" %>
   </div>
 
   <!-- Question grid: filled = answered, grey = skipped, outlined = not yet seen -->
-  <div class="bg-slate-50 dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/60 dark:border-slate-800 shadow-sm">
-    <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-4">Questions</p>
+  <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/60 dark:border-slate-800 shadow-sm">
+    <p class="text-xs font-bold text-slate-400 mb-4">Questions</p>
     <div class="grid grid-cols-6 gap-2">
       <% @questions.each_with_index do |q, i| %>
         <% n = i + 1 %>
         <% r = @responses[q.id] %>
         <%
           state_class =
-            if n == @position then "bg-rose-800 text-white ring-2 ring-offset-2 ring-rose-800 dark:ring-offset-slate-900"
+            if n == @position then "bg-brand-800 text-white ring-2 ring-offset-2 ring-brand-800 dark:ring-offset-slate-900"
             elsif r&.chosen_option == "SKIPPED" then "bg-slate-200 dark:bg-slate-800 text-slate-500"
-            elsif r then "bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300"
+            elsif r then "bg-brand-100 dark:bg-brand-950/60 text-brand-800 dark:text-brand-300"
             else "border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-950"
             end
         %>

@@ -1,12 +1,12 @@
-<div class="py-10 bg-white dark:bg-slate-950 min-h-screen w-full transition-colors duration-200">
+<div class="py-10 min-h-screen w-full transition-colors duration-200">
   <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 space-y-8">
 
     <div>
-      <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">Add a Question</h1>
+      <h1 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-3xl">Add a Question</h1>
       <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Type one question. It goes straight into the question bank, under the topic you choose, and students can practise it right away.</p>
     </div>
 
-    <div class="bg-slate-50 dark:bg-slate-900 px-6 py-8 shadow-xl rounded-2xl border border-slate-200 dark:border-slate-800">
+    <div class="bg-white dark:bg-slate-900 px-6 py-8 shadow-sm rounded-2xl border border-slate-200 dark:border-slate-800">
 
       <% if notice %>
         <div class="mb-6 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 p-4 border border-emerald-200 dark:border-emerald-900/50">
@@ -30,7 +30,7 @@
         <div class="flex flex-col sm:flex-row gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
           <%= link_to "Cancel", questions_path, class: "flex-1 text-center font-bold text-xs border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-950 px-4 py-3 rounded-xl hover:bg-slate-100 transition-colors shadow-sm" %>
           <%= form.submit "Save & add another", name: "add_another", class: "flex-1 justify-center rounded-xl border border-brand-800 text-brand-800 dark:text-brand-300 bg-white dark:bg-slate-950 px-4 py-3 text-xs font-bold shadow-sm cursor-pointer" %>
-          <%= form.submit "Save question", class: "flex-1 justify-center rounded-xl bg-brand-800 dark:bg-brand-700 px-4 py-3 text-xs font-bold text-white shadow-md hover:bg-brand-900 dark:hover:bg-brand-600 transition-colors cursor-pointer" %>
+          <%= form.submit "Save question", class: "flex-1 justify-center rounded-xl bg-brand-800 dark:bg-brand-700 px-4 py-3 text-xs font-bold text-white shadow-sm hover:bg-brand-900 dark:hover:bg-brand-600 transition-colors cursor-pointer" %>
         </div>
 
       <% end %>

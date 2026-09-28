@@ -1,9 +1,9 @@
-<div class="py-10 bg-white dark:bg-slate-950 min-h-screen w-full transition-colors duration-200">
+<div class="py-10 min-h-screen w-full transition-colors duration-200">
   <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 space-y-8">
 
     <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-6 gap-4">
       <div>
-        <h1 class="text-3xl font-black text-slate-900 dark:text-white"><%= @topic %> Results</h1>
+        <h1 class="text-3xl font-semibold text-slate-900 dark:text-white"><%= @topic %> Results</h1>
         <p class="text-sm text-slate-500 mt-1">
           Submitted <%= l(@attempt.finished_at, format: :long) %>
           <% if @attempt.test_session %>
@@ -11,7 +11,7 @@
           <% end %>
         </p>
       </div>
-      <%= link_to "Back to Dashboard", dashboard_path, class: "shrink-0 text-xs font-bold bg-rose-800 text-white px-4 py-2.5 rounded-xl hover:bg-rose-900 shadow-md" %>
+      <%= link_to "Back to Dashboard", dashboard_path, class: "shrink-0 text-xs font-bold bg-brand-800 text-white px-4 py-2.5 rounded-xl hover:bg-brand-900 shadow-sm" %>
     </div>
 
     <% if alert %>
@@ -24,60 +24,60 @@
     <% if @my_result %>
       <div class="rounded-2xl bg-gradient-to-br from-amber-50 to-white dark:from-amber-950/30 dark:to-slate-950 border border-amber-200 dark:border-amber-900/50 p-5 flex flex-wrap items-center gap-6">
         <div>
-          <p class="text-[10px] font-bold uppercase tracking-widest text-amber-700 dark:text-amber-400">Your rank</p>
-          <p class="text-4xl font-black text-slate-900 dark:text-white"><%= @my_result.rank <= 3 ? %w[🥇 🥈 🥉][@my_result.rank - 1] : "" %> #<%= @my_result.rank %> <span class="text-base font-bold text-slate-500">of <%= @ranked_count %></span></p>
+          <p class="text-xs font-bold text-amber-700 dark:text-amber-400">Your rank</p>
+          <p class="text-4xl font-semibold text-slate-900 dark:text-white"><%= @my_result.rank <= 3 ? %w[🥇 🥈 🥉][@my_result.rank - 1] : "" %> #<%= @my_result.rank %> <span class="text-base font-bold text-slate-500">of <%= @ranked_count %></span></p>
         </div>
         <div>
-          <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Marks</p>
-          <p class="text-2xl font-black text-slate-900 dark:text-white"><%= marks_text(@my_result.marks) %> <span class="text-sm font-bold text-slate-500">/ <%= marks_text(@my_result.max_marks) %></span></p>
+          <p class="text-xs font-bold text-slate-400">Marks</p>
+          <p class="text-2xl font-semibold text-slate-900 dark:text-white"><%= marks_text(@my_result.marks) %> <span class="text-sm font-bold text-slate-500">/ <%= marks_text(@my_result.max_marks) %></span></p>
         </div>
         <div>
-          <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Time taken</p>
-          <p class="text-2xl font-black text-slate-900 dark:text-white"><%= duration_text(@my_result.time_taken) %></p>
+          <p class="text-xs font-bold text-slate-400">Time taken</p>
+          <p class="text-2xl font-semibold text-slate-900 dark:text-white"><%= duration_text(@my_result.time_taken) %></p>
         </div>
-        <p class="basis-full text-[11px] text-slate-500">Marks: +2 correct, −0.66 wrong, 0 skipped. Equal marks → less time ranks higher. Your rank can change as more students submit.</p>
+        <p class="basis-full text-xs text-slate-500">Marks: +2 correct, −0.66 wrong, 0 skipped. Equal marks → less time ranks higher. Your rank can change as more students submit.</p>
       </div>
     <% end %>
 
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
       <div class="bg-emerald-50/40 dark:bg-emerald-950/10 p-5 rounded-2xl border border-emerald-100 dark:border-emerald-900/40">
-        <p class="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Correct</p>
-        <p class="text-3xl font-black text-emerald-600 mt-1"><%= @summary[:correct] %></p>
+        <p class="text-xs font-bold text-emerald-700 dark:text-emerald-400">Correct</p>
+        <p class="text-3xl font-semibold text-emerald-600 mt-1"><%= @summary[:correct] %></p>
       </div>
       <div class="bg-red-50/40 dark:bg-red-950/10 p-5 rounded-2xl border border-red-100 dark:border-red-900/40">
-        <p class="text-[10px] font-bold text-red-700 dark:text-red-400 uppercase tracking-wider">Wrong</p>
-        <p class="text-3xl font-black text-red-700 mt-1"><%= @summary[:wrong] %></p>
+        <p class="text-xs font-bold text-red-700 dark:text-red-400">Wrong</p>
+        <p class="text-3xl font-semibold text-red-700 mt-1"><%= @summary[:wrong] %></p>
       </div>
-      <div class="bg-slate-50 dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800">
-        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Skipped / Not attempted</p>
-        <p class="text-3xl font-black text-slate-900 dark:text-white mt-1"><%= @summary[:skipped] + @summary[:unattempted] %></p>
+      <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800">
+        <p class="text-xs font-bold text-slate-400">Skipped / Not attempted</p>
+        <p class="text-3xl font-semibold text-slate-900 dark:text-white mt-1"><%= @summary[:skipped] + @summary[:unattempted] %></p>
       </div>
-      <div class="bg-slate-50 dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800">
-        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Score</p>
-        <p class="text-3xl font-black text-slate-900 dark:text-white mt-1"><%= @summary[:percentage] %>%</p>
+      <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800">
+        <p class="text-xs font-bold text-slate-400">Score</p>
+        <p class="text-3xl font-semibold text-slate-900 dark:text-white mt-1"><%= @summary[:percentage] %>%</p>
         <% unless @summary[:passed].nil? %>
-          <p class="text-[10px] font-black mt-1 <%= @summary[:passed] ? "text-emerald-600" : "text-red-700" %>"><%= @summary[:passed] ? "PASSED" : "NOT PASSED" %></p>
+          <p class="text-xs font-semibold mt-1 <%= @summary[:passed] ? "text-emerald-600" : "text-red-700" %>"><%= @summary[:passed] ? "PASSED" : "NOT PASSED" %></p>
         <% end %>
       </div>
     </div>
 
     <div class="space-y-6">
-      <h3 class="text-lg font-extrabold text-slate-900 dark:text-white">Answer Review</h3>
+      <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Answer Review</h3>
 
       <% @questions.each_with_index do |q, i| %>
         <% resp = @responses[q.id] %>
         <div class="p-6 rounded-2xl border bg-slate-50/50 dark:bg-slate-900/30 <%= resp&.is_correct ? "border-emerald-200 dark:border-emerald-900/50" : "border-slate-200 dark:border-slate-800" %>">
           <div class="flex justify-between items-start gap-4 mb-3">
-            <span class="text-xs font-black bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 px-2.5 py-1 rounded-lg text-slate-700 dark:text-slate-300">Q<%= i + 1 %></span>
+            <span class="text-xs font-semibold bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 px-2.5 py-1 rounded-lg text-slate-700 dark:text-slate-300">Q<%= i + 1 %></span>
 
             <% if resp.nil? %>
-              <span class="text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-0.5 rounded-full">Not attempted</span>
+              <span class="text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-0.5 rounded-full">Not attempted</span>
             <% elsif resp.chosen_option == "SKIPPED" %>
-              <span class="text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200 px-2.5 py-0.5 rounded-full">Skipped</span>
+              <span class="text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200 px-2.5 py-0.5 rounded-full">Skipped</span>
             <% elsif resp.is_correct %>
-              <span class="text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full">✓ Correct</span>
+              <span class="text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full">✓ Correct</span>
             <% else %>
-              <span class="text-[10px] font-bold bg-red-50 text-red-700 border border-red-200 px-2.5 py-0.5 rounded-full">✗ Wrong</span>
+              <span class="text-xs font-bold bg-red-50 text-red-700 border border-red-200 px-2.5 py-0.5 rounded-full">✗ Wrong</span>
             <% end %>
           </div>
 
@@ -90,7 +90,7 @@
 
           <% if q.explanation.present? %>
             <div class="p-4 rounded-xl bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 space-y-1">
-              <p class="text-[10px] font-black uppercase text-rose-800 dark:text-rose-400 tracking-wider">Explanation</p>
+              <p class="text-xs font-semibold text-brand-800 dark:text-brand-400">Explanation</p>
               <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed"><%= q.explanation %></p>
             </div>
           <% end %>

@@ -1,14 +1,14 @@
-<div class="py-10 bg-white dark:bg-slate-950 min-h-screen w-full transition-colors duration-200">
+<div class="py-10 min-h-screen w-full transition-colors duration-200">
   <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 space-y-6">
 
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 dark:border-slate-800 pb-6 gap-4">
       <div>
-        <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl"><%= Current.user.admin? ? "All Tests" : "My Tests" %></h1>
+        <h1 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-3xl"><%= Current.user.admin? ? "All Tests" : "My Tests" %></h1>
         <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Create tests, choose open or PIN access, set time windows and see results.</p>
       </div>
       <div class="flex flex-wrap items-center gap-3">
         <%= link_to "Bulk Import Excel 📥", upload_form_test_sessions_path, class: "rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs px-4 py-2.5 bg-white dark:bg-slate-950 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors text-center" %>
-        <%= link_to "Create Test ➕", new_test_session_path, class: "rounded-xl bg-brand-800 hover:bg-brand-900 text-white font-bold text-xs px-4 py-2.5 shadow-md transition-all text-center" %>
+        <%= link_to "Create Test ➕", new_test_session_path, class: "rounded-xl bg-brand-800 hover:bg-brand-900 text-white font-bold text-xs px-4 py-2.5 shadow-sm transition-all text-center" %>
       </div>
     </div>
 
@@ -35,21 +35,21 @@
               else [test.ends_at ? "Live until #{l(test.ends_at, format: :short)}" : "Live (no time window)", "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"]
               end
           %>
-          <div class="bg-slate-50 dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 flex justify-between items-center gap-4 shadow-sm hover:border-brand-800/40 transition-all">
+          <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 flex justify-between items-center gap-4 shadow-sm hover:border-brand-800/40 transition-all">
             <div class="space-y-3 min-w-0">
               <div>
                 <div class="flex flex-wrap gap-1.5">
-                  <span class="inline-block px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-brand-100 dark:bg-brand-950/50 text-brand-800 dark:text-brand-400"><%= test.exam_type %></span>
-                  <span class="inline-block px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider <%= test.open_access? ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-400" : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300" %>"><%= test.open_access? ? "Open" : "PIN" %></span>
-                  <span class="inline-block px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider <%= status_class %>"><%= status_label %></span>
+                  <span class="inline-block px-2 py-0.5 rounded text-xs font-semibold bg-brand-100 dark:bg-brand-950/50 text-brand-800 dark:text-brand-400"><%= test.exam_type %></span>
+                  <span class="inline-block px-2 py-0.5 rounded text-xs font-semibold <%= test.open_access? ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-400" : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300" %>"><%= test.open_access? ? "Open" : "PIN" %></span>
+                  <span class="inline-block px-2 py-0.5 rounded text-xs font-semibold <%= status_class %>"><%= status_label %></span>
                 </div>
-                <h4 class="text-base font-black text-slate-900 dark:text-white mt-1 truncate"><%= test.title %></h4>
+                <h4 class="text-base font-semibold text-slate-900 dark:text-white mt-1 truncate"><%= test.title %></h4>
                 <p class="text-xs text-slate-400 mt-0.5">
                   <strong class="text-brand-800 dark:text-brand-400"><%= @question_counts[test.id].to_i %> questions</strong> · <%= test.duration_minutes %> min · pass <%= test.pass_mark_percentage %>%
                   <% if Current.user.admin? %> · by <%= test.user.email_address %><% end %>
                 </p>
               </div>
-              <div class="flex items-center gap-x-3 text-xs font-black pt-1">
+              <div class="flex items-center gap-x-3 text-xs font-semibold pt-1">
                 <%= link_to "Results 📊", test_session_path(test), class: "text-brand-800 dark:text-brand-400 hover:text-brand-900" %>
                 <span class="text-slate-300 dark:text-slate-700">|</span>
                 <%= link_to "Edit ⚙️", edit_test_session_path(test), class: "text-slate-500 dark:text-slate-400 hover:text-brand-800" %>
@@ -58,17 +58,17 @@
 
             <div class="shrink-0 text-right flex flex-col justify-center pl-4 border-l border-slate-200/60 dark:border-slate-800">
               <% if test.pin_required? %>
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">PIN</span>
+                <span class="text-xs font-bold text-slate-400 block">PIN</span>
                 <span class="text-lg font-black text-brand-800 dark:text-brand-400 font-mono bg-white dark:bg-slate-950 px-3 py-1 rounded-xl mt-1.5 inline-block shadow-sm border border-dashed border-brand-800/30 select-all"><%= test.pin_code %></span>
               <% else %>
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Access</span>
-                <span class="text-sm font-black text-emerald-700 dark:text-emerald-400 mt-1.5">No PIN needed</span>
+                <span class="text-xs font-bold text-slate-400 block">Access</span>
+                <span class="text-sm font-semibold text-emerald-700 dark:text-emerald-400 mt-1.5">No PIN needed</span>
               <% end %>
             </div>
           </div>
         <% end %>
       <% else %>
-        <div class="md:col-span-2 text-center py-16 text-slate-400 font-medium bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
+        <div class="md:col-span-2 text-center py-16 text-slate-400 font-medium bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
           <div class="text-3xl mb-2">🔐</div>
           <p class="text-sm font-bold text-slate-700 dark:text-slate-300">No tests yet</p>
           <p class="text-xs text-slate-400 mt-1">Create a test or bulk-import one from Excel.</p>

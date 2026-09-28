@@ -3,30 +3,30 @@
   <!-- Meta Configuration Row -->
   <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
     <div>
-      <%= form.label :exam_type, "Exam Portfolio", class: "block text-xs font-bold text-slate-500 uppercase tracking-wider" %>
+      <%= form.label :exam_type, "Exam Portfolio", class: "block text-xs font-bold text-slate-500" %>
       <%= form.select :exam_type, [["UPSC", "UPSC"], ["SSC", "SSC"], ["BANKING", "BANKING"], ["CBSE", "CBSE"], ["JEE", "JEE"]], {}, class: "mt-1.5 block w-full rounded-xl border-0 py-2.5 px-3 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-brand-800" %>
     </div>
     <div>
-      <%= form.label :year, "Exam Year (Optional)", class: "block text-xs font-bold text-slate-500 uppercase tracking-wider" %>
+      <%= form.label :year, "Exam Year (Optional)", class: "block text-xs font-bold text-slate-500" %>
       <%= form.number_field :year, class: "mt-1.5 block w-full rounded-xl border-0 py-2.5 px-3 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-brand-800" %>
     </div>
   </div>
 
   <!-- Topic Category -->
   <div>
-    <%= form.label :topic, "Syllabus Topic Section Name", class: "block text-xs font-bold text-slate-500 uppercase tracking-wider" %>
+    <%= form.label :topic, "Syllabus Topic Section Name", class: "block text-xs font-bold text-slate-500" %>
     <%= form.text_field :topic, required: true, list: "topic-options", autocomplete: "off", class: "mt-2 block w-full rounded-xl border-0 py-2.5 px-3 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-brand-800" %>
   </div>
 
   <!-- Main Content Core Prompt Statement -->
   <div>
-    <%= form.label :content, "Question Prompt Statement Statement", class: "block text-xs font-bold text-slate-500 uppercase tracking-wider" %>
+    <%= form.label :content, "Question Prompt Statement Statement", class: "block text-xs font-bold text-slate-500" %>
     <%= form.text_area :content, rows: 4, required: true, class: "mt-2 block w-full rounded-xl border-0 py-2.5 px-3 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-brand-800 leading-relaxed font-sans" %>
   </div>
 
   <!-- Four Multiple Choice Inputs Grid -->
   <div class="border-t border-slate-200 dark:border-slate-800 pt-6 space-y-4">
-    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Multiple Choice Core Option Fields</p>
+    <p class="text-xs font-bold text-slate-400">Multiple Choice Core Option Fields</p>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div>
@@ -50,13 +50,13 @@
 
   <!-- Correct Key Selection -->
   <div class="border-t border-slate-200 dark:border-slate-800 pt-6">
-    <%= form.label :correct_answer, "Identify Correct Answer Key", class: "block text-xs font-bold text-slate-500 uppercase tracking-wider" %>
-    <%= form.select :correct_answer, [["Option A", "A"], ["Option B", "B"], ["Option C", "C"], ["Option D", "D"]], {}, class: "mt-2 block w-28 rounded-xl border-0 py-2.5 px-3 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-black focus:ring-2 focus:ring-brand-800 text-sm" %>
+    <%= form.label :correct_answer, "Identify Correct Answer Key", class: "block text-xs font-bold text-slate-500" %>
+    <%= form.select :correct_answer, [["Option A", "A"], ["Option B", "B"], ["Option C", "C"], ["Option D", "D"]], {}, class: "mt-2 block w-28 rounded-xl border-0 py-2.5 px-3 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-semibold focus:ring-2 focus:ring-brand-800 text-sm" %>
   </div>
 
   <!-- Textbook Explanation Rationale -->
   <div>
-    <%= form.label :explanation, "Textbook Rationale Explanation", class: "block text-xs font-bold text-slate-500 uppercase tracking-wider" %>
+    <%= form.label :explanation, "Textbook Rationale Explanation", class: "block text-xs font-bold text-slate-500" %>
     <%= form.text_area :explanation, rows: 4, class: "mt-2 block w-full rounded-xl border-0 py-2.5 px-3 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-brand-800 leading-relaxed font-mono text-xs" %>
   </div>
 

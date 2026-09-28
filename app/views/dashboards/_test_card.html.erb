@@ -1,31 +1,33 @@
 <%# locals: test, mine (the student's attempt or nil), subjects (array of topic names) %>
 <% label, label_class = test_window_badge(test) %>
-<div class="bg-white dark:bg-slate-950 p-4 rounded-xl border border-slate-200/60 dark:border-slate-800 flex items-center justify-between gap-3 shadow-sm">
-  <div class="min-w-0 space-y-1">
-    <div class="flex flex-wrap gap-1">
-      <span class="inline-block text-[9px] font-black px-1.5 py-0.5 rounded tracking-wide uppercase <%= label_class %>"><%= label %></span>
-      <span class="inline-block text-[9px] font-black px-1.5 py-0.5 rounded tracking-wide uppercase <%= test.open_access? ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-400" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300" %>"><%= test.open_access? ? "Open" : "🔐 PIN" %></span>
-      <span class="inline-block text-[9px] font-black px-1.5 py-0.5 rounded tracking-wide uppercase bg-rose-50 text-rose-800 dark:bg-rose-950/40 dark:text-rose-400"><%= test.exam_type %></span>
+<div class="bg-white dark:bg-slate-900 rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 shadow-[0_1px_2px_rgba(15,23,42,0.04)] p-5 flex flex-col justify-between gap-4">
+  <div class="min-w-0">
+    <div class="flex flex-wrap gap-1.5">
+      <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium <%= label_class %>"><%= label %></span>
+      <% if test.pin_required? %>
+        <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">PIN</span>
+      <% end %>
     </div>
-    <h5 class="text-sm font-bold text-slate-900 dark:text-white truncate"><%= test.title %></h5>
-    <p class="text-[11px] text-slate-400 truncate">
-      <%= subjects.presence&.join(", ") || "No questions yet" %> · <%= test.duration_minutes %> min · by <%= test.user.email_address.split("@").first.capitalize %>
-    </p>
+    <h3 class="mt-2 font-semibold text-slate-900 dark:text-white truncate" title="<%= test.title %>"><%= test.title %></h3>
+    <p class="mt-1 text-sm text-slate-500 truncate"><%= [test.exam_type, subjects.presence&.join(", "), "#{test.duration_minutes} min"].compact.join(" · ") %></p>
+    <p class="text-xs text-slate-400 mt-0.5">by <%= test.user.email_address.split("@").first.capitalize %></p>
   </div>
 
+  <% primary = "self-start rounded-lg px-3.5 py-2 text-sm font-medium bg-brand-700 text-white hover:bg-brand-800" %>
+  <% secondary = "self-start rounded-lg px-3.5 py-2 text-sm font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200" %>
   <% if mine&.finished? || (mine && mine.expired?) %>
     <% rank, of = @ranks_by_test && @ranks_by_test[test.id] %>
-    <%= link_to test_results_dashboard_path(token: mine.token), class: "shrink-0 text-center text-xs font-black text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg" do %>
-      Result
-      <% if rank %><span class="block text-[10px] font-bold text-amber-700 dark:text-amber-400">Rank #<%= rank %> of <%= of %></span><% end %>
-    <% end %>
+    <div class="flex items-center gap-3">
+      <%= link_to "See result", test_results_dashboard_path(token: mine.token), class: secondary %>
+      <% if rank %><span class="text-sm text-slate-500">Rank <span class="font-semibold text-slate-900 dark:text-white">#<%= rank %></span> of <%= of %></span><% end %>
+    </div>
   <% elsif mine %>
-    <%= link_to "Resume →", test_intro_dashboard_path(test), class: "shrink-0 text-xs font-black text-rose-800 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-3 py-1.5 rounded-lg border border-rose-100 dark:border-rose-900/40" %>
+    <%= link_to "Resume test", test_intro_dashboard_path(test), class: primary %>
   <% elsif test.window_status == :closed %>
-    <span class="shrink-0 text-xs font-bold text-slate-400">Missed</span>
+    <span class="text-sm text-slate-400">Missed</span>
   <% elsif test.open_access? %>
-    <%= link_to "View →", test_intro_dashboard_path(test), class: "shrink-0 text-xs font-black text-rose-800 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-3 py-1.5 rounded-lg border border-rose-100 dark:border-rose-900/40" %>
+    <%= link_to (test.window_status == :live ? "Start test" : "View details"), test_intro_dashboard_path(test), class: (test.window_status == :live ? primary : secondary) %>
   <% else %>
-    <%= link_to "🔑 Enter PIN", join_test_sessions_path, class: "shrink-0 text-xs font-bold text-slate-500 hover:text-rose-800 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-1.5 rounded-lg" %>
+    <%= link_to "Enter PIN", join_test_sessions_path, class: secondary %>
   <% end %>
 </div>

@@ -12,30 +12,30 @@ class AllTestsPageTest < ActionDispatch::IntegrationTest
 
     get dashboard_path
     assert_response :success
-    assert_select "h5", text: /New Test/, count: 3
-    assert_select "h5", text: "PIN Physics Test", count: 0 # closed tests stay off the dashboard
+    assert_select "h3", text: /New Test/, count: 3
+    assert_select "h3", text: "PIN Physics Test", count: 0 # closed tests stay off the dashboard
     assert_select "a[href=?]", all_tests_dashboard_path
   end
 
   test "all tests page lists every test" do
     get all_tests_dashboard_path
     assert_response :success
-    assert_select "h5", text: "Open Physics Test"
-    assert_select "h5", text: "PIN Physics Test"
+    assert_select "h3", text: "Open Physics Test"
+    assert_select "h3", text: "PIN Physics Test"
   end
 
   test "filter by exam" do
     test_sessions(:two).update!(exam_type: "SSC")
     get all_tests_dashboard_path, params: { exam: "SSC" }
-    assert_select "h5", text: "PIN Physics Test"
-    assert_select "h5", text: "Open Physics Test", count: 0
+    assert_select "h3", text: "PIN Physics Test"
+    assert_select "h3", text: "Open Physics Test", count: 0
   end
 
   test "filter by subject uses the topics of each test's questions" do
     questions(:two).update!(topic: "Chemistry") # only test one contains question two
     get all_tests_dashboard_path, params: { subject: "Chemistry" }
-    assert_select "h5", text: "Open Physics Test"
-    assert_select "h5", text: "PIN Physics Test", count: 0
+    assert_select "h3", text: "Open Physics Test"
+    assert_select "h3", text: "PIN Physics Test", count: 0
   end
 
   test "teachers are sent to their own test manager" do

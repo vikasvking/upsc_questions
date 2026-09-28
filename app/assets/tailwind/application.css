@@ -47,3 +47,14 @@
   --color-brand-900: var(--color-emerald-900);
   --color-brand-950: var(--color-emerald-950);
 }
+
+/* ---- Look & feel: Inter font, calmer weights (bold = 600) ---- */
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --font-weight-bold: 600;
+}
+
+@layer base {
+  h1, h2, h3 { letter-spacing: -0.01em; }
+  input, select, textarea { font-size: 0.875rem; }
+}

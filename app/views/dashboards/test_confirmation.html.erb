@@ -1,7 +1,7 @@
 <% test = @test_session %>
-<div class="py-16 bg-white dark:bg-slate-950 min-h-screen flex items-center justify-center transition-colors duration-200 w-full">
+<div class="py-16 min-h-screen flex items-center justify-center transition-colors duration-200 w-full">
   <div class="mx-auto max-w-xl px-6 text-center space-y-6">
-    <div class="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/40 text-3xl shadow-sm">⏱️</div>
+    <div class="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-50 dark:bg-brand-950/40 border border-brand-200 dark:border-brand-900/40 text-3xl shadow-sm">⏱️</div>
 
     <% if alert %>
       <div class="rounded-xl bg-red-50 dark:bg-red-950/40 p-3 border border-red-200 dark:border-red-900/40 text-xs text-red-800 dark:text-red-300 font-bold"><%= alert %></div>
@@ -11,12 +11,12 @@
     <% end %>
 
     <div class="space-y-2">
-      <h1 class="text-3xl font-black tracking-tight text-slate-900 dark:text-white"><%= test ? test.title : "#{@topic} Practice" %></h1>
+      <h1 class="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white"><%= test ? test.title : "#{@topic} Practice" %></h1>
       <p class="text-sm text-slate-500 dark:text-slate-400">Read the rules before you start.</p>
     </div>
 
-    <div class="bg-slate-50 dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 text-left space-y-3.5 text-xs text-slate-600 dark:text-slate-400 leading-relaxed shadow-sm">
-      <p class="font-bold uppercase tracking-wider text-[10px] text-rose-800 dark:text-rose-400">Rules</p>
+    <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 text-left space-y-3.5 text-xs text-slate-600 dark:text-slate-400 leading-relaxed shadow-sm">
+      <p class="font-bold text-xs text-brand-800 dark:text-brand-400">Rules</p>
       <div class="flex gap-x-2"><span>•</span> <span><strong><%= @total_q_count %> questions</strong>.</span></div>
 
       <% if test %>
@@ -39,18 +39,18 @@
 
       <% if test %>
         <% if @existing_attempt&.finished? %>
-          <%= link_to "View My Result", test_results_dashboard_path(token: @existing_attempt.token), class: "flex-1 text-center font-bold text-sm bg-rose-800 hover:bg-rose-900 text-white px-4 py-3 rounded-xl shadow-md" %>
+          <%= link_to "View My Result", test_results_dashboard_path(token: @existing_attempt.token), class: "flex-1 text-center font-bold text-sm bg-brand-800 hover:bg-brand-900 text-white px-4 py-3 rounded-xl shadow-sm" %>
         <% elsif @existing_attempt %>
-          <%= button_to "Resume Test", start_test_dashboard_path(test_session_id: test.id), method: :post, form_class: "flex-1", class: "w-full text-center font-bold text-sm bg-rose-800 hover:bg-rose-900 text-white px-4 py-3 rounded-xl shadow-md cursor-pointer" %>
+          <%= button_to "Resume Test", start_test_dashboard_path(test_session_id: test.id), method: :post, form_class: "flex-1", class: "w-full text-center font-bold text-sm bg-brand-800 hover:bg-brand-900 text-white px-4 py-3 rounded-xl shadow-sm cursor-pointer" %>
         <% elsif test.window_status == :upcoming %>
           <span class="flex-1 text-center font-bold text-sm bg-slate-100 dark:bg-slate-900 text-slate-400 px-4 py-3 rounded-xl">Not open yet</span>
         <% elsif test.window_status == :closed %>
           <span class="flex-1 text-center font-bold text-sm bg-slate-100 dark:bg-slate-900 text-slate-400 px-4 py-3 rounded-xl">Test closed</span>
         <% else %>
-          <%= button_to "Start Test", start_test_dashboard_path(test_session_id: test.id), method: :post, form_class: "flex-1", class: "w-full text-center font-bold text-sm bg-rose-800 hover:bg-rose-900 text-white px-4 py-3 rounded-xl shadow-md cursor-pointer" %>
+          <%= button_to "Start Test", start_test_dashboard_path(test_session_id: test.id), method: :post, form_class: "flex-1", class: "w-full text-center font-bold text-sm bg-brand-800 hover:bg-brand-900 text-white px-4 py-3 rounded-xl shadow-sm cursor-pointer" %>
         <% end %>
       <% else %>
-        <%= button_to (@resume_attempt ? "Resume Practice" : "Start Practice"), start_test_dashboard_path(topic: @topic), method: :post, form_class: "flex-1", class: "w-full text-center font-bold text-sm bg-rose-800 hover:bg-rose-900 text-white px-4 py-3 rounded-xl shadow-md cursor-pointer" %>
+        <%= button_to (@resume_attempt ? "Resume Practice" : "Start Practice"), start_test_dashboard_path(topic: @topic), method: :post, form_class: "flex-1", class: "w-full text-center font-bold text-sm bg-brand-800 hover:bg-brand-900 text-white px-4 py-3 rounded-xl shadow-sm cursor-pointer" %>
       <% end %>
     </div>
   </div>

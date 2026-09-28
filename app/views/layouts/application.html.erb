@@ -19,6 +19,9 @@
     <link rel="apple-touch-icon" href="/icon.png">
 
     <%# Includes all stylesheet files in app/assets/stylesheets %>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&display=swap">
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
@@ -86,16 +89,17 @@
 
   </head>
 
-  <body data-role="<%= authenticated? ? Current.user.role : "guest" %>" class="bg-white dark:bg-slate-950 transition-colors duration-200 antialiased">
+  <body data-role="<%= authenticated? ? Current.user.role : "guest" %>" class="bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-300 font-sans transition-colors duration-200 antialiased">
 
    <% if authenticated? %>
      <!-- Small screens: top bar with a menu button (the sidebar slides in over the page) -->
-     <div class="lg:hidden sticky top-0 z-30 flex items-center gap-3 h-14 px-4 bg-brand-900 dark:bg-brand-950 text-white shadow">
-       <button type="button" id="sidebar-open" aria-label="Open menu" aria-controls="app-sidebar" aria-expanded="false" class="p-2 -ml-2 rounded-lg hover:bg-white/10">
-         <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+     <div class="lg:hidden sticky top-0 z-30 flex items-center gap-3 h-14 px-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200 dark:border-slate-800">
+       <button type="button" id="sidebar-open" aria-label="Open menu" aria-controls="app-sidebar" aria-expanded="false" class="p-2 -ml-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">
+         <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
        </button>
-       <span class="text-sm font-black tracking-wider uppercase">UPSCOfficer</span>
-       <span class="ml-auto text-[10px] font-black uppercase tracking-wider bg-white text-brand-900 rounded-full px-2 py-0.5"><%= Current.user.role.humanize %></span>
+       <span class="h-7 w-7 rounded-lg bg-brand-700 text-white grid place-items-center text-xs font-semibold">U</span>
+       <span class="font-semibold text-slate-900 dark:text-white">UPSCOfficer</span>
+       <span class="ml-auto text-xs font-medium rounded-full px-2.5 py-0.5 bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-200"><%= Current.user.role.humanize %></span>
      </div>
      <div id="sidebar-backdrop" class="hidden lg:hidden fixed inset-0 z-30 bg-slate-900/50"></div>
 
@@ -103,8 +107,8 @@
      <%= render "layouts/side_nav" %>
 
      <!-- Content column: pushed right by the sidebar width on large screens only -->
-     <main class="lg:pl-64 min-h-screen">
-       <div class="px-6 py-4">
+     <main class="lg:pl-60 min-h-screen">
+       <div class="px-2 sm:px-4">
          <%= yield %>
        </div>
      </main>

@@ -306,6 +306,7 @@ class DashboardsController < ApplicationController
     @current_streak_count = calculate_active_streak
     responses = Current.user.user_responses
     total_platform_questions = Question.count
+    @bank_total = total_platform_questions
 
     @lifetime_correct_count = responses.where(is_correct: true).distinct.count(:question_id)
     @lifetime_wrong_count   = responses.where(is_correct: false).where.not(chosen_option: "SKIPPED").distinct.count(:question_id)

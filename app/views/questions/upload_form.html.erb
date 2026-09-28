@@ -1,9 +1,9 @@
-<div class="py-10 bg-white dark:bg-slate-950 min-h-screen w-full transition-colors duration-200">
+<div class="py-10 min-h-screen w-full transition-colors duration-200">
   <div class="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 space-y-8">
 
     <!-- Title Header Row -->
     <div class="border-b border-slate-200 dark:border-slate-800 pb-6">
-      <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">Admin Data Ingestion</h1>
+      <h1 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-3xl">Admin Data Ingestion</h1>
       <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Upload and seed your core exam repository from standard historical spreadsheet formats.</p>
     </div>
 
@@ -13,10 +13,10 @@
         <span class="text-xl">📋</span>
         <div>
           <h4 class="text-xs font-bold text-slate-900 dark:text-white">Required Ingestion Format</h4>
-          <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Ensure your upload columns match our required system column sequences.</p>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Ensure your upload columns match our required system column sequences.</p>
         </div>
       </div>
-      <%= link_to "Download Sample Sheet 📥", download_template_questions_path, class: "text-xs font-black text-white bg-brand-800 hover:bg-brand-900 dark:bg-brand-700 dark:hover:bg-brand-600 px-3.5 py-2 rounded-xl transition-all shadow-sm text-center cursor-pointer" %>
+      <%= link_to "Download Sample Sheet 📥", download_template_questions_path, class: "text-xs font-semibold text-white bg-brand-800 hover:bg-brand-900 dark:bg-brand-700 dark:hover:bg-brand-600 px-3.5 py-2 rounded-xl transition-all shadow-sm text-center cursor-pointer" %>
     </div>
 
     <!-- Alert / Notice Notification Banners -->
@@ -33,7 +33,7 @@
     <% end %>
 
     <!-- Ingestion Form Container Box -->
-    <div class="bg-slate-50 dark:bg-slate-900 px-6 py-8 shadow-xl rounded-2xl border border-slate-200 dark:border-slate-800">
+    <div class="bg-white dark:bg-slate-900 px-6 py-8 shadow-sm rounded-2xl border border-slate-200 dark:border-slate-800">
       <%= form_with url: import_questions_path, multipart: true, local: true, class: "space-y-6" do |form| %>
 
         <!-- Exam Type Stream Selector Dropdown Input -->
@@ -45,7 +45,7 @@
                             {},
                             { class: "block w-full rounded-xl border-0 py-2.5 px-3 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-inset focus:ring-brand-800 dark:focus:ring-brand-500 sm:text-sm" } %>
           </div>
-          <p class="mt-1 text-[10px] text-slate-400">All questions in the attached file will automatically be categorized under this stream portfolio.</p>
+          <p class="mt-1 text-xs text-slate-400">All questions in the attached file will automatically be categorized under this stream portfolio.</p>
         </div>
 
         <!-- Optional Exam Year Parameter Selection Input -->
@@ -54,7 +54,7 @@
           <div class="mt-2">
             <%= form.number_field :year, placeholder: "e.g., 2026", class: "block w-full rounded-xl border-0 py-2.5 px-3 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-brand-800 dark:focus:ring-brand-500 bg-white dark:bg-slate-950 text-slate-900 dark:text-white sm:text-sm" %>
           </div>
-          <p class="mt-1 text-[10px] text-slate-400">Sets the timeline token mapped into historical PYQ metrics if applicable.</p>
+          <p class="mt-1 text-xs text-slate-400">Sets the timeline token mapped into historical PYQ metrics if applicable.</p>
         </div>
 
         <!-- Dynamic Drag & Drop File Field Input Container -->
@@ -66,7 +66,7 @@
               <div class="flex text-xs leading-6 text-slate-600 dark:text-slate-400 justify-center">
                 <span class="relative font-bold text-brand-800 dark:text-brand-400 hover:text-brand-900 cursor-pointer">Click to browse file</span>
               </div>
-              <p class="text-[10px] text-slate-400">Accepts only standard simplified spreadsheet formats (.xlsx)</p>
+              <p class="text-xs text-slate-400">Accepts only standard simplified spreadsheet formats (.xlsx)</p>
 
               <!-- Hidden Native Input Layer positioned cleanly across the active click zone -->
               <%= form.file_field :file, accept: '.xlsx', required: true, id: "excel-uploader-input", class: "absolute inset-0 opacity-0 cursor-pointer w-full h-full" %>
@@ -79,7 +79,7 @@
         <!-- Submit Buttons Action row -->
         <div class="flex gap-4 pt-4 border-t border-slate-200 dark:border-slate-800">
           <%= link_to "Cancel & Return", dashboard_path, class: "flex-1 text-center font-bold text-xs border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-950 px-4 py-3 rounded-xl hover:bg-slate-100 transition-colors shadow-sm" %>
-          <%= form.submit "Execute Data Import Ingestion", id: "submit-ingestion-trigger", class: "flex-1 justify-center rounded-xl bg-brand-800 dark:bg-brand-700 px-4 py-3 text-xs font-bold text-white shadow-md hover:bg-brand-900 dark:hover:bg-brand-600 transition-colors cursor-pointer transform hover:-translate-y-0.5" %>
+          <%= form.submit "Execute Data Import Ingestion", id: "submit-ingestion-trigger", class: "flex-1 justify-center rounded-xl bg-brand-800 dark:bg-brand-700 px-4 py-3 text-xs font-bold text-white shadow-sm hover:bg-brand-900 dark:hover:bg-brand-600 transition-colors cursor-pointer" %>
         </div>
 
       <% end %>

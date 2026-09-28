@@ -1,30 +1,22 @@
-<div class="space-y-4 pt-2">
-  <% if alert %>
-    <div class="rounded-xl bg-red-50 dark:bg-red-950/40 p-3 border border-red-200 dark:border-red-900/40 text-xs text-red-800 dark:text-red-300 font-bold"><%= alert %></div>
-  <% end %>
-  <% if notice %>
-    <div class="rounded-xl bg-emerald-50 dark:bg-emerald-950/40 p-3 border border-emerald-200 dark:border-emerald-900/40 text-xs text-emerald-800 dark:text-emerald-300 font-bold"><%= notice %></div>
-  <% end %>
-
-  <div class="flex items-end justify-between gap-4">
-    <div>
-      <h3 class="text-sm font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Latest Tests</h3>
-      <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">The newest tests that are live or opening soon.</p>
-    </div>
-    <%= link_to "View all tests →", all_tests_dashboard_path, class: "shrink-0 text-xs font-black text-rose-800 dark:text-rose-400 hover:underline" %>
+<section class="space-y-4">
+  <div class="flex items-baseline justify-between">
+    <h2 class="font-semibold text-slate-900 dark:text-white">Latest tests</h2>
+    <%= link_to "View all →", all_tests_dashboard_path, class: "text-sm font-medium text-brand-700 dark:text-brand-300 hover:underline" %>
   </div>
 
   <% if @latest_tests.any? %>
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
       <% @latest_tests.each do |test| %>
         <%= render "dashboards/test_card", test: test, mine: @my_attempts_by_test[test.id], subjects: @subjects_by_test[test.id] %>
       <% end %>
     </div>
   <% else %>
-    <div class="text-center py-8 bg-slate-50/50 dark:bg-slate-900/30 rounded-xl border border-slate-200/60 dark:border-slate-800">
-      <p class="text-xs text-slate-400">No live or upcoming tests right now.
-        <%= link_to "See past tests", all_tests_dashboard_path, class: "font-bold text-rose-800 dark:text-rose-400" %>
-        or <%= link_to "practise by subject", question_bank_path, class: "font-bold text-rose-800 dark:text-rose-400" %>.</p>
+    <div class="rounded-2xl bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 px-6 py-10 text-center">
+      <p class="text-slate-600 dark:text-slate-300">No live or upcoming tests right now.</p>
+      <p class="mt-1 text-sm text-slate-500">
+        <%= link_to "See past tests", all_tests_dashboard_path, class: "font-medium text-brand-700 dark:text-brand-300" %> or
+        <%= link_to "practise by subject", question_bank_path, class: "font-medium text-brand-700 dark:text-brand-300" %>.
+      </p>
     </div>
   <% end %>
-</div>
+</section>
