@@ -14,7 +14,11 @@
   </div>
 
   <% if mine&.finished? || (mine && mine.expired?) %>
-    <%= link_to "Result", test_results_dashboard_path(token: mine.token), class: "shrink-0 text-xs font-black text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg" %>
+    <% rank, of = @ranks_by_test && @ranks_by_test[test.id] %>
+    <%= link_to test_results_dashboard_path(token: mine.token), class: "shrink-0 text-center text-xs font-black text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg" do %>
+      Result
+      <% if rank %><span class="block text-[10px] font-bold text-amber-700 dark:text-amber-400">Rank #<%= rank %> of <%= of %></span><% end %>
+    <% end %>
   <% elsif mine %>
     <%= link_to "Resume →", test_intro_dashboard_path(test), class: "shrink-0 text-xs font-black text-rose-800 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-3 py-1.5 rounded-lg border border-rose-100 dark:border-rose-900/40" %>
   <% elsif test.window_status == :closed %>

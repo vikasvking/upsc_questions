@@ -31,3 +31,31 @@ class LeaderboardTest < ActiveSupport::TestCase
     assert_equal 30.0, cmp[:platform][:avg_seconds]
   end
 end
+
+class LeaderboardScoreTest < ActiveSupport::TestCase
+  def answer(user, question, choice, seconds: 30)
+    user.user_responses.create!(question: question, chosen_option: choice,
+                                is_correct: choice == question.correct_answer,
+                                duration_seconds: seconds, test_session_token: SecureRandom.hex(4))
+  end
+
+  test "points depend on the try that first got it right, plus a speed bonus" do
+    assert_equal 12.0, Leaderboard.points_for(1, 20)   # 10 + full bonus
+    assert_equal 6.0,  Leaderboard.points_for(2, 200)  # 6 + no bonus
+    assert_equal 3.0,  Leaderboard.points_for(5, 0)    # unknown time, no bonus
+    assert_in_delta 4.0, Leaderboard.points_for(3, 75), 0.01 # 3 + half bonus
+  end
+
+  test "solving in fewer tries ranks higher than needing many" do
+    answer(users(:one), questions(:one), "A")          # 1st try -> 12
+    answer(users(:two), questions(:one), "C")
+    answer(users(:two), questions(:one), "D")
+    answer(users(:two), questions(:one), "A")          # 3rd try -> 5
+
+    rows = Leaderboard.build_rows
+    assert_equal [users(:one).id, users(:two).id], rows.map(&:user_id)
+    assert_equal 12.0, rows.first.score
+    assert_equal 5.0, rows.last.score
+    assert_equal 3.0, rows.last.avg_tries
+  end
+end

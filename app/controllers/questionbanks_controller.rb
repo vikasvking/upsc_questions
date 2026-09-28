@@ -31,8 +31,35 @@ class QuestionbanksController < ApplicationController
     @question_stats = @progress.question_stats(all_questions)
     @filter = FILTERS.include?(params[:filter]) ? params[:filter] : "all"
     @filter_counts = FILTERS.to_h { |f| [f, all_questions.count { |q| matches_filter?(q, f) }] }
-    @questions = all_questions.select { |q| matches_filter?(q, @filter) }
+    # keep the question just answered on screen even if it no longer matches the filter
+    @answered_id = flash[:answered_id].to_i
+    @questions = all_questions.select { |q| matches_filter?(q, @filter) || q.id == @answered_id }
     @numbers = all_questions.each_with_index.to_h { |q, i| [q.id, i + 1] }
+  end
+
+  # POST /question_bank/answer -> practise one question on its own (not part of any test)
+  def answer
+    question = Question.find(params[:question_id])
+    choice = params[:answer_choice].to_s.strip.upcase
+    back = question_bank_topic_path(name: question.topic, filter: params[:filter].presence, anchor: "q-#{question.id}")
+
+    unless Question::ANSWER_KEYS.include?(choice)
+      redirect_to back, alert: "Pick an option first."
+      return
+    end
+
+    correct = choice == question.correct_answer
+    Current.user.user_responses.create!(
+      question: question,
+      chosen_option: choice,
+      is_correct: correct,
+      duration_seconds: params[:duration_seconds].to_i.clamp(0, 3600),
+      test_session_token: nil # single-question practice, not tied to a test
+    )
+
+    flash[:answered_id] = question.id
+    flash[:answered_correct] = correct
+    redirect_to back
   end
 
   private

@@ -48,6 +48,20 @@ class TestAttempt < ApplicationRecord
     user_responses.order(:updated_at).index_by(&:question_id)
   end
 
+  # UPSC-style marking used for ranking inside a teacher test
+  MARKS_CORRECT = 2.0
+  MARKS_WRONG   = -2.0 / 3 # one third of the marks for a correct answer
+
+  def self.marks_for(correct, wrong)
+    (correct * MARKS_CORRECT + wrong * MARKS_WRONG).round(2)
+  end
+
+  # Seconds from Start to Submit
+  def time_taken
+    return nil unless finished_at
+    (finished_at - started_at).to_i
+  end
+
   def score_summary
     question_ids = questions.pluck(:id)
     total     = question_ids.size
@@ -60,7 +74,9 @@ class TestAttempt < ApplicationRecord
     passed    = test_session ? pct >= test_session.pass_mark_percentage : nil
 
     { total: total, correct: correct, wrong: wrong, skipped: skipped,
-      unattempted: total - responses.size, percentage: pct, passed: passed }
+      unattempted: total - responses.size, percentage: pct, passed: passed,
+      marks: self.class.marks_for(correct, wrong), max_marks: (total * MARKS_CORRECT).round(2),
+      time_taken: time_taken }
   end
 
   private

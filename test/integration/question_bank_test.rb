@@ -44,4 +44,26 @@ class QuestionBankTest < ActionDispatch::IntegrationTest
     get edit_question_path(questions(:one))
     assert_response :success
   end
+
+  test "a single question can be practised from the question bank" do
+    sign_in_as users(:one)
+    assert_difference -> { users(:one).user_responses.count }, 1 do
+      post question_bank_answer_path, params: { question_id: questions(:one).id, answer_choice: "a", duration_seconds: 12 }
+    end
+    assert_redirected_to question_bank_topic_path(name: "Physics", anchor: "q-#{questions(:one).id}")
+    follow_redirect!
+    assert_match "✓ Correct!", response.body
+    assert_match "Attempted 1 time", response.body
+    assert_nil users(:one).user_responses.last.test_session_token
+  end
+
+  test "student sees their rank on a submitted test" do
+    sign_in_as users(:one)
+    post start_test_dashboard_path, params: { test_session_id: test_sessions(:one).id }
+    attempt = users(:one).test_attempts.last
+    post finish_test_dashboard_path, params: { token: attempt.token }
+    follow_redirect!
+    assert_match "Your rank", response.body
+    assert_match "#1", response.body
+  end
 end

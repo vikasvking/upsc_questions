@@ -44,7 +44,7 @@
       </div>
       <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">
         <% if cmp[:rank] %>
-          Your rank: <strong class="text-slate-900 dark:text-white">#<%= cmp[:rank] %></strong> of <%= cmp[:students] %> students (by questions solved).
+          Your rank: <strong class="text-slate-900 dark:text-white">#<%= cmp[:rank] %></strong> of <%= cmp[:students] %> students.
         <% else %>
           Answer a few questions to get a rank.
         <% end %>
@@ -72,7 +72,10 @@
         </tbody>
       </table>
     </div>
-    <p class="mt-4 text-[10px] text-slate-400">Top <%= Leaderboard::TOP_N %> = students with the most questions solved. Green = better than the toppers' average, red = behind it.</p>
+    <details class="mt-4 text-[10px] text-slate-500 dark:text-slate-400">
+      <summary class="cursor-pointer font-bold">How rank score works</summary>
+      <p class="mt-1 leading-relaxed">Each question you solve earns points by the try you first got it right: 1st try 10, 2nd try 6, later 3. Plus up to 2 bonus points for speed (full at 30 s or less, none at 2 min). Top <%= Leaderboard::TOP_N %> = highest rank scores. Green = better than the toppers' average, red = behind it.</p>
+    </details>
   </div>
 
   <!-- Card 3: Focus suggestion (rule-based: weakest topic, or first one not started) -->

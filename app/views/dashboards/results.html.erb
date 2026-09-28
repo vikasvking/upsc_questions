@@ -21,6 +21,24 @@
       <div class="rounded-xl bg-emerald-50 dark:bg-emerald-950/40 p-3 border border-emerald-200 dark:border-emerald-900/40 text-xs text-emerald-800 dark:text-emerald-300 font-bold"><%= notice %></div>
     <% end %>
 
+    <% if @my_result %>
+      <div class="rounded-2xl bg-gradient-to-br from-amber-50 to-white dark:from-amber-950/30 dark:to-slate-950 border border-amber-200 dark:border-amber-900/50 p-5 flex flex-wrap items-center gap-6">
+        <div>
+          <p class="text-[10px] font-bold uppercase tracking-widest text-amber-700 dark:text-amber-400">Your rank</p>
+          <p class="text-4xl font-black text-slate-900 dark:text-white"><%= @my_result.rank <= 3 ? %w[🥇 🥈 🥉][@my_result.rank - 1] : "" %> #<%= @my_result.rank %> <span class="text-base font-bold text-slate-500">of <%= @ranked_count %></span></p>
+        </div>
+        <div>
+          <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Marks</p>
+          <p class="text-2xl font-black text-slate-900 dark:text-white"><%= marks_text(@my_result.marks) %> <span class="text-sm font-bold text-slate-500">/ <%= marks_text(@my_result.max_marks) %></span></p>
+        </div>
+        <div>
+          <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Time taken</p>
+          <p class="text-2xl font-black text-slate-900 dark:text-white"><%= duration_text(@my_result.time_taken) %></p>
+        </div>
+        <p class="basis-full text-[11px] text-slate-500">Marks: +2 correct, −0.66 wrong, 0 skipped. Equal marks → less time ranks higher. Your rank can change as more students submit.</p>
+      </div>
+    <% end %>
+
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
       <div class="bg-emerald-50/40 dark:bg-emerald-950/10 p-5 rounded-2xl border border-emerald-100 dark:border-emerald-900/40">
         <p class="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Correct</p>

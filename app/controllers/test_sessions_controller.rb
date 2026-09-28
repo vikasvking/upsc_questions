@@ -22,30 +22,15 @@ class TestSessionsController < ApplicationController
   end
 
   # Results for one test: one row per student attempt
+  # Results for one test, ranked by marks then time
   def show
-    attempts = @test_session.test_attempts.includes(:user).to_a
-    attempts.select(&:expired?).each(&:finish!)
-
-    @in_progress_count = attempts.count { |a| !a.finished? }
-
-    @student_performance_list = attempts.select(&:finished?).map do |attempt|
-      s = attempt.score_summary
-      { email: attempt.user.email_address, correct: s[:correct], total: s[:total],
-        percentage: s[:percentage], passed: s[:passed], submitted_at: attempt.finished_at }
-    end.sort_by { |row| -row[:percentage] }
-
-    @total_participants = @student_performance_list.size
-    @class_average_pct =
-      @total_participants.positive? ? (@student_performance_list.sum { |r| r[:percentage] } / @total_participants).round(1) : 0.0
-
-    top = @student_performance_list.first
-    @topper_email =
-      if top && top[:percentage].positive?
-        @student_performance_list.select { |r| r[:percentage] == top[:percentage] }
-                                 .map { |r| "#{r[:email]} (#{r[:percentage]}%)" }.join(", ")
-      else
-        "No submissions yet"
-      end
+    @results = @test_session.rankings
+    @in_progress_count = @test_session.test_attempts.in_progress.count
+    @total_participants = @results.size
+    @class_average_marks = @results.any? ? (@results.sum(&:marks) / @results.size).round(2) : 0.0
+    @class_average_pct = @results.any? ? (@results.sum(&:percentage) / @results.size).round(1) : 0.0
+    toppers = @results.select { |r| r.rank == 1 && r.marks.positive? }
+    @topper_email = toppers.any? ? toppers.map { |r| "#{r.user.email_address} (#{r.marks} marks)" }.join(", ") : "No submissions yet"
   end
 
   def new

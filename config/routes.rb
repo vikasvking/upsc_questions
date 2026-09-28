@@ -5,6 +5,7 @@ Rails.application.routes.draw do
   get "dashboard", to: "dashboards#show", as: :dashboard
   get "question_bank", to: "questionbanks#show", as: :question_bank
   get "question_bank/topic", to: "questionbanks#topic", as: :question_bank_topic
+  post "question_bank/answer", to: "questionbanks#answer", as: :question_bank_answer
 
   # Teacher tests (now includes :update, which was missing and broke "Edit Paper")
   resources :test_sessions, only: [:index, :new, :create, :show, :edit, :update] do

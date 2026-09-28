@@ -125,6 +125,13 @@ class DashboardsController < ApplicationController
     @summary   = @attempt.score_summary
     @correct_count = @summary[:correct]
     @wrong_count   = @summary[:wrong]
+
+    # Rank among everyone who has submitted this teacher test so far
+    if @attempt.test_session
+      ranking = @attempt.test_session.rankings
+      @my_result = ranking.find { |r| r.attempt.id == @attempt.id }
+      @ranked_count = ranking.size
+    end
   end
 
   private
@@ -133,6 +140,16 @@ class DashboardsController < ApplicationController
   def load_card_data(tests)
     ids = tests.map(&:id)
     @my_attempts_by_test = Current.user.test_attempts.where(test_session_id: ids).index_by(&:test_session_id)
+
+    # My rank on each test I have submitted: { test_id => [rank, number of students] }
+    @ranks_by_test = {}
+    tests.each do |t|
+      mine = @my_attempts_by_test[t.id]
+      next unless mine&.finished? || mine&.expired?
+      ranking = t.rankings
+      me = ranking.find { |r| r.attempt.id == mine.id }
+      @ranks_by_test[t.id] = [me.rank, ranking.size] if me
+    end
     @subjects_by_test = TestQuestion.joins(:question)
                                     .where(test_session_id: ids)
                                     .distinct

@@ -31,6 +31,41 @@ class TestSession < ApplicationRecord
 
   def available_now? = window_status == :live
 
+  Result = Struct.new(:attempt, :user, :rank, :correct, :wrong, :skipped, :unattempted, :total,
+                      :marks, :max_marks, :percentage, :passed, :time_taken, keyword_init: true)
+
+  # Submitted attempts ranked UPSC-style: marks (+2 correct, -0.66 wrong, 0 skipped) high to low,
+  # then less time taken, then earlier submission. Equal marks and time share a rank (1, 2, 2, 4).
+  # Uses 3 queries no matter how many students took the test.
+  def rankings
+    test_attempts.in_progress.select(&:expired?).each(&:finish!)
+
+    attempts = test_attempts.finished.includes(:user).to_a
+    qids     = ordered_questions.pluck(:id)
+    total    = qids.size
+    latest   = UserResponse.where(test_session_token: attempts.map(&:token), question_id: qids)
+                           .order(:updated_at)
+                           .index_by { |r| [r.test_session_token, r.question_id] }
+
+    results = attempts.map do |a|
+      answers = qids.filter_map { |qid| latest[[a.token, qid]] }
+      correct = answers.count(&:is_correct)
+      skipped = answers.count { |r| r.chosen_option == "SKIPPED" }
+      wrong   = answers.size - correct - skipped
+      pct     = total.positive? ? (correct * 100.0 / total).round(1) : 0.0
+      Result.new(attempt: a, user: a.user, correct: correct, wrong: wrong, skipped: skipped,
+                 unattempted: total - answers.size, total: total,
+                 marks: TestAttempt.marks_for(correct, wrong), max_marks: (total * TestAttempt::MARKS_CORRECT).round(2),
+                 percentage: pct, passed: pct >= pass_mark_percentage, time_taken: a.time_taken)
+    end
+
+    results.sort_by! { |r| [-r.marks, r.time_taken || Float::INFINITY, r.attempt.finished_at] }
+    results.each_with_index do |r, i|
+      prev = results[i - 1] if i.positive?
+      r.rank = prev && prev.marks == r.marks && prev.time_taken == r.time_taken ? prev.rank : i + 1
+    end
+  end
+
   # Questions in the order the teacher added them
   def ordered_questions
     questions.reorder("test_questions.id ASC")
