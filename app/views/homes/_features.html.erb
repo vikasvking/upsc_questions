@@ -1,28 +1,35 @@
-<div class="bg-slate-50 dark:bg-slate-950 py-24 border-t border-slate-100 dark:border-slate-900 transition-colors duration-200">
-  <div class="mx-auto max-w-6xl px-6 lg:px-8">
-    <div class="mx-auto max-w-2xl text-center mb-16">
-      <h2 class="text-base font-bold text-brand-800 dark:text-brand-400">Engineered for Success</h2>
-      <p class="mt-2 text-3xl font-semibold text-slate-900 dark:text-white sm:text-4xl">Systematic Performance Matrices</p>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      <div class="bg-white dark:bg-slate-900 p-8 rounded-2xl border border-slate-200/60 dark:border-slate-800 shadow-sm">
-        <div class="text-3xl mb-4">📑</div>
-        <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">15 Years Historical PYQs</h3>
-        <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">Every question organized by year and syllabus subsection with instant tracking vectors.</p>
-      </div>
-
-      <div class="bg-white dark:bg-slate-900 p-8 rounded-2xl border border-slate-200/60 dark:border-slate-800 shadow-sm">
-        <div class="text-3xl mb-4">🧩</div>
-        <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">Subject & Topic Performance Matrix</h3>
-        <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">Drill deep into your execution data. Filter trends across Economy, History, and specific sub-topics.</p>
-      </div>
-
-      <div class="bg-white dark:bg-slate-900 p-8 rounded-2xl border border-slate-200/60 dark:border-slate-800 shadow-sm">
-        <div class="text-3xl mb-4">🤖</div>
-        <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">AI-Driven Remedial Focus</h3>
-        <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">Our system recognizes error clusters and builds daily custom practices targeting weak areas.</p>
-      </div>
-    </div>
+<section id="features" class="mx-auto max-w-6xl px-6 py-20 scroll-mt-16">
+  <div class="max-w-2xl">
+    <h2 class="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">How it works</h2>
+    <p class="mt-3 text-slate-600 dark:text-slate-400">Three steps, every day. The app keeps score so you can focus on learning.</p>
   </div>
-</div>
+
+  <ol class="mt-10 grid md:grid-cols-3 gap-6">
+    <% [
+         ["1", "Practise by topic", "Pick a subject from the Question Bank. Answer one question or a whole set, and read the explanation right after."],
+         ["2", "Take timed tests", "Start open tests or enter your teacher's PIN. Tests submit themselves when time runs out, with UPSC-style marking."],
+         ["3", "See where you stand", "Get your rank on every test and a rank score across the platform, and compare yourself with the top 10."]
+       ].each do |n, title, text| %>
+      <li class="rounded-2xl bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 p-6">
+        <span class="grid h-8 w-8 place-items-center rounded-full bg-brand-50 dark:bg-brand-950 text-sm font-semibold text-brand-700 dark:text-brand-300"><%= n %></span>
+        <h3 class="mt-4 font-semibold text-slate-900 dark:text-white"><%= title %></h3>
+        <p class="mt-2 text-sm text-slate-600 dark:text-slate-400 leading-relaxed"><%= text %></p>
+      </li>
+    <% end %>
+  </ol>
+
+  <div class="mt-16 grid sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-10">
+    <% [
+         ["📚", "Every exam, one place", "UPSC, SSC, Banking, CBSE and JEE questions, organised by exam, year and topic."],
+         ["🧩", "Topic progress", "A topic is complete when every question in it is answered correctly, and you can see exactly which ones are left."],
+         ["🔥", "Daily streak", "Aim for 25 questions a day. Your week at a glance keeps you consistent."],
+         ["🎯", "Focus next", "The dashboard points you to your weakest topic, so practice time goes where it counts."]
+       ].each do |icon, title, text| %>
+      <div>
+        <p class="text-2xl"><%= icon %></p>
+        <h3 class="mt-3 font-semibold text-slate-900 dark:text-white"><%= title %></h3>
+        <p class="mt-1.5 text-sm text-slate-600 dark:text-slate-400 leading-relaxed"><%= text %></p>
+      </div>
+    <% end %>
+  </div>
+</section>

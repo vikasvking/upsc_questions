@@ -1,21 +1,27 @@
-<div class="mx-auto md:w-2/3 w-full">
-  <% if alert = flash[:alert] %>
-    <p class="py-2 px-3 bg-red-50 mb-5 text-red-500 font-medium rounded-lg inline-block" id="alert"><%= alert %></p>
-  <% end %>
-
-  <h1 class="font-bold text-4xl">Update your password</h1>
-
-  <%= form_with url: password_path(params[:token]), method: :put, class: "contents" do |form| %>
-    <div class="my-5">
-      <%= form.password_field :password, required: true, autocomplete: "new-password", placeholder: "Enter new password", maxlength: 72, class: "block shadow-sm rounded-md border border-gray-400 focus:outline-solid focus:outline-blue-600 px-3 py-2 mt-2 w-full" %>
+<div class="min-h-[calc(100vh-4rem)] flex flex-col justify-center px-6 py-12">
+  <div class="mx-auto w-full max-w-sm">
+    <div class="text-center">
+      <a href="<%= root_path %>" class="inline-grid h-10 w-10 place-items-center rounded-xl bg-brand-700 text-white font-semibold">R</a>
+      <h1 class="mt-5 text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">Set a new password</h1>
+      <p class="mt-2 text-sm text-slate-500">Choose a password you haven't used here before.</p>
     </div>
 
-    <div class="my-5">
-      <%= form.password_field :password_confirmation, required: true, autocomplete: "new-password", placeholder: "Repeat new password", maxlength: 72, class: "block shadow-sm rounded-md border border-gray-400 focus:outline-solid focus:outline-blue-600 px-3 py-2 mt-2 w-full" %>
-    </div>
+    <div class="mt-8 rounded-2xl bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 shadow-sm px-6 py-7">
+      <% if alert = flash[:alert] %>
+        <div id="alert" class="mb-5 rounded-lg bg-red-50 dark:bg-red-950/40 px-3 py-2.5 text-sm text-red-800 dark:text-red-300 ring-1 ring-red-200 dark:ring-red-900/50"><%= alert %></div>
+      <% end %>
 
-    <div class="inline">
-      <%= form.submit "Save", class: "w-full sm:w-auto text-center rounded-md px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white inline-block font-medium cursor-pointer" %>
+      <%= form_with url: password_path(params[:token]), method: :put, class: "space-y-5" do |form| %>
+        <div>
+          <%= form.label :password, "New password", class: "block text-sm font-medium text-slate-700 dark:text-slate-300" %>
+          <%= form.password_field :password, required: true, autocomplete: "new-password", maxlength: 72, class: "mt-1.5 block w-full rounded-lg border-0 py-2.5 px-3 ring-1 ring-inset ring-slate-300 dark:ring-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-brand-600 bg-white dark:bg-slate-950 text-slate-900 dark:text-white" %>
+        </div>
+        <div>
+          <%= form.label :password_confirmation, "Repeat new password", class: "block text-sm font-medium text-slate-700 dark:text-slate-300" %>
+          <%= form.password_field :password_confirmation, required: true, autocomplete: "new-password", maxlength: 72, class: "mt-1.5 block w-full rounded-lg border-0 py-2.5 px-3 ring-1 ring-inset ring-slate-300 dark:ring-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-brand-600 bg-white dark:bg-slate-950 text-slate-900 dark:text-white" %>
+        </div>
+        <%= form.submit "Save new password", class: "w-full rounded-lg bg-brand-700 px-3 py-2.5 text-sm font-medium text-white hover:bg-brand-800 cursor-pointer" %>
+      <% end %>
     </div>
-  <% end %>
+  </div>
 </div>

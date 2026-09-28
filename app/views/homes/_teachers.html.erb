@@ -1,0 +1,39 @@
+<section id="teachers" class="bg-white dark:bg-slate-900 border-y border-slate-200/70 dark:border-slate-800 scroll-mt-16">
+  <div class="mx-auto max-w-6xl px-6 py-20 grid lg:grid-cols-2 gap-12 items-center">
+    <div>
+      <p class="text-sm font-medium text-brand-700 dark:text-brand-300">For teachers and coaching institutes</p>
+      <h2 class="mt-2 text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">Run your own test series</h2>
+      <p class="mt-3 text-slate-600 dark:text-slate-400">Everything you need to test a class, without spreadsheets of marks.</p>
+      <ul class="mt-8 space-y-4">
+        <% [
+             ["Upload questions from Excel", "Or add them one at a time. They go straight into the question bank."],
+             ["Open or PIN tests", "Make a test free for everyone, or share a PIN with your class only."],
+             ["Time windows", "Set when a test opens and closes. Late starters only get the time that's left."],
+             ["Ranked results", "Marks, time taken, pass/fail and the class topper for every test."]
+           ].each do |title, text| %>
+          <li class="flex gap-3">
+            <span class="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-emerald-100 text-emerald-700 text-xs">✓</span>
+            <div><p class="font-medium text-slate-900 dark:text-white"><%= title %></p><p class="text-sm text-slate-600 dark:text-slate-400"><%= text %></p></div>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+
+    <!-- Example results table (illustration) -->
+    <div class="rounded-2xl ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden bg-white dark:bg-slate-950">
+      <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+        <p class="font-semibold text-slate-900 dark:text-white">Weekly Polity Mock · Results</p>
+        <span class="rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-xs text-slate-600 dark:text-slate-300">PIN K7Q2XM</span>
+      </div>
+      <table class="w-full text-sm">
+        <thead class="text-xs text-slate-500"><tr><th class="px-5 py-2 text-left font-normal">Rank</th><th class="py-2 text-left font-normal">Student</th><th class="py-2 text-right font-normal">Marks</th><th class="px-5 py-2 text-right font-normal">Time</th></tr></thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+          <% [["🥇", "priya.s", "38", "21m 10s"], ["🥈", "arjun.k", "38", "24m 02s"], ["🥉", "asha.v", "37.3", "19m 45s"], ["#4", "rahul.m", "33.3", "27m 30s"]].each do |r, name, marks, time| %>
+            <tr><td class="px-5 py-2.5"><%= r %></td><td class="py-2.5"><%= name %></td><td class="py-2.5 text-right tabular-nums"><%= marks %> / 40</td><td class="px-5 py-2.5 text-right tabular-nums text-slate-500"><%= time %></td></tr>
+          <% end %>
+        </tbody>
+      </table>
+      <p class="px-5 py-3 text-xs text-slate-400 border-t border-slate-100 dark:border-slate-800">Example · +2 correct, −0.66 wrong · equal marks: faster ranks higher</p>
+    </div>
+  </div>
+</section>

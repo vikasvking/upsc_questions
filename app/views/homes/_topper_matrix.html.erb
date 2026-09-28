@@ -1,37 +1,31 @@
 <% rows = Leaderboard.rows %>
-<% top = Leaderboard.average(rows.first(Leaderboard::TOP_N)) %>
-<% all = Leaderboard.average(rows) %>
-<div class="bg-white dark:bg-slate-900 py-20 transition-colors duration-200">
-  <div class="mx-auto max-w-6xl px-6 lg:px-8">
-    <div class="mx-auto max-w-3xl text-center mb-12">
-      <h2 class="text-base font-bold text-brand-800 dark:text-brand-400">Benchmark Your Score</h2>
-      <p class="mt-2 text-3xl font-semibold text-slate-900 dark:text-white sm:text-4xl">How Toppers Practise</p>
-      <p class="mt-4 text-sm text-slate-600 dark:text-slate-400">Live numbers from students on this platform. Sign in to see where you stand.</p>
+<% if rows.size >= 3 %>
+  <% top = Leaderboard.average(rows.first(Leaderboard::TOP_N)) %>
+  <% all = Leaderboard.average(rows) %>
+  <section class="mx-auto max-w-6xl px-6 py-20">
+    <div class="max-w-2xl">
+      <h2 class="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">How the toppers practise</h2>
+      <p class="mt-3 text-slate-600 dark:text-slate-400">Live numbers from students on Rankwise. Sign in to see where you stand.</p>
     </div>
-
-    <% if rows.any? %>
-      <div class="mx-auto max-w-3xl overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-        <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-sm">
-          <thead class="bg-slate-50 dark:bg-slate-950 text-left text-xs font-bold text-slate-500">
+    <div class="mt-8 max-w-3xl overflow-x-auto rounded-2xl bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800">
+      <table class="min-w-full text-sm">
+        <thead class="text-left text-xs text-slate-500">
+          <tr>
+            <th class="px-6 py-3 font-normal"></th>
+            <th class="px-6 py-3 font-normal text-right">Top <%= [rows.size, Leaderboard::TOP_N].min %> average</th>
+            <th class="px-6 py-3 font-normal text-right">All <%= rows.size %> students</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+          <% Leaderboard::METRICS.each do |key, label, _| %>
             <tr>
-              <th class="px-6 py-3">Metric</th>
-              <th class="px-6 py-3 text-right">Top <%= [rows.size, Leaderboard::TOP_N].min %> average</th>
-              <th class="px-6 py-3 text-right">All students (<%= rows.size %>)</th>
+              <td class="px-6 py-3"><%= label %></td>
+              <td class="px-6 py-3 text-right font-semibold text-brand-700 dark:text-brand-300 tabular-nums"><%= metric_value(key, top[key]) %></td>
+              <td class="px-6 py-3 text-right tabular-nums"><%= metric_value(key, all[key]) %></td>
             </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
-            <% Leaderboard::METRICS.each do |key, label, _| %>
-              <tr>
-                <td class="px-6 py-3 font-semibold"><%= label %></td>
-                <td class="px-6 py-3 text-right font-semibold text-brand-800 dark:text-brand-400"><%= metric_value(key, top[key]) %></td>
-                <td class="px-6 py-3 text-right"><%= metric_value(key, all[key]) %></td>
-              </tr>
-            <% end %>
-          </tbody>
-        </table>
-      </div>
-    <% else %>
-      <p class="text-center text-sm text-slate-500">Benchmarks appear here once students start practising.</p>
-    <% end %>
-  </div>
-</div>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+<% end %>

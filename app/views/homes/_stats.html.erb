@@ -1,0 +1,12 @@
+<% if @site_stats && @site_stats[:questions].positive? %>
+  <section class="border-y border-slate-200/70 dark:border-slate-800 bg-white dark:bg-slate-900">
+    <dl class="mx-auto max-w-6xl px-6 py-8 grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
+      <% [["Practice questions", @site_stats[:questions]], ["Topics", @site_stats[:topics]], ["Tests created", @site_stats[:tests]], ["Students", @site_stats[:students]]].each do |label, value| %>
+        <div>
+          <dt class="text-sm text-slate-500"><%= label %></dt>
+          <dd class="mt-1 text-2xl font-semibold text-slate-900 dark:text-white tabular-nums"><%= number_with_delimiter(value) %></dd>
+        </div>
+      <% end %>
+    </dl>
+  </section>
+<% end %>

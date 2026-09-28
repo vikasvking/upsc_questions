@@ -1,29 +1,27 @@
-<header class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-850 fixed inset-x-0 top-0 z-50 transition-colors duration-200">
-  <nav class="mx-auto flex max-w-6xl items-center justify-between p-4 lg:px-8" aria-label="Global">
-    <!-- Branding -->
-    <div class="flex lg:flex-1">
-      <%= link_to root_path, class: "-m-1.5 p-1.5 flex items-center gap-x-2" do %>
-        <span class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-          UPSC<span class="text-brand-800 dark:text-brand-400">Officer</span>
-        </span>
-      <% end %>
+<header class="fixed inset-x-0 top-0 z-30 h-16 bg-white/85 dark:bg-slate-950/85 backdrop-blur border-b border-slate-200/70 dark:border-slate-800">
+  <nav class="mx-auto max-w-6xl h-full px-6 flex items-center justify-between gap-4" aria-label="Main">
+    <a href="<%= root_path %>" class="flex items-center gap-2">
+      <span class="h-8 w-8 rounded-lg bg-brand-700 text-white grid place-items-center text-sm font-semibold">R</span>
+      <span class="font-semibold text-slate-900 dark:text-white">Rankwise</span>
+    </a>
+
+    <div class="hidden md:flex items-center gap-6 text-sm text-slate-600 dark:text-slate-400">
+      <a href="<%= root_path %>#features" class="hover:text-slate-900 dark:hover:text-white">How it works</a>
+      <a href="<%= root_path %>#teachers" class="hover:text-slate-900 dark:hover:text-white">For teachers</a>
+      <a href="<%= root_path %>#pricing" class="hover:text-slate-900 dark:hover:text-white">Pricing</a>
     </div>
 
-    <!-- Right Side Actions & Dark Mode Toggle -->
-    <div class="flex flex-1 justify-end items-center gap-x-6">
-  <!-- Theme Toggle Button -->
-  <button id="theme-toggle" class="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none" aria-label="Toggle dark mode">
-    <svg id="theme-toggle-sun" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 14.121a1 1 0 010-1.414l.707-.707a1 1 0 111.414 1.414l-.707.707a1 1 0 01-1.414 0zm-9.9-4.242a1 1 0 011.415 0l.707.707a1 1 0 11-1.414 1.414l-.707-.707a1 1 0 010-1.414zm1.414-5.657a1 1 0 000 1.414l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 0z"></path></svg>
-    <svg id="theme-toggle-moon" class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
-  </button>
-
-  <% if authenticated? %>
-    <%= link_to "Dashboard", dashboard_path, class: "text-sm font-semibold text-slate-900 dark:text-slate-300 hover:text-brand-800" %>
-    <%= link_to "Sign Out", session_path, data: { turbo_method: :delete }, class: "text-sm font-semibold leading-6 text-slate-900 dark:text-slate-300 hover:text-brand-800" %>
-  <% else %>
-    <%= link_to "Log In", new_session_path, class: "text-sm font-semibold leading-6 text-slate-900 dark:text-slate-300 hover:text-brand-800" %>
-    <%= link_to "Sign Up", new_registration_path, class: "rounded-md bg-brand-800 hover:bg-brand-900 dark:bg-brand-700 dark:hover:bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors" %>
-  <% end %>
-</div>
+    <div class="flex items-center gap-2 sm:gap-3">
+      <button id="theme-toggle" class="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer" aria-label="Toggle dark mode">
+        <svg id="theme-toggle-sun" class="hidden h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.36 6.36l-.7-.7M6.34 6.34l-.7-.7m12.72 0l-.7.7M6.34 17.66l-.7.7M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+        <svg id="theme-toggle-moon" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.35 15.35A9 9 0 018.65 3.65 9 9 0 1020.35 15.35z"/></svg>
+      </button>
+      <% if authenticated? %>
+        <%= link_to "Dashboard", dashboard_path, class: "rounded-lg bg-brand-700 px-4 py-2 text-sm font-medium text-white hover:bg-brand-800" %>
+      <% else %>
+        <%= link_to "Log in", new_session_path, class: "px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white" %>
+        <%= link_to "Sign up", new_registration_path, class: "rounded-lg bg-brand-700 px-4 py-2 text-sm font-medium text-white hover:bg-brand-800" %>
+      <% end %>
+    </div>
   </nav>
 </header>

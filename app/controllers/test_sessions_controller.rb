@@ -103,7 +103,7 @@ class TestSessionsController < ApplicationController
       ["Physics", "What is the formula of Acceleration?", "MA", "MV", "v/t", "MV2", "C", "Acceleration = Velocity / Time."]
     ].map { |row| row.join("\t") }.join("\n")
 
-    send_data xls_content, filename: "bulk_test_creation_template.xls", type: "application/vnd.ms-excel; charset=utf-8"
+    send_data xls_content, filename: "rankwise_test_template.xls", type: "application/vnd.ms-excel; charset=utf-8"
   end
 
   def join_form
