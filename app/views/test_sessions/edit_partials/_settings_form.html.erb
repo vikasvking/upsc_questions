@@ -1,22 +1,72 @@
+<% input_class = "mt-1.5 block w-full rounded-xl border-0 py-2.5 px-3 bg-white dark:bg-slate-950 ring-1 ring-inset ring-slate-200 dark:ring-slate-800 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-800" %>
+<% label_class = "text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider" %>
+
+<% if @test_session.errors.any? %>
+  <div class="rounded-xl bg-red-50 dark:bg-red-950/40 p-4 border border-red-200 dark:border-red-900/50">
+    <ul class="list-disc pl-5 text-xs text-red-800 dark:text-red-400 space-y-1">
+      <% @test_session.errors.full_messages.each do |msg| %>
+        <li><%= msg %></li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>
+
 <div class="bg-slate-50 dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-4 shadow-sm">
   <div class="sm:col-span-2">
-    <%= f.label :title, "Examination Paper Title", class: "text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider" %>
-    <%= f.text_field :title, required: true, class: "mt-1.5 block w-full rounded-xl border-0 py-2.5 px-3 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-rose-800" %>
+    <%= f.label :title, "Test Title", class: label_class %>
+    <%= f.text_field :title, required: true, placeholder: "e.g., Weekly Polity Mock", class: input_class %>
   </div>
 
   <div>
-    <%= f.label :exam_type, "Exam Category Portfolio Target", class: "text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider" %>
-    <%= f.select :exam_type, [["UPSC Civil Services", "UPSC"], ["SSC CGL", "SSC"], ["CBSE Class X", "CBSE"], ["IIT JEE Main", "JEE"]], {}, class: "mt-1.5 block w-full rounded-xl border-0 py-2.5 px-3 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-sm text-slate-900 dark:text-white" %>
+    <%= f.label :exam_type, "Exam", class: label_class %>
+    <%= f.select :exam_type, [["UPSC Civil Services", "UPSC"], ["SSC CGL", "SSC"], ["CBSE Class X", "CBSE"], ["IIT JEE Main", "JEE"]], {}, class: input_class %>
   </div>
 
   <div class="grid grid-cols-2 gap-3">
     <div>
-      <%= f.label :duration_minutes, "Time (Minutes)", class: "text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider" %>
-      <%= f.number_field :duration_minutes, class: "mt-1.5 block w-full rounded-xl border-0 py-2.5 px-3 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-sm text-slate-900 dark:text-white" %>
+      <%= f.label :duration_minutes, "Time limit (min)", class: label_class %>
+      <%= f.number_field :duration_minutes, min: 1, required: true, class: input_class %>
     </div>
     <div>
-      <%= f.label :pass_mark_percentage, "Passing Mark %", class: "text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider" %>
-      <%= f.number_field :pass_mark_percentage, class: "mt-1.5 block w-full rounded-xl border-0 py-2.5 px-3 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-sm text-slate-900 dark:text-white" %>
+      <%= f.label :pass_mark_percentage, "Pass mark %", class: label_class %>
+      <%= f.number_field :pass_mark_percentage, min: 0, max: 100, required: true, class: input_class %>
+    </div>
+  </div>
+
+  <!-- Who can take it -->
+  <div class="sm:col-span-2 border-t border-slate-200 dark:border-slate-800 pt-4">
+    <p class="<%= label_class %>">Access</p>
+    <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <label class="flex items-start gap-3 p-3 rounded-xl bg-white dark:bg-slate-950 ring-1 ring-slate-200 dark:ring-slate-800 cursor-pointer has-[:checked]:ring-2 has-[:checked]:ring-brand-700">
+        <%= f.radio_button :access_type, "open", class: "mt-0.5 accent-brand-700" %>
+        <span>
+          <span class="block text-sm font-bold text-slate-900 dark:text-white">🟢 Open (free)</span>
+          <span class="block text-xs text-slate-500">Every student sees it on their dashboard and can start it. No PIN.</span>
+        </span>
+      </label>
+      <label class="flex items-start gap-3 p-3 rounded-xl bg-white dark:bg-slate-950 ring-1 ring-slate-200 dark:ring-slate-800 cursor-pointer has-[:checked]:ring-2 has-[:checked]:ring-brand-700">
+        <%= f.radio_button :access_type, "pin", class: "mt-0.5 accent-brand-700" %>
+        <span>
+          <span class="block text-sm font-bold text-slate-900 dark:text-white">🔐 PIN required</span>
+          <span class="block text-xs text-slate-500">Students must enter the test's PIN, which you share with them.</span>
+        </span>
+      </label>
+    </div>
+  </div>
+
+  <!-- When it can be taken -->
+  <div class="sm:col-span-2 border-t border-slate-200 dark:border-slate-800 pt-4">
+    <p class="<%= label_class %>">Availability window <span class="normal-case font-medium">(optional, India time)</span></p>
+    <p class="text-xs text-slate-500 mt-1">Leave both empty to allow the test any time. Students can only start between these times, and a test started late ends at the closing time.</p>
+    <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <%= f.label :starts_at, "Opens at", class: label_class %>
+        <%= f.datetime_field :starts_at, class: input_class %>
+      </div>
+      <div>
+        <%= f.label :ends_at, "Closes at", class: label_class %>
+        <%= f.datetime_field :ends_at, class: input_class %>
+      </div>
     </div>
   </div>
 </div>

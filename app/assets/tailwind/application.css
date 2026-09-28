@@ -1,2 +1,49 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
+
+/*
+  "brand" colour = the colour of whoever is logged in.
+  Use bg-brand-800, text-brand-400 etc. in views.
+  Students and visitors: rose (burgundy). Teachers: indigo. Admins: emerald.
+*/
+@theme {
+  --color-brand-50:  var(--color-rose-50);
+  --color-brand-100: var(--color-rose-100);
+  --color-brand-200: var(--color-rose-200);
+  --color-brand-300: var(--color-rose-300);
+  --color-brand-400: var(--color-rose-400);
+  --color-brand-500: var(--color-rose-500);
+  --color-brand-600: var(--color-rose-600);
+  --color-brand-700: var(--color-rose-700);
+  --color-brand-800: var(--color-rose-800);
+  --color-brand-900: var(--color-rose-900);
+  --color-brand-950: var(--color-rose-950);
+}
+
+[data-role="teacher"] {
+  --color-brand-50:  var(--color-indigo-50);
+  --color-brand-100: var(--color-indigo-100);
+  --color-brand-200: var(--color-indigo-200);
+  --color-brand-300: var(--color-indigo-300);
+  --color-brand-400: var(--color-indigo-400);
+  --color-brand-500: var(--color-indigo-500);
+  --color-brand-600: var(--color-indigo-600);
+  --color-brand-700: var(--color-indigo-700);
+  --color-brand-800: var(--color-indigo-800);
+  --color-brand-900: var(--color-indigo-900);
+  --color-brand-950: var(--color-indigo-950);
+}
+
+[data-role="admin"] {
+  --color-brand-50:  var(--color-emerald-50);
+  --color-brand-100: var(--color-emerald-100);
+  --color-brand-200: var(--color-emerald-200);
+  --color-brand-300: var(--color-emerald-300);
+  --color-brand-400: var(--color-emerald-400);
+  --color-brand-500: var(--color-emerald-500);
+  --color-brand-600: var(--color-emerald-600);
+  --color-brand-700: var(--color-emerald-700);
+  --color-brand-800: var(--color-emerald-800);
+  --color-brand-900: var(--color-emerald-900);
+  --color-brand-950: var(--color-emerald-950);
+}

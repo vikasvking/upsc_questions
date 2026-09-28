@@ -1,79 +1,43 @@
 <script>
-  document.addEventListener("turbo:load", () => {
+  (function () {
     const searchField = document.getElementById("library-search-field");
-    const libraryRows = document.querySelectorAll(".library-row-item");
     const activeContainer = document.getElementById("active-questions-container");
-    const counterElement = document.getElementById("active-selected-counter");
     const masterContainer = document.getElementById("master-library-container");
+    const counter = document.getElementById("active-selected-counter");
 
-    if (searchField && libraryRows.length > 0) {
+    const updateCounter = () => {
+      if (!counter || !activeContainer) return;
+      counter.textContent = activeContainer.querySelectorAll(".question-checkbox:checked").length;
+    };
+
+    // Filter the library by topic or question text
+    if (searchField && masterContainer) {
       searchField.addEventListener("input", (e) => {
         const query = e.target.value.toLowerCase().trim();
-        libraryRows.forEach(row => {
-          const topic = row.querySelector(".filter-topic-token").innerText.toLowerCase();
-          const content = row.querySelector(".filter-content-token").innerText.toLowerCase();
-          if (topic.includes(query) || content.includes(query)) {
-            row.classList.remove("hidden");
-          } else {
-            row.classList.add("hidden");
-          }
+        masterContainer.querySelectorAll(".library-row-item").forEach((row) => {
+          const text = row.querySelector(".filter-topic-token").textContent + " " + row.querySelector(".filter-content-token").textContent;
+          row.classList.toggle("hidden", !text.toLowerCase().includes(query));
         });
       });
     }
 
+    // Ticking a library question moves the card itself into the test list.
+    // Moving the existing element (instead of building HTML from its text) keeps question text safely escaped.
     if (masterContainer && activeContainer) {
       masterContainer.addEventListener("change", (e) => {
-        if (e.target.classList.contains("library-repository-checkbox") && e.target.checked) {
-          const libraryCard = e.target.closest(".library-row-item");
-          if (!libraryCard) return;
+        const box = e.target;
+        if (!box.classList.contains("library-repository-checkbox") || !box.checked) return;
 
-          const originalCheckbox = libraryCard.querySelector(".library-repository-checkbox");
-          const qId = originalCheckbox ? originalCheckbox.value : e.target.value;
+        const card = box.closest(".library-row-item");
+        if (!card) return;
 
-          const examType = libraryCard.querySelector(".bg-slate-100") ? libraryCard.querySelector(".bg-slate-100").innerText : "CBSE";
-          const topic = libraryCard.querySelector(".filter-topic-token").innerText;
-          const qNo = libraryCard.querySelector(".font-mono").innerText;
-          const content = libraryCard.querySelector(".filter-content-token").innerText;
-
-          // 🚀 FIX: Input name updated inside the cloned element template below to test_session[question_ids][]
-          const activeCardHtml = `
-            <label id="active-card-q-${qId}" class="flex items-start gap-4 p-4 rounded-xl bg-white dark:bg-slate-900 border border-rose-200/60 dark:border-rose-900/40 cursor-pointer block hover:bg-slate-50/50 transition-colors animate-fadeIn">
-              <div class="mt-1">
-                <input type="checkbox" name="test_session[question_ids][]" value="${qId}" checked="checked" class="accent-rose-800 h-4 w-4 rounded focus:ring-rose-800">
-              </div>
-              <div class="space-y-1.5 flex-1">
-                <div class="flex items-center gap-x-2 flex-wrap gap-y-1">
-                  <span class="inline-block px-2 py-0.5 rounded text-[9px] font-black uppercase bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-400">${examType}</span>
-                  <span class="inline-block px-2 py-0.5 rounded-full text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">${topic}</span>
-                  <span class="text-[10px] font-bold font-mono text-slate-400 ml-auto">${qNo}</span>
-                </div>
-                <p class="text-xs font-semibold text-slate-900 dark:text-white leading-relaxed">${content}</p>
-              </div>
-            </label>
-          `;
-
-          activeContainer.insertAdjacentHTML("beforeend", activeCardHtml);
-
-          libraryCard.style.opacity = "0";
-          setTimeout(() => { libraryCard.remove(); }, 300);
-
-          updateSelectionCounter();
-        }
+        card.classList.remove("library-row-item", "hidden");
+        box.classList.remove("library-repository-checkbox");
+        activeContainer.appendChild(card);
+        updateCounter();
       });
-    }
 
-    function updateSelectionCounter() {
-      if (counterElement) {
-        // 🚀 FIX: Adjusted selector to look for your updated native input array name fields
-        const checkedCount = document.querySelectorAll('input[name="test_session[question_ids][]"]:checked').length;
-        counterElement.innerText = checkedCount;
-      }
+      activeContainer.addEventListener("change", updateCounter);
     }
-
-    if (activeContainer) {
-      activeContainer.addEventListener("change", (e) => {
-        updateSelectionCounter();
-      });
-    }
-  });
+  })();
 </script>

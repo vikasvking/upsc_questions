@@ -7,16 +7,16 @@
         <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">Aspirant Profile</h1>
         <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage your identity, core details, and security metrics.</p>
       </div>
-      <%= link_to "Edit Profile Data 📝", edit_profile_path, class: "rounded-xl bg-rose-800 hover:bg-rose-900 dark:bg-rose-700 dark:hover:bg-rose-600 text-white font-bold text-xs px-4 py-2.5 shadow-md text-center transition-all transform hover:-translate-y-0.5 cursor-pointer" %>
+      <%= link_to "Edit Profile Data 📝", edit_profile_path, class: "rounded-xl bg-brand-800 hover:bg-brand-900 dark:bg-brand-700 dark:hover:bg-brand-600 text-white font-bold text-xs px-4 py-2.5 shadow-md text-center transition-all transform hover:-translate-y-0.5 cursor-pointer" %>
     </div>
 
     <!-- Main Biodata Grid Layout Card -->
     <div class="bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-sm space-y-6">
       <div class="flex items-center gap-x-4 border-b border-slate-200/60 dark:border-slate-800 pb-6">
-        <div class="h-16 w-16 rounded-full bg-rose-800/10 dark:bg-rose-500/10 border border-rose-800/30 flex items-center justify-center text-2xl">👤</div>
+        <div class="h-16 w-16 rounded-full bg-brand-800/10 dark:bg-brand-500/10 border border-brand-800/30 flex items-center justify-center text-2xl">👤</div>
         <div>
           <h3 class="text-lg font-extrabold text-slate-900 dark:text-white"><%= @user.email_address %></h3>
-          <p class="text-xs text-rose-800 dark:text-rose-400 font-bold uppercase mt-0.5 tracking-wider">Verified Account Tier</p>
+          <p class="text-xs text-brand-800 dark:text-brand-400 font-bold uppercase mt-0.5 tracking-wider">Verified Account Tier</p>
         </div>
       </div>
 

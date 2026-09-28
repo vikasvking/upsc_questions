@@ -1,9 +1,18 @@
-# This file should ensure the existence of records required to run the application in every environment (production,
-# development, test). The code here should be idempotent so that it can be executed at any point in every environment.
-# The data can then be loaded with the bin/rails db:seed command (or created alongside the database with db:setup).
-#
-# Example:
-#
-#   ["Action", "Comedy", "Drama", "Horror"].each do |genre_name|
-#     MovieGenre.find_or_create_by!(name: genre_name)
-#   end
+# Creates the first admin and teacher accounts.
+# Run:  ADMIN_EMAIL=you@site.com ADMIN_PASSWORD=secret123 TEACHER_EMAIL=t@site.com TEACHER_PASSWORD=secret123 bin/rails db:seed
+# Safe to run more than once: it only updates the role of existing accounts.
+
+{ "ADMIN" => :admin, "TEACHER" => :teacher }.each do |prefix, role|
+  email    = ENV["#{prefix}_EMAIL"]
+  password = ENV["#{prefix}_PASSWORD"]
+  next if email.blank?
+
+  user = User.find_or_initialize_by(email_address: email.strip.downcase)
+  if user.new_record?
+    raise "#{prefix}_PASSWORD is required to create #{email}" if password.blank?
+    user.password = password
+  end
+  user.role = role
+  user.save!
+  puts "#{role}: #{user.email_address}"
+end

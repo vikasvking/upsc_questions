@@ -20,6 +20,12 @@
         </div>
       <% end %>
 
+      <% if notice %>
+        <div class="mb-4 rounded-md bg-emerald-50 dark:bg-emerald-950/40 p-3 border border-emerald-200 dark:border-emerald-900/50">
+          <p class="text-sm font-medium text-emerald-800 dark:text-emerald-400"><%= notice %></p>
+        </div>
+      <% end %>
+
       <%= form_with url: session_path, class: "space-y-6" do |form| %>
         <div>
           <%= form.label :email_address, "Email Address", class: "block text-sm font-semibold leading-6 text-slate-900 dark:text-slate-200" %>

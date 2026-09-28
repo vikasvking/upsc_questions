@@ -1,143 +1,224 @@
 class DashboardsController < ApplicationController
-  # Runs the global metrics summary computations before handling any active dashboard requests
-  before_action :set_global_dashboard_metrics
-   before_action :ensure_student_access, only: [:show, :start_test, :submit_answer, :skip_question]
-   def show
-   if params[:topic].present?
-     @topic = params[:topic]
+  before_action :ensure_student_access
+  before_action :set_attempt, only: [:arena, :submit_answer, :skip_question, :finish_test, :results]
+  before_action :close_if_time_up, only: [:arena, :submit_answer, :skip_question]
 
-     # Enforce pre-test instruction validation constraints if the user session hasn't initialized the quiz
-     if session[:active_test_topic] != @topic
-       @total_q_count = Question.where(topic: @topic).count
-       render :test_confirmation and return
-     end
-
-     # Load up all questions inside this topic explicitly typecasted via native PostgreSQL integers
-     @questions = Question.where(topic: @topic).order(Arel.sql("q_no::integer ASC"))
-     current_q_no = params[:q_no].presence || 1
-     @question = @questions.find_by(q_no: current_q_no) || @questions.first
-
-     # Securely check if the user has already loaded a choice response map inside this isolated testing block
-     if Current.user && @question
-       @previous_attempt = Current.user.user_responses.where(question: @question, test_session_token: session[:active_test_token]).last
-     end
-
-     render :quiz_arena
-   else
-     # Mode B: Standard Main Dashboard Selection View Panel Hub
-     @streak_days = generate_streak_calendar_data
-
-     # 🚀 NEW METRICS: Gather all platform test options available for the student dashboard
-     @available_subjects = Question.pluck(:topic).uniq.compact
-     @custom_teacher_tests = TestSession.order(created_at: :desc)
-
-     render :show
-   end
- end
-
-
-  # Initializes session tokens and tracking timestamps
-  def start_test
-    topic = params[:topic]
-    session[:active_test_topic] = topic
-    session[:active_test_token] = SecureRandom.hex(8)
-    session[:test_start_time] = Time.current.to_i
-
-    redirect_to dashboard_path(topic: topic)
-  end
-
-  # Receives multiple choice options input, checks validity, and appends rows to user response records
-  def submit_answer
-    @question = Question.find(params[:question_id])
-    chosen = params[:answer_choice]
-
-    if chosen.blank?
-      redirect_to dashboard_path(topic: @question.topic, q_no: @question.q_no), alert: "Please select an option before submitting."
+  # GET /dashboard            -> hub
+  # GET /dashboard?topic=X    -> rules page for a practice topic
+  def show
+    if params[:topic].present?
+      @topic = params[:topic]
+      @total_q_count = Question.where(topic: @topic).count
+      @resume_attempt = Current.user.test_attempts.in_progress.find_by(topic: @topic, test_session_id: nil)
+      render :test_confirmation
       return
     end
 
-    correct_check = (chosen.strip.upcase == @question.correct_answer.strip.upcase)
+    set_global_dashboard_metrics
+    @streak_days = generate_streak_calendar_data
+    @subject_counts = Question.where.not(topic: nil).group(:topic).order(:topic).count
+    @subject_exam_types = Question.where.not(topic: nil).group(:topic).minimum(:exam_type)
 
-    Current.user.user_responses.create!(
-      question: @question,
-      chosen_option: chosen,
-      is_correct: correct_check,
-      duration_seconds: params[:duration_seconds].to_i,
-      test_session_token: session[:active_test_token]
-    )
+    tests = TestSession.includes(:user).newest_first.to_a
+    @open_tests = tests.select(&:open_access?)
+    @pin_tests  = tests.select(&:pin_required?)
+    @my_attempts_by_test = Current.user.test_attempts.where.not(test_session_id: nil).index_by(&:test_session_id)
+  end
 
-    flash[:chosen_answer] = chosen
-    flash[:is_correct_flag] = correct_check
-    flash[:explanation_text] = @question.explanation
+  # GET /dashboard/tests/:id -> rules page for a teacher test
+  def test_intro
+    @test_session = TestSession.find(params[:id])
+    @existing_attempt = Current.user.test_attempts.find_by(test_session: @test_session)
 
-    # Dynamic sequential next lookups leveraging PostgreSQL cast operations
-    next_q = Question.where(topic: @question.topic)
-                     .where("q_no::integer > ?", @question.q_no.to_i)
-                     .order(Arel.sql("q_no::integer ASC"))
-                     .first
+    unless can_access_test?(@test_session)
+      redirect_to join_test_sessions_path, alert: "This test needs a PIN. Enter the code from your teacher."
+      return
+    end
 
-    if next_q
-      redirect_to dashboard_path(topic: @question.topic, q_no: next_q.q_no)
+    @total_q_count = @test_session.questions.count
+    render :test_confirmation
+  end
+
+  # POST /dashboard/start_test (topic=... OR test_session_id=...)
+  def start_test
+    if params[:test_session_id].present?
+      start_teacher_test(TestSession.find(params[:test_session_id]))
     else
-      redirect_to finish_test_dashboard_path(question_id: @question.id), data: { turbo_method: :post }
+      start_practice(params[:topic].to_s)
     end
   end
 
-  # Saves a custom "SKIPPED" flag entry parameter to help your dynamic AI model track avoided modules
+  # GET /dashboard/arena/:token?n=3
+  def arena
+    @questions = @attempt.questions.to_a
+    if @questions.empty?
+      redirect_to dashboard_path, alert: "This test has no questions yet."
+      return
+    end
+
+    @position = params[:n].to_i.clamp(1, @questions.size)
+    @question = @questions[@position - 1]
+    @responses = @attempt.responses_by_question
+    @previous_attempt = @responses[@question.id]
+    render :quiz_arena
+  end
+
+  def submit_answer
+    chosen = params[:answer_choice].to_s.strip.upcase
+    question = find_question_in_attempt
+    return unless question
+
+    unless Question::ANSWER_KEYS.include?(chosen)
+      redirect_to arena_dashboard_path(@attempt.token, n: params[:n]), alert: "Please select an option before submitting."
+      return
+    end
+
+    save_response(question, chosen, chosen == question.correct_answer.to_s.strip.upcase)
+    go_to_next_question(question)
+  end
+
   def skip_question
-    @question = Question.find(params[:question_id])
+    question = find_question_in_attempt
+    return unless question
 
-    Current.user.user_responses.create!(
-      question: @question,
-      chosen_option: "SKIPPED",
-      is_correct: false,
-      duration_seconds: params[:duration_seconds].to_i,
-      test_session_token: session[:active_test_token]
-    )
-
-    next_q = Question.where(topic: @question.topic)
-                     .where("q_no::integer > ?", @question.q_no.to_i)
-                     .order(Arel.sql("q_no::integer ASC"))
-                     .first
-
-    if next_q
-      redirect_to dashboard_path(topic: @question.topic, q_no: next_q.q_no)
-    else
-      redirect_to finish_test_dashboard_path(question_id: @question.id), data: { turbo_method: :post }
-    end
+    save_response(question, "SKIPPED", false)
+    go_to_next_question(question)
   end
 
-  # Finalizes exam execution and tears down active session state cookie logs
   def finish_test
-    completed_topic = session[:active_test_topic]
-    completed_token = session[:active_test_token]
-
-    session[:active_test_topic] = nil
-    session[:active_test_token] = nil
-    session[:test_start_time] = nil
-
-    redirect_to test_results_dashboard_path(topic: completed_topic, token: completed_token), notice: "Test evaluation complete."
+    @attempt.finish!
+    redirect_to test_results_dashboard_path(token: @attempt.token), notice: "Test submitted."
   end
 
-  # Pulls the complete evaluation worksheet history matrix mapping onto blocks
+  # GET /dashboard/results?token=...
   def results
-    @topic = params[:topic]
-    @token = params[:token]
+    @attempt.finish! if @attempt.expired?
+    unless @attempt.finished?
+      redirect_to arena_dashboard_path(@attempt.token), alert: "Finish the test to see your results."
+      return
+    end
 
-    @questions = Question.where(topic: @topic).order(Arel.sql("q_no::integer ASC"))
-    @responses = Current.user.user_responses.where(test_session_token: @token).index_by { |resp| resp.question_id }
-
-    total_attempts = @responses.values.count
-    @correct_count = @responses.values.select(&:is_correct).count
-    @wrong_count = total_attempts - @correct_count
+    @topic     = @attempt.title
+    @questions = @attempt.questions.to_a
+    @responses = @attempt.responses_by_question
+    @summary   = @attempt.score_summary
+    @correct_count = @summary[:correct]
+    @wrong_count   = @summary[:wrong]
   end
 
   private
 
-  # Compiles chronological response counts over a 7-day row history mapping matrix
-  def generate_streak_calendar_data
-    return [] unless Current.user
+  # ---------- starting ----------
 
+  def start_practice(topic)
+    if topic.blank? || !Question.exists?(topic: topic)
+      redirect_to dashboard_path, alert: "That topic has no questions."
+      return
+    end
+
+    attempt = Current.user.test_attempts.in_progress.find_by(topic: topic, test_session_id: nil) ||
+              Current.user.test_attempts.create!(topic: topic)
+    redirect_to arena_dashboard_path(attempt.token, n: 1)
+  end
+
+  def start_teacher_test(test)
+    unless can_access_test?(test)
+      redirect_to join_test_sessions_path, alert: "This test needs a PIN. Enter the code from your teacher."
+      return
+    end
+
+    existing = Current.user.test_attempts.find_by(test_session: test)
+    if existing&.finished? || existing&.expired?
+      existing.finish!
+      redirect_to test_results_dashboard_path(token: existing.token), notice: "You have already submitted this test."
+      return
+    end
+    if existing
+      redirect_to arena_dashboard_path(existing.token), notice: "Resuming your test."
+      return
+    end
+
+    case test.window_status
+    when :upcoming
+      redirect_to test_intro_dashboard_path(test), alert: "This test opens at #{I18n.l(test.starts_at, format: :long)}."
+      return
+    when :closed
+      redirect_to dashboard_path, alert: "This test closed at #{I18n.l(test.ends_at, format: :long)}."
+      return
+    end
+
+    if test.questions.none?
+      redirect_to dashboard_path, alert: "This test has no questions yet."
+      return
+    end
+
+    attempt = Current.user.test_attempts.create!(test_session: test)
+    redirect_to arena_dashboard_path(attempt.token, n: 1)
+  end
+
+  # Open tests: anyone. PIN tests: only after the student entered the PIN (remembered in their session).
+  def can_access_test?(test)
+    test.open_access? || unlocked_test_ids.include?(test.id) ||
+      Current.user.test_attempts.exists?(test_session: test)
+  end
+
+  def unlocked_test_ids
+    Array(session[:unlocked_test_ids]).map(&:to_i)
+  end
+
+  # ---------- answering ----------
+
+  def set_attempt
+    token = params[:token].presence
+    @attempt = token && Current.user.test_attempts.find_by(token: token)
+    redirect_to dashboard_path, alert: "Test not found." unless @attempt
+  end
+
+  def close_if_time_up
+    if @attempt.finished?
+      redirect_to test_results_dashboard_path(token: @attempt.token), notice: "This test has already been submitted."
+    elsif @attempt.expired?
+      @attempt.finish!
+      redirect_to test_results_dashboard_path(token: @attempt.token), alert: "Time is up. Your test was submitted automatically."
+    end
+  end
+
+  def find_question_in_attempt
+    question = @attempt.questions.find_by(id: params[:question_id])
+    redirect_to arena_dashboard_path(@attempt.token), alert: "That question is not part of this test." unless question
+    question
+  end
+
+  # One answer per question per attempt: answering again replaces the old answer
+  def save_response(question, chosen, correct)
+    response = Current.user.user_responses.find_or_initialize_by(question: question, test_session_token: @attempt.token)
+    response.update!(
+      chosen_option: chosen,
+      is_correct: correct,
+      duration_seconds: response.duration_seconds.to_i + params[:duration_seconds].to_i
+    )
+  end
+
+  # Next unanswered question after the current one; wraps round to earlier gaps; finishes when all are done
+  def go_to_next_question(question)
+    questions = @attempt.questions.to_a
+    answered  = @attempt.user_responses.pluck(:question_id).to_set
+    current   = questions.index { |q| q.id == question.id }.to_i + 1
+
+    order = ((current + 1)..questions.size).to_a + (1...current).to_a
+    next_n = order.find { |n| !answered.include?(questions[n - 1].id) }
+
+    if next_n
+      redirect_to arena_dashboard_path(@attempt.token, n: next_n)
+    else
+      @attempt.finish!
+      redirect_to test_results_dashboard_path(token: @attempt.token), notice: "All questions answered. Test submitted."
+    end
+  end
+
+  # ---------- dashboard metrics ----------
+
+  def generate_streak_calendar_data
     (0..6).to_a.reverse.map do |day_offset|
       target_date = Date.current - day_offset
       solved_count = Current.user.user_responses.where(created_at: target_date.all_day).count
@@ -147,68 +228,47 @@ class DashboardsController < ApplicationController
         day_name: target_date.strftime("%a"),
         day_number: target_date.day,
         solved_count: solved_count,
-        target_fulfilled: solved_count >= 25, # Enforces your strict 25-Question threshold target
+        target_fulfilled: solved_count >= 25,
         is_today: target_date == Date.current
       }
     end
   end
 
-  # Dynamically iterates backwards across logs to quantify accurate consecutive target fulfillment totals
+  # Counts consecutive days (ending today or yesterday) with 25+ answers
   def calculate_active_streak
-    return 0 unless Current.user
+    daily = Current.user.user_responses
+                   .where(created_at: 400.days.ago.beginning_of_day..)
+                   .group("DATE(created_at AT TIME ZONE 'UTC' AT TIME ZONE '#{Time.zone.tzinfo.name}')")
+                   .count
+                   .transform_keys(&:to_date)
 
-    # 🚀 SAFEGUARD FIX: If the user has zero responses logged, immediately return 0
-    # to break what would otherwise be a critical server-crashing infinite loop block
-    return 0 if Current.user.user_responses.count.zero?
-
+    day = Date.current
+    day -= 1 if daily[day].to_i < 25
     streak = 0
-    check_date = Date.current
-
-    loop do
-      count = Current.user.user_responses.where(created_at: check_date.all_day).count
-      if count >= 25
-        streak += 1
-        check_date -= 1.day
-      else
-        if check_date == Date.current
-          yesterday_count = Current.user.user_responses.where(created_at: (Date.current - 1.day).all_day).count
-          if yesterday_count >= 25
-            check_date -= 1.day
-            next
-          end
-        end
-        break
-      end
+    while daily[day].to_i >= 25
+      streak += 1
+      day -= 1
     end
     streak
   end
 
-  # Gathers global analytical profile metrics used on top information panels
   def set_global_dashboard_metrics
     @current_streak_count = calculate_active_streak
+    responses = Current.user.user_responses
+    total_platform_questions = Question.count
 
-    if Current.user
-      total_platform_questions = Question.count
+    @lifetime_correct_count = responses.where(is_correct: true).distinct.count(:question_id)
+    @lifetime_wrong_count   = responses.where(is_correct: false).where.not(chosen_option: "SKIPPED").distinct.count(:question_id)
+    unique_attempted        = responses.distinct.count(:question_id)
+    @overall_completion_pct = total_platform_questions.positive? ? (unique_attempted * 100.0 / total_platform_questions).round : 0
 
-      @lifetime_correct_count = Current.user.user_responses.where(is_correct: true).distinct.count(:question_id)
-      @lifetime_wrong_count = Current.user.user_responses.where(is_correct: false).where.not(chosen_option: "SKIPPED").distinct.count(:question_id)
-      unique_attempted_questions = Current.user.user_responses.distinct.count(:question_id)
-
-      @overall_completion_pct = total_platform_questions > 0 ? ((unique_attempted_questions.to_f / total_platform_questions) * 100).round : 0
-
-      total_validated_attempts = Current.user.user_responses.where.not(chosen_option: "SKIPPED").count
-      @global_accuracy_pct = total_validated_attempts > 0 ? ((Current.user.user_responses.where(is_correct: true).count.to_f / total_validated_attempts) * 100).round(1) : 0.0
-    else
-      @lifetime_correct_count = 0
-      @lifetime_wrong_count = 0
-      @overall_completion_pct = 0
-      @global_accuracy_pct = 0.0
-    end
+    answered = responses.where.not(chosen_option: "SKIPPED").count
+    @global_accuracy_pct = answered.positive? ? (responses.where(is_correct: true).count * 100.0 / answered).round(1) : 0.0
   end
+
   def ensure_student_access
-    # Grant access to students, but also let admins browse the arena if needed
-    if Current.user&.teacher?
-      redirect_to upload_form_questions_path, notice: "Welcome Teacher! Redirected to your Question Ingestion Hub workspace."
+    if Current.user&.faculty?
+      redirect_to test_sessions_path, notice: "Teachers and admins manage tests from here."
     end
   end
 end

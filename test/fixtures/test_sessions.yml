@@ -1,17 +1,16 @@
-# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
-
 one:
-  user: one
-  title: MyString
-  exam_type: MyString
-  duration_minutes: 1
-  pass_mark_percentage: 1
-  pin_code: MyString
-
+  user: teacher
+  title: Open Physics Test
+  exam_type: UPSC
+  duration_minutes: 30
+  pass_mark_percentage: 50
+  pin_code: OPEN01
+  access_type: open
 two:
-  user: two
-  title: MyString
-  exam_type: MyString
-  duration_minutes: 1
-  pass_mark_percentage: 1
-  pin_code: MyString
+  user: teacher
+  title: PIN Physics Test
+  exam_type: UPSC
+  duration_minutes: 30
+  pass_mark_percentage: 50
+  pin_code: PINT02
+  access_type: pin

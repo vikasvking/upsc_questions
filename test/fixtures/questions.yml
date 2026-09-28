@@ -1,25 +1,26 @@
-# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
-
 one:
-  year: 1
-  q_no: MyString
-  topic: MyString
-  content: MyText
-  option_a: MyText
-  option_b: MyText
-  option_c: MyText
-  option_d: MyText
-  correct_answer: MyString
-  explanation: MyText
-
+  user: teacher
+  exam_type: UPSC
+  year: 2024
+  q_no: "1"
+  topic: Physics
+  content: What is the unit of force?
+  option_a: Newton
+  option_b: Joule
+  option_c: Watt
+  option_d: Pascal
+  correct_answer: A
+  explanation: Force is measured in newtons.
 two:
-  year: 1
-  q_no: MyString
-  topic: MyString
-  content: MyText
-  option_a: MyText
-  option_b: MyText
-  option_c: MyText
-  option_d: MyText
-  correct_answer: MyString
-  explanation: MyText
+  user: teacher
+  exam_type: UPSC
+  year: 2024
+  q_no: "2"
+  topic: Physics
+  content: What is the unit of energy?
+  option_a: Newton
+  option_b: Joule
+  option_c: Watt
+  option_d: Pascal
+  correct_answer: B
+  explanation: Energy is measured in joules.

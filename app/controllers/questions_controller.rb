@@ -5,7 +5,7 @@ class QuestionsController < ApplicationController
   before_action :ensure_modification_permission, only: [:edit, :update]
 
   def index
-    @questions = Question.order(year: :desc).order(Arel.sql("q_no::integer ASC"))
+    @questions = Question.in_order
   end
 
   def upload_form
@@ -22,7 +22,7 @@ class QuestionsController < ApplicationController
       return
     end
 
-    unless file.original_filename.end_with?('.xlsx') || file.original_filename.end_with?('.xls')
+    unless file.original_filename.downcase.end_with?(".xlsx", ".xls")
       redirect_to upload_form_questions_path, alert: "Invalid format. You must upload a native Excel Workbook sheet (.xlsx or .xls)."
       return
     end
@@ -68,7 +68,7 @@ class QuestionsController < ApplicationController
   end
 
   def ensure_teacher_or_admin_access
-    unless Current.user&.teacher? || Current.user&.admin?
+    unless Current.user&.faculty?
       redirect_to dashboard_path, alert: "Access Denied: Only teachers or administrators can view this workspace area."
     end
   end

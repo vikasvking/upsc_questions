@@ -1,40 +1,28 @@
-<%= form_with url: submit_answer_dashboard_path, method: :post, local: true, class: "bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800/80 shadow-md p-6 sm:p-8 flex flex-col justify-between min-h-[520px]" do |form| %>
+<%= form_with url: submit_answer_dashboard_path, method: :post, class: "bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800/80 shadow-md p-6 sm:p-8 flex flex-col justify-between min-h-[480px]" do |form| %>
+  <%= hidden_field_tag :token, @attempt.token %>
+  <%= hidden_field_tag :n, @position %>
   <%= hidden_field_tag :question_id, @question.id %>
   <%= hidden_field_tag :duration_seconds, 0, id: "time-elapsed-tracker" %>
 
   <div class="space-y-6">
-    <!-- Navigation Header Row Pagination links -->
     <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
-      <% prev_q = @questions.find_by(q_no: @question.q_no.to_i - 1) %>
-      <% next_q = @questions.find_by(q_no: @question.q_no.to_i + 1) %>
-
-      <!-- Dynamic navigation limits based on active context state mapping parameters -->
-      <% if action_name == 'results' %>
-        <%= link_to_if prev_q, "← Previous", test_results_dashboard_path(topic: @topic, token: @token, q_no: prev_q&.q_no), class: "text-xs font-bold text-slate-500 hover:text-rose-800" %>
-        <span class="text-sm font-black text-rose-800 dark:text-rose-400 tracking-wide">Reviewing Question <%= @question.q_no %> of <%= @questions.count %></span>
-        <%= link_to_if next_q, "Next →", test_results_dashboard_path(topic: @topic, token: @token, q_no: next_q&.q_no), class: "text-xs font-bold text-slate-500 hover:text-rose-800" %>
-      <% else %>
-        <%= link_to_if prev_q, "← Previous", dashboard_path(topic: @topic, q_no: prev_q&.q_no), class: "text-xs font-bold text-slate-500 hover:text-rose-800" %>
-        <span class="text-sm font-black text-rose-800 dark:text-rose-400 tracking-wide">Question <%= @question.q_no %> of <%= @questions.count %></span>
-        <%= link_to_if next_q, "Next →", dashboard_path(topic: @topic, q_no: next_q&.q_no), class: "text-xs font-bold text-slate-500 hover:text-rose-800" %>
-      <% end %>
+      <%= link_to_if @position > 1, "← Previous", arena_dashboard_path(@attempt.token, n: @position - 1), class: "text-xs font-bold text-slate-500 hover:text-rose-800" %>
+      <span class="text-sm font-black text-rose-800 dark:text-rose-400 tracking-wide">
+        Question <%= @position %> of <%= @questions.size %>
+        <span class="ml-1 text-[10px] font-mono text-slate-400">(Q.No <%= @question.q_no %>)</span>
+      </span>
+      <%= link_to_if @position < @questions.size, "Next →", arena_dashboard_path(@attempt.token, n: @position + 1), class: "text-xs font-bold text-slate-500 hover:text-rose-800" %>
     </div>
 
-    <!-- Active Live Core Question Prompt -->
     <div class="text-slate-900 dark:text-white text-base leading-relaxed font-semibold">
       <%= @question.content %>
     </div>
 
-    <!-- Options Radio Container Choices -->
     <div class="grid grid-cols-1 gap-3 pt-2">
       <% [["A", @question.option_a], ["B", @question.option_b], ["C", @question.option_c], ["D", @question.option_d]].each do |letter, option_text| %>
         <% next if option_text.blank? %>
         <label class="flex items-start gap-x-3.5 p-4 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800/60 cursor-pointer hover:border-rose-800/40 transition-colors group">
-          <!-- Disables option input clicking entirely when reviewing a completed session inside results view -->
-          <%= form.radio_button :answer_choice, letter,
-                                checked: (@previous_attempt&.chosen_option == letter),
-                                disabled: (action_name == 'results'),
-                                class: "mt-1 accent-rose-800 dark:accent-rose-500 h-4 w-4" %>
+          <%= radio_button_tag :answer_choice, letter, @previous_attempt&.chosen_option == letter, class: "mt-1 accent-rose-800 dark:accent-rose-500 h-4 w-4" %>
           <span class="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white">
             <strong class="text-rose-800 dark:text-rose-400"><%= letter %>.</strong> <%= option_text %>
           </span>
@@ -42,36 +30,19 @@
       <% end %>
     </div>
 
-    <!-- 🚀 FIXED CONFIGURATION: Explanations show exclusively on results review, strictly hidden during live test execution -->
-    <% if action_name == 'results' && (@previous_attempt || flash[:explanation_text]) %>
-      <div class="mt-4 p-4 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2 animate-fadeIn">
-        <div class="flex items-center gap-x-2 text-xs font-black uppercase tracking-wider <%= (@previous_attempt&.is_correct || flash[:is_correct_flag]) ? 'text-emerald-600' : 'text-rose-800' %>">
-          <% if @previous_attempt&.is_correct %>
-            <span>✓</span> Correct Choice (Answer Key: <%= @question.correct_answer %>)
-          <% else %>
-            <span>✗</span> Incorrect Choice (Answer Key: <%= @question.correct_answer %>)
-          <% end %>
-        </div>
-        <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-mono bg-slate-50 dark:bg-slate-900 p-3 rounded-lg border border-slate-100 dark:border-slate-850">
-          <%= @previous_attempt&.question&.explanation || flash[:explanation_text] %>
-        </p>
-      </div>
+    <% if @previous_attempt %>
+      <p class="text-[11px] text-slate-400">
+        <%= @previous_attempt.chosen_option == "SKIPPED" ? "You skipped this question earlier." : "Saved answer: #{@previous_attempt.chosen_option}. Pick another option and submit to change it." %>
+      </p>
     <% end %>
   </div>
 
-  <!-- Primary Action Footer Segments Control Bar -->
   <div class="mt-8 flex items-center justify-between border-t border-slate-200 dark:border-slate-800 pt-4 gap-4">
-    <% if action_name == 'results' %>
-      <!-- Results Mode View Footer Navigation Map -->
-      <%= link_to "← Exit Review Hub", dashboard_path, class: "text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-rose-800 border border-slate-200 dark:border-slate-800 rounded-lg px-4 py-2.5 transition-colors bg-white dark:bg-slate-950 shadow-sm" %>
-      <span class="text-xs font-bold text-slate-400">Review Mode Only</span>
-    <% else %>
-      <!-- Active Live Practice Test Mode Footer Action Triggers -->
-      <%= link_to "Skip Question ↷", skip_question_dashboard_path(question_id: @question.id),
-                  data: { turbo_method: :post },
-                  class: "text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-rose-800 dark:hover:text-rose-400 border border-slate-200 dark:border-slate-800 rounded-lg px-4 py-2.5 transition-colors bg-white dark:bg-slate-950 shadow-sm cursor-pointer" %>
+    <%= link_to "Skip Question ↷",
+                skip_question_dashboard_path(token: @attempt.token, question_id: @question.id, n: @position),
+                data: { turbo_method: :post },
+                class: "text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-rose-800 dark:hover:text-rose-400 border border-slate-200 dark:border-slate-800 rounded-lg px-4 py-2.5 transition-colors bg-white dark:bg-slate-950" %>
 
-      <%= form.submit "Submit Answer Pass", class: "rounded-lg bg-rose-800 dark:bg-rose-700 hover:bg-rose-900 dark:hover:bg-rose-600 text-white font-bold text-sm px-6 py-2.5 shadow-md transition-all cursor-pointer transform hover:-translate-y-0.5" %>
-    <% end %>
+    <%= form.submit "Save Answer & Next", class: "rounded-lg bg-rose-800 dark:bg-rose-700 hover:bg-rose-900 dark:hover:bg-rose-600 text-white font-bold text-sm px-6 py-2.5 shadow-md transition-all cursor-pointer" %>
   </div>
 <% end %>

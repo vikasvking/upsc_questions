@@ -1,28 +1,30 @@
 <div class="py-10 bg-white dark:bg-slate-950 min-h-screen w-full transition-colors duration-200">
   <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
 
-    <!-- Test Breadcrumb Return Area Line -->
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-x-3">
-        <%= link_to "← Exit Arena", dashboard_path, class: "text-xs font-bold bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 text-slate-600 dark:text-slate-400 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800" %>
-        <h2 class="text-sm font-black text-rose-800 dark:text-rose-400 uppercase tracking-wider"><%= @topic %> Module</h2>
+        <%= link_to "← Exit (progress is saved)", dashboard_path, class: "text-xs font-bold bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 text-slate-600 dark:text-slate-400 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800" %>
+        <h2 class="text-sm font-black text-rose-800 dark:text-rose-400 uppercase tracking-wider"><%= @attempt.title %></h2>
       </div>
-      <span class="text-xs bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 font-mono px-3 py-1.5 rounded-lg">Source Year: <%= @question&.year %></span>
+      <span class="text-xs bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 font-mono px-3 py-1.5 rounded-lg">
+        <%= [@question.exam_type, @question.year].compact_blank.join(" · ").presence || "—" %>
+      </span>
     </div>
 
-    <!-- Active Grid Shell Mapping -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+    <% if alert %>
+      <div class="rounded-xl bg-red-50 dark:bg-red-950/40 p-3 border border-red-200 dark:border-red-900/40 text-xs text-red-800 dark:text-red-300 font-bold"><%= alert %></div>
+    <% end %>
+    <% if notice %>
+      <div class="rounded-xl bg-emerald-50 dark:bg-emerald-950/40 p-3 border border-emerald-200 dark:border-emerald-900/40 text-xs text-emerald-800 dark:text-emerald-300 font-bold"><%= notice %></div>
+    <% end %>
 
-      <!-- Left Panel Navigation Grid (Span 4) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
       <div class="lg:col-span-4">
         <%= render "dashboards/quiz_sidebar" %>
       </div>
-
-      <!-- Right Panel Content Grid Card (Span 8) -->
       <div class="lg:col-span-8">
         <%= render "dashboards/quiz_content" %>
       </div>
-
     </div>
 
   </div>

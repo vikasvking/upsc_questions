@@ -1,69 +1,43 @@
+<% selected_ids = Array(params.dig(:test_session, :question_ids)).map(&:to_i) %>
 <div class="py-10 bg-white dark:bg-slate-950 min-h-screen w-full transition-colors duration-200">
   <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 space-y-8">
 
     <div>
-      <h1 class="text-2xl font-black text-slate-900 dark:text-white sm:text-3xl">Compile Custom Test Paper</h1>
-      <p class="text-sm text-slate-500 mt-1">Configure parameters and hand-pick the exact question sequences you want to deploy to your students.</p>
+      <%= link_to "← Back to Tests", test_sessions_path, class: "text-[10px] font-bold uppercase tracking-wider text-brand-800 dark:text-brand-400 hover:underline" %>
+      <h1 class="text-2xl font-black text-slate-900 dark:text-white sm:text-3xl mt-2">Create Test</h1>
+      <p class="text-sm text-slate-500 mt-1">Set the rules, choose who can take it and when, then pick the questions.</p>
     </div>
 
-    <!-- Active Error Notification Display Banner -->
     <% if flash[:alert] %>
-      <div class="rounded-xl bg-rose-50 dark:bg-rose-950/40 p-4 border border-rose-200 dark:border-rose-900/50 animate-fadeIn">
-        <p class="text-xs font-bold text-rose-800 dark:text-rose-400 flex items-center gap-x-2"><span>✗</span> <%= flash[:alert] %></p>
+      <div class="rounded-xl bg-red-50 dark:bg-red-950/40 p-4 border border-red-200 dark:border-red-900/50">
+        <p class="text-xs font-bold text-red-800 dark:text-red-400 flex items-center gap-x-2"><span>✗</span> <%= flash[:alert] %></p>
       </div>
     <% end %>
 
-    <%= form_with model: @test_session, local: true, class: "space-y-8" do |f| %>
+    <%= form_with model: @test_session, class: "space-y-8" do |f| %>
+      <%= render "test_sessions/edit_partials/settings_form", f: f %>
 
-      <!-- Part 1: Configuration Fields Container Grid -->
-      <div class="bg-slate-50 dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-4 shadow-sm">
-        <div class="sm:col-span-2">
-          <%= f.label :title, "Examination Paper Title", class: "text-xs font-bold text-slate-400 uppercase tracking-wider" %>
-          <%= f.text_field :title, placeholder: "e.g., Weekly Syllabus Evaluation Mock", required: true, class: "mt-1.5 block w-full rounded-xl border-0 py-2.5 px-3 bg-white dark:bg-slate-950 border border-slate-200 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-rose-800" %>
-        </div>
-
-        <div>
-          <%= f.label :exam_type, "Exam Category Stream Portfolio Portfolio", class: "text-xs font-bold text-slate-400 uppercase tracking-wider" %>
-          <%= f.select :exam_type, [["UPSC Civil Services", "UPSC"], ["SSC CGL", "SSC"], ["CBSE Class X", "CBSE"], ["IIT JEE Main", "JEE"]], {}, class: "mt-1.5 block w-full rounded-xl border-0 py-2.5 px-3 bg-white dark:bg-slate-950 border border-slate-200 text-sm text-slate-900 dark:text-white" %>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <%= f.label :duration_minutes, "Time (Minutes)", class: "text-xs font-bold text-slate-400 uppercase tracking-wider" %>
-            <%= f.number_field :duration_minutes, value: 45, class: "mt-1.5 block w-full rounded-xl border-0 py-2.5 px-3 bg-white dark:bg-slate-950 border border-slate-200 text-sm text-slate-900 dark:text-white" %>
-          </div>
-          <div>
-            <%= f.label :pass_mark_percentage, "Passing Mark %", class: "text-xs font-bold text-slate-400 uppercase tracking-wider" %>
-            <%= f.number_field :pass_mark_percentage, value: 40, class: "mt-1.5 block w-full rounded-xl border-0 py-2.5 px-3 bg-white dark:bg-slate-950 border border-slate-200 text-sm text-slate-900 dark:text-white" %>
-          </div>
-        </div>
-      </div>
-
-      <!-- Part 2: Hand-Pick Interactive Selection Framework Pool -->
       <div class="space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
           <div>
-            <h3 class="text-base font-extrabold text-slate-900 dark:text-white">Select Questions Pool Matrix</h3>
-            <p class="text-xs text-slate-400 mt-0.5">Toggle checkboxes to manually cluster target questions into the active paper tracking block.</p>
+            <h3 class="text-base font-extrabold text-slate-900 dark:text-white">Pick Questions (<span id="pool-selected-counter"><%= selected_ids.size %></span> selected)</h3>
+            <p class="text-xs text-slate-400 mt-0.5">Questions appear in the test in the order of this list.</p>
           </div>
-
-          <!-- Instant Live Local Search Field Widget Layout -->
-          <input type="text" id="pool-search-field" placeholder="🔍 Search topic or keyword..." class="rounded-xl border border-slate-200 dark:border-slate-800 text-xs py-2 px-3.5 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-rose-800 w-full sm:w-64 shadow-sm" />
+          <input type="text" id="pool-search-field" placeholder="🔍 Search topic or keyword..." class="rounded-xl border border-slate-200 dark:border-slate-800 text-xs py-2 px-3.5 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-800 w-full sm:w-64 shadow-sm" />
         </div>
 
-        <!-- Questions Checkbox Roll Area Layout Wrapper -->
-        <div id="questions-pool-list" class="space-y-3 max-h-[480px] overflow-y-auto pr-2 scrollbar-thin">
+        <div id="questions-pool-list" class="space-y-3 max-h-[480px] overflow-y-auto pr-2">
           <% if @questions.any? %>
             <% @questions.each do |q| %>
-              <label class="question-row-item flex items-start gap-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800/60 cursor-pointer hover:border-rose-800/40 transition-colors group block">
+              <label class="question-row-item flex items-start gap-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800/60 cursor-pointer hover:border-brand-800/40 transition-colors">
                 <div class="mt-1">
-                  <%= check_box_tag "selected_question_ids[]", q.id, false, class: "accent-rose-800 h-4 w-4 rounded focus:ring-rose-800" %>
+                  <%= check_box_tag "test_session[question_ids][]", q.id, selected_ids.include?(q.id), id: "pick_q_#{q.id}", class: "pool-checkbox accent-brand-800 h-4 w-4 rounded" %>
                 </div>
                 <div class="space-y-2 flex-1">
                   <div class="flex items-center gap-x-2 flex-wrap gap-y-1.5">
-                    <span class="inline-block px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-rose-100 dark:bg-rose-950/50 text-rose-800 dark:text-rose-400 border border-rose-200/20"><%= q.exam_type %></span>
+                    <span class="inline-block px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-brand-100 dark:bg-brand-950/50 text-brand-800 dark:text-brand-400"><%= q.exam_type %></span>
                     <span class="inline-block px-2 py-0.5 rounded-full text-[9px] font-bold bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 filter-topic-token"><%= q.topic %></span>
-                    <span class="text-[10px] font-bold font-mono text-slate-400 ml-auto">Q.No <%= q.q_no %></span>
+                    <span class="text-[10px] font-bold font-mono text-slate-400 ml-auto"><%= q.year %> Q.No <%= q.q_no %></span>
                   </div>
                   <p class="text-xs font-semibold text-slate-900 dark:text-white leading-relaxed filter-content-token"><%= q.content %></p>
                 </div>
@@ -71,43 +45,41 @@
             <% end %>
           <% else %>
             <div class="text-center py-12 text-slate-400 font-medium bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
-              Your Question Bank repository is completely empty. Please upload an Excel sheet first before compiling tests.
+              The question bank is empty. Upload an Excel sheet first.
             </div>
           <% end %>
         </div>
       </div>
 
-      <!-- Action Button Triggers Footer -->
       <div class="flex gap-4 pt-4 border-t border-slate-200 dark:border-slate-800">
-        <%= link_to "Discard & Return", test_sessions_path, class: "flex-1 text-center font-bold text-xs border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-950 px-4 py-3 rounded-xl hover:bg-slate-100 transition-colors shadow-sm" %>
-        <%= f.submit "Generate Custom Exam Code 🔐", class: "flex-1 justify-center rounded-xl bg-rose-800 dark:bg-rose-700 px-4 py-3 text-xs font-bold text-white shadow-md hover:bg-rose-900 dark:hover:bg-rose-600 transition-colors cursor-pointer transform hover:-translate-y-0.5" %>
+        <%= link_to "Discard", test_sessions_path, class: "flex-1 text-center font-bold text-xs border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-950 px-4 py-3 rounded-xl hover:bg-slate-100 transition-colors shadow-sm" %>
+        <%= f.submit "Create Test", class: "flex-1 justify-center rounded-xl bg-brand-800 dark:bg-brand-700 px-4 py-3 text-xs font-bold text-white shadow-md hover:bg-brand-900 dark:hover:bg-brand-600 transition-colors cursor-pointer" %>
       </div>
-
     <% end %>
   </div>
 </div>
 
-<!-- JavaScript Instant Live Client Search Filter Logic -->
 <script>
-  document.addEventListener("turbo:load", () => {
+  (function () {
     const searchField = document.getElementById("pool-search-field");
     const rows = document.querySelectorAll(".question-row-item");
+    const counter = document.getElementById("pool-selected-counter");
+    const list = document.getElementById("questions-pool-list");
 
-    if (searchField && rows.length > 0) {
+    if (searchField) {
       searchField.addEventListener("input", (e) => {
         const query = e.target.value.toLowerCase().trim();
-
-        rows.forEach(row => {
-          const topic = row.querySelector(".filter-topic-token").innerText.toLowerCase();
-          const content = row.querySelector(".filter-content-token").innerText.toLowerCase();
-
-          if (topic.includes(query) || content.includes(query)) {
-            row.classList.remove("hidden");
-          } else {
-            row.classList.add("hidden");
-          }
+        rows.forEach((row) => {
+          const text = row.querySelector(".filter-topic-token").textContent + " " + row.querySelector(".filter-content-token").textContent;
+          row.classList.toggle("hidden", !text.toLowerCase().includes(query));
         });
       });
     }
-  });
+
+    if (list && counter) {
+      list.addEventListener("change", () => {
+        counter.textContent = list.querySelectorAll(".pool-checkbox:checked").length;
+      });
+    }
+  })();
 </script>

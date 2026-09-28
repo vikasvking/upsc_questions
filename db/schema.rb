@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_27_095931) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_28_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -41,6 +41,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_27_095931) do
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 
+  create_table "test_attempts", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "test_session_id"
+    t.string "topic"
+    t.string "token", null: false
+    t.datetime "started_at", null: false
+    t.datetime "deadline_at"
+    t.datetime "finished_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["test_session_id"], name: "index_test_attempts_on_test_session_id"
+    t.index ["token"], name: "index_test_attempts_on_token", unique: true
+    t.index ["user_id", "test_session_id"], name: "index_test_attempts_on_user_id_and_test_session_id"
+    t.index ["user_id"], name: "index_test_attempts_on_user_id"
+  end
+
   create_table "test_questions", force: :cascade do |t|
     t.bigint "test_session_id", null: false
     t.bigint "question_id", null: false
@@ -59,6 +75,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_27_095931) do
     t.string "pin_code", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "access_type", default: "pin", null: false
+    t.datetime "starts_at"
+    t.datetime "ends_at"
     t.index ["pin_code"], name: "index_test_sessions_on_pin_code", unique: true
     t.index ["user_id"], name: "index_test_sessions_on_user_id"
   end
@@ -73,6 +92,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_27_095931) do
     t.datetime "updated_at", null: false
     t.string "test_session_token"
     t.index ["question_id"], name: "index_user_responses_on_question_id"
+    t.index ["test_session_token", "question_id"], name: "index_user_responses_on_test_session_token_and_question_id"
     t.index ["user_id", "question_id"], name: "index_user_responses_on_user_id_and_question_id"
     t.index ["user_id"], name: "index_user_responses_on_user_id"
   end
@@ -88,6 +108,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_27_095931) do
 
   add_foreign_key "questions", "users"
   add_foreign_key "sessions", "users"
+  add_foreign_key "test_attempts", "test_sessions"
+  add_foreign_key "test_attempts", "users"
   add_foreign_key "test_questions", "questions"
   add_foreign_key "test_questions", "test_sessions"
   add_foreign_key "test_sessions", "users"

@@ -1,71 +1,91 @@
 <div class="space-y-6">
-  <!-- Test Info Card -->
+  <!-- Test info -->
   <div class="bg-slate-50 dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/60 dark:border-slate-800 shadow-sm">
-    <p class="text-[10px] font-bold uppercase tracking-wider text-rose-800 dark:text-rose-400">Active Module</p>
-    <h3 class="text-base font-bold text-slate-900 dark:text-white mt-1">UPSC Prelims Mock Set</h3>
-    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Syllabus Section: Indian Polity</p>
+    <p class="text-[10px] font-bold uppercase tracking-wider text-rose-800 dark:text-rose-400"><%= @attempt.test_session ? "Teacher Test" : "Topic Practice" %></p>
+    <h3 class="text-base font-bold text-slate-900 dark:text-white mt-1"><%= @attempt.title %></h3>
+    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1"><%= @responses.size %> of <%= @questions.size %> answered</p>
   </div>
 
-  <!-- Countdown Timer Card -->
-  <!-- Live Tracking stopwatch Card -->
-<div class="bg-slate-50 dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/60 dark:border-slate-800 shadow-sm relative overflow-hidden">
-  <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 tracking-widest">Time Elapsed</p>
-  <p id="live-stopwatch-display" class="text-2xl font-black text-rose-800 dark:text-rose-400 mt-1 font-mono tracking-tight">00:00:00</p>
+  <!-- Timer -->
+  <div class="bg-slate-50 dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/60 dark:border-slate-800 shadow-sm">
+    <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400"><%= @attempt.timed? ? "Time Left" : "Time Elapsed" %></p>
+    <p id="quiz-clock"
+       class="text-2xl font-black text-rose-800 dark:text-rose-400 mt-1 font-mono tracking-tight"
+       data-mode="<%= @attempt.timed? ? "countdown" : "stopwatch" %>"
+       data-seconds="<%= @attempt.timed? ? @attempt.seconds_left : (Time.current - @attempt.started_at).to_i %>">--:--:--</p>
 
-  <!-- 🚀 FINISH TEST BUTTON WITH CONFIRMATION BLOCK -->
-  <%= button_to "Finish Session 📥", finish_test_dashboard_path, method: :post,
-                data: { turbo_confirm: "Are you sure you want to finish the test? Your responses will be finalized." },
-                class: "w-full mt-4 text-center font-bold text-xs bg-white dark:bg-slate-950 text-rose-800 dark:text-rose-400 border border-rose-800/30 dark:border-slate-800/80 hover:bg-rose-50 dark:hover:bg-rose-950/20 py-2.5 rounded-xl shadow-sm transition-colors cursor-pointer" %>
+    <%= button_to "Finish & Submit 📥", finish_test_dashboard_path(token: @attempt.token), method: :post,
+                  form: { id: "finish-test-form" },
+                  data: { turbo_confirm: "Submit the test now? You cannot change answers afterwards." },
+                  class: "w-full mt-4 text-center font-bold text-xs bg-white dark:bg-slate-950 text-rose-800 dark:text-rose-400 border border-rose-800/30 dark:border-slate-800/80 hover:bg-rose-50 dark:hover:bg-rose-950/20 py-2.5 rounded-xl transition-all shadow-sm cursor-pointer" %>
+  </div>
+
+  <!-- Question grid: filled = answered, grey = skipped, outlined = not yet seen -->
+  <div class="bg-slate-50 dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/60 dark:border-slate-800 shadow-sm">
+    <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-4">Questions</p>
+    <div class="grid grid-cols-6 gap-2">
+      <% @questions.each_with_index do |q, i| %>
+        <% n = i + 1 %>
+        <% r = @responses[q.id] %>
+        <%
+          state_class =
+            if n == @position then "bg-rose-800 text-white ring-2 ring-offset-2 ring-rose-800 dark:ring-offset-slate-900"
+            elsif r&.chosen_option == "SKIPPED" then "bg-slate-200 dark:bg-slate-800 text-slate-500"
+            elsif r then "bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300"
+            else "border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-950"
+            end
+        %>
+        <%= link_to n, arena_dashboard_path(@attempt.token, n: n), class: "h-9 w-full flex items-center justify-center rounded-lg text-xs font-bold #{state_class}" %>
+      <% end %>
+    </div>
+  </div>
 </div>
 
 <script>
-(function() {
-  function initializeStopwatch() {
-    const display = document.getElementById('live-stopwatch-display');
-    const hiddenTracker = document.getElementById('time-elapsed-tracker');
-    if (!display) return;
+  (function () {
+    // Clear a timer left over from the previous Turbo page visit
+    if (window.__quizClock) clearInterval(window.__quizClock);
 
-    // Sync to backend initialization epochs timestamp parameters
-    const startTime = <%= session[:test_start_time] || Time.current.to_i %>;
+    const clock = document.getElementById("quiz-clock");
+    if (!clock) return;
 
-    setInterval(() => {
-      const now = Math.floor(Date.now() / 1000);
-      const elapsed = now - startTime;
+    const mode = clock.dataset.mode;
+    const startSeconds = parseInt(clock.dataset.seconds, 10) || 0;
+    const pageLoadedAt = Date.now();
 
-      const hrs = String(Math.floor(elapsed / 3600)).padStart(2, '0');
-      const mins = String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0');
-      const secs = String(elapsed % 60).padStart(2, '0');
+    const fmt = (s) => {
+      s = Math.max(0, s);
+      const h = String(Math.floor(s / 3600)).padStart(2, "0");
+      const m = String(Math.floor((s % 3600) / 60)).padStart(2, "0");
+      const sec = String(s % 60).padStart(2, "0");
+      return `${h}:${m}:${sec}`;
+    };
 
-      display.innerText = `${hrs}:${mins}:${secs}`;
-      if (hiddenTracker) hiddenTracker.value = elapsed;
-    }, 1000);
-  }
+    let submitted = false;
+    const tick = () => {
+      if (!document.body.contains(clock)) { clearInterval(window.__quizClock); return; }
 
-  document.addEventListener("turbo:load", initializeStopwatch);
-})();
+      const passed = Math.floor((Date.now() - pageLoadedAt) / 1000);
+
+      // time spent on this question, sent with the answer
+      const tracker = document.getElementById("time-elapsed-tracker");
+      if (tracker) tracker.value = passed;
+
+      if (mode === "countdown") {
+        const left = startSeconds - passed;
+        clock.textContent = fmt(left);
+        if (left <= 60) clock.classList.add("animate-pulse");
+        if (left <= 0 && !submitted) {
+          submitted = true;
+          const form = document.getElementById("finish-test-form");
+          if (form) form.submit(); // plain submit: skips the confirm dialog
+        }
+      } else {
+        clock.textContent = fmt(startSeconds + passed);
+      }
+    };
+
+    tick();
+    window.__quizClock = setInterval(tick, 1000);
+  })();
 </script>
-
-
-  <!-- Question Navigation Grid Matrix -->
-  <div class="bg-slate-50 dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/60 dark:border-slate-800 shadow-sm">
-    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-4 tracking-widest">Question Grid</p>
-
-    <!-- Replace the Question Grid loop on line 17 with this -->
-<div class="grid grid-cols-6 gap-2">
-  <% @questions.each do |q| %>
-    <% if q.q_no == @question.q_no %>
-      <%= link_to q.q_no, dashboard_path(topic: @topic, q_no: q.q_no), class: "h-9 w-full flex items-center justify-center rounded-lg text-xs font-bold bg-rose-800 text-white shadow-sm ring-2 ring-offset-2 ring-rose-800 dark:ring-offset-slate-950" %>
-    <% else %>
-      <%= link_to q.q_no, dashboard_path(topic: @topic, q_no: q.q_no), class: "h-9 w-full flex items-center justify-center rounded-lg text-xs font-semibold border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/40" %>
-    <% end %>
-  <% end %>
-</div>
-
-  </div>
-
-  <!-- Next Scheduled Challenge Section -->
-  <div class="bg-slate-50 dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/60 dark:border-slate-800 shadow-sm">
-    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 tracking-widest">Next Queue</p>
-    <p class="text-xs font-bold text-slate-800 dark:text-white mt-1">Macro Economics Assessment</p>
-  </div>
-</div>
