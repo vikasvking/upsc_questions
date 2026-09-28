@@ -9,7 +9,6 @@
       <%= link_to_if @position > 1, "← Previous", arena_dashboard_path(@attempt.token, n: @position - 1), class: "text-xs font-bold text-slate-500 hover:text-rose-800" %>
       <span class="text-sm font-black text-rose-800 dark:text-rose-400 tracking-wide">
         Question <%= @position %> of <%= @questions.size %>
-        <span class="ml-1 text-[10px] font-mono text-slate-400">(Q.No <%= @question.q_no %>)</span>
       </span>
       <%= link_to_if @position < @questions.size, "Next →", arena_dashboard_path(@attempt.token, n: @position + 1), class: "text-xs font-bold text-slate-500 hover:text-rose-800" %>
     </div>

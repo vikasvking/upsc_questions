@@ -7,21 +7,17 @@ class Question < ApplicationRecord
   has_many :test_questions, dependent: :destroy
 
   normalizes :correct_answer, with: ->(v) { v.to_s.strip.upcase }
-  normalizes :q_no, with: ->(v) { v.to_s.strip }
 
-  validates :q_no, :topic, :content, :correct_answer, presence: true
+  # q_no is no longer used (numbers clashed between uploads); old values stay in the database unused
+  validates :topic, :content, :correct_answer, presence: true
   validates :correct_answer, inclusion: { in: ANSWER_KEYS, message: "must be A, B, C or D" }
 
-  # Safe ordering: never crashes on q_no values like "12a" or "Q5".
-  # Sorts by exam, year, then the digits inside q_no, then q_no text, then id.
-  scope :in_order, -> {
-    order(:exam_type, :year)
-      .order(Arel.sql("NULLIF(regexp_replace(questions.q_no, '[^0-9]', '', 'g'), '')::bigint ASC NULLS LAST"))
-      .order(:q_no, :id)
-  }
+  # Grouped by exam and year, then in the order the questions were added
+  scope :in_order, -> { order(:exam_type, :year, :id) }
 
   def self.import_from_excel(file_path, exam_type_param, year_param, creator_id)
     # The downloadable template (.xls) is tab-separated text; real .xlsx files are opened natively.
+    # An old "Q.No" column, if present, is simply ignored.
     xlsx = if File.extname(file_path).downcase == ".xls"
              Roo::Spreadsheet.open(file_path, extension: :csv, csv_options: { col_sep: "\t" })
            else
@@ -39,7 +35,6 @@ class Question < ApplicationRecord
           user_id:        creator_id,
           year:           year_param.presence,
           exam_type:      exam_type_param.strip.upcase,
-          q_no:           cell_text(row["Q.No"]),
           topic:          cell_text(row["Topic"]),
           content:        cell_text(row["Question"]),
           option_a:       cell_text(row["Option A"]),

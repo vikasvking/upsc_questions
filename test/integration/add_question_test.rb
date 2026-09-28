@@ -4,7 +4,7 @@ class AddQuestionTest < ActionDispatch::IntegrationTest
   setup { sign_in_as users(:teacher) }
 
   def params(extra = {})
-    { question: { exam_type: "UPSC", year: 2024, q_no: "3", topic: "Physics",
+    { question: { exam_type: "UPSC", year: 2024, topic: "Physics",
                   content: "What is the SI unit of power?", option_a: "Joule", option_b: "Watt",
                   option_c: "Newton", option_d: "Volt", correct_answer: "B",
                   explanation: "Power is measured in watts." } }.merge(extra)
@@ -13,7 +13,7 @@ class AddQuestionTest < ActionDispatch::IntegrationTest
   test "teacher adds one question and it lands in the question bank" do
     get new_question_path(exam_type: "UPSC", year: 2024)
     assert_response :success
-    assert_select "input[name='question[q_no]'][value='3']" # next number after the fixtures' Q1 and Q2 (UPSC 2024)
+    assert_select "input[name='question[q_no]']", count: 0 # question numbers are no longer used
 
     assert_difference -> { Question.where(topic: "Physics").count }, 1 do
       post questions_path, params: params

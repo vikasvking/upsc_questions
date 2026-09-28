@@ -119,7 +119,6 @@ class TestSession < ApplicationRecord
           user_id:        creator_id,
           exam_type:      test_session.exam_type,
           year:           settings_row["Exam Year"].presence,
-          q_no:           Question.cell_text(row["Q.No"]),
           topic:          Question.cell_text(row["Topic"]),
           content:        Question.cell_text(row["Question"]),
           option_a:       Question.cell_text(row["Option A"]),

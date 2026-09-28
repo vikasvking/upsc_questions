@@ -38,8 +38,8 @@ class QuestionsController < ApplicationController
   end
 
   def download_template
-    headers = ["Q.No", "Topic", "Question", "Option A", "Option B", "Option C", "Option D", "Correct Answer", "Explanation"]
-    sample_row = ["1", "Physics", "What is the formula for Acceleration?", "MA", "MV", "v/t", "MV2", "C", "Acceleration is the change in velocity per unit time (v/t)."]
+    headers = ["Topic", "Question", "Option A", "Option B", "Option C", "Option D", "Correct Answer", "Explanation"]
+    sample_row = ["Physics", "What is the formula for Acceleration?", "MA", "MV", "v/t", "MV2", "C", "Acceleration is the change in velocity per unit time (v/t)."]
     xls_data = headers.join("\t") + "\n" + sample_row.join("\t")
     send_data xls_data, filename: "upsc_officer_question_template.xls", type: "application/vnd.ms-excel; charset=utf-8"
   end
@@ -52,7 +52,6 @@ class QuestionsController < ApplicationController
       topic: params[:topic].presence,
       correct_answer: "A"
     )
-    @question.q_no = next_question_number(@question)
   end
 
   def create
@@ -61,7 +60,7 @@ class QuestionsController < ApplicationController
     if @question.save
       if params[:add_another]
         redirect_to new_question_path(exam_type: @question.exam_type, year: @question.year, topic: @question.topic),
-                    notice: "Saved Q.No #{@question.q_no} in #{@question.topic}. Add the next one."
+                    notice: "Saved in #{@question.topic}. Add the next one."
       else
         redirect_to questions_path, notice: "Question added to the #{@question.topic} question bank."
       end
@@ -83,12 +82,6 @@ class QuestionsController < ApplicationController
 
   private
 
-  # One more than the highest numeric Q.No for the same exam and year (1 if none)
-  def next_question_number(question)
-    numbers = Question.where(exam_type: question.exam_type, year: question.year).pluck(:q_no)
-    (numbers.map { |n| n.to_s[/\d+/].to_i }.max || 0) + 1
-  end
-
   def set_question
     @question = Question.find(params[:id])
   end
@@ -107,6 +100,6 @@ class QuestionsController < ApplicationController
   end
 
   def question_params
-    params.require(:question).permit(:exam_type, :year, :q_no, :topic, :content, :option_a, :option_b, :option_c, :option_d, :correct_answer, :explanation)
+    params.require(:question).permit(:exam_type, :year, :topic, :content, :option_a, :option_b, :option_c, :option_d, :correct_answer, :explanation)
   end
 end

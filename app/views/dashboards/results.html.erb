@@ -68,7 +68,7 @@
         <% resp = @responses[q.id] %>
         <div class="p-6 rounded-2xl border bg-slate-50/50 dark:bg-slate-900/30 <%= resp&.is_correct ? "border-emerald-200 dark:border-emerald-900/50" : "border-slate-200 dark:border-slate-800" %>">
           <div class="flex justify-between items-start gap-4 mb-3">
-            <span class="text-xs font-black bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 px-2.5 py-1 rounded-lg text-slate-700 dark:text-slate-300">Q<%= i + 1 %> <span class="text-slate-400 font-mono">(Q.No <%= q.q_no %>)</span></span>
+            <span class="text-xs font-black bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 px-2.5 py-1 rounded-lg text-slate-700 dark:text-slate-300">Q<%= i + 1 %></span>
 
             <% if resp.nil? %>
               <span class="text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-0.5 rounded-full">Not attempted</span>

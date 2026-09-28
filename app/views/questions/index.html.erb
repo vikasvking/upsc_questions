@@ -33,7 +33,6 @@
           <tr>
             <th class="px-4 py-3.5">Portfolio</th>
             <th class="px-4 py-3.5">Year</th>
-            <th class="px-4 py-3.5">Q.No</th>
             <th class="px-4 py-3.5">Syllabus Topic Category</th>
             <th class="px-6 py-3.5">Question Prompt Content Snippet</th>
             <th class="px-4 py-3.5 text-center">Correct Key</th>
@@ -56,10 +55,6 @@
                   <%= question.year.presence || "Mock" %>
                 </td>
 
-                <!-- Question Number -->
-                <td class="px-4 py-3.5 font-bold font-mono text-brand-800 dark:text-brand-400">
-                  <%= question.q_no %>
-                </td>
 
                 <!-- Topic Capsule -->
                 <td class="px-4 py-3.5">
@@ -93,7 +88,7 @@
           <% else %>
             <!-- Fallback Empty State Display Matrix -->
             <tr>
-              <td colspan="7" class="text-center py-12 text-slate-400 font-medium bg-slate-50/50 dark:bg-slate-950/10">
+              <td colspan="6" class="text-center py-12 text-slate-400 font-medium bg-slate-50/50 dark:bg-slate-950/10">
                 The question repository is currently empty. Click the button on top to ingest your Excel question sets.
               </td>
             </tr>

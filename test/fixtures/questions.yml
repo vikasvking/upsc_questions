@@ -2,7 +2,6 @@ one:
   user: teacher
   exam_type: UPSC
   year: 2024
-  q_no: "1"
   topic: Physics
   content: What is the unit of force?
   option_a: Newton
@@ -15,7 +14,6 @@ two:
   user: teacher
   exam_type: UPSC
   year: 2024
-  q_no: "2"
   topic: Physics
   content: What is the unit of energy?
   option_a: Newton

@@ -99,8 +99,8 @@ class TestSessionsController < ApplicationController
       ["Test Title", "Exam Portfolio", "Duration Minutes", "Passing Percentage", "Exam Year", "Access (Open/PIN)", "Starts At", "Ends At"],
       ["Surprise Physics Quiz", "CBSE", "45", "40", "2026", "PIN", "2026-10-05 10:00", "2026-10-05 18:00"],
       [],
-      ["Q.No", "Topic", "Question", "Option A", "Option B", "Option C", "Option D", "Correct Answer", "Explanation"],
-      ["1", "Physics", "What is the formula of Acceleration?", "MA", "MV", "v/t", "MV2", "C", "Acceleration = Velocity / Time."]
+      ["Topic", "Question", "Option A", "Option B", "Option C", "Option D", "Correct Answer", "Explanation"],
+      ["Physics", "What is the formula of Acceleration?", "MA", "MV", "v/t", "MV2", "C", "Acceleration = Velocity / Time."]
     ].map { |row| row.join("\t") }.join("\n")
 
     send_data xls_content, filename: "bulk_test_creation_template.xls", type: "application/vnd.ms-excel; charset=utf-8"
