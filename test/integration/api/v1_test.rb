@@ -59,7 +59,10 @@ class ApiV1Test < ActionDispatch::IntegrationTest
     assert_equal true, json["released"]
     assert_equal 1, json.dig("summary", "correct")
     assert_equal 1, json.dig("rank", "rank")
-    assert_equal "A", json["review"].first["correct_answer"]
+    reviewed = json["review"].find { |r| r["id"] == questions(:one).id }
+    assert_equal "A", reviewed["correct_answer"]
+    assert_equal "A", reviewed["my_choice"]
+    assert_equal true, reviewed["correct"]
   end
 
   test "PIN tests need the PIN first" do
