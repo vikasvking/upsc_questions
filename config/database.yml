@@ -88,6 +88,9 @@ production:
   primary: &primary_production
     <<: *default
     url: <%= ENV["DATABASE_URL"] %>
+    # Web threads and the Solid Queue threads (worker, dispatcher, scheduler, heartbeats) share this one pool
+    # when Solid Queue runs in async mode inside Puma (config/puma.rb).
+    max_connections: <%= ENV.fetch("DB_POOL") { ENV.fetch("RAILS_MAX_THREADS", 3).to_i + 8 } %>
   # Solid Queue (jobs + scheduler) and Solid Cache live in the primary database.
   cable:
     <<: *primary_production
