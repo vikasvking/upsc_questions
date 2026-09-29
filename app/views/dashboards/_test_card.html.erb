@@ -1,22 +1,21 @@
 <%# locals: test, mine (the student's attempt or nil), subjects (array of topic names) %>
 <% label, label_class = test_window_badge(test) %>
-<div class="bg-white dark:bg-slate-900 rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 shadow-[0_1px_2px_rgba(15,23,42,0.04)] p-5 flex flex-col justify-between gap-4">
+<% style = test_style(test) %>
+<div class="bg-white dark:bg-slate-900 rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 shadow-[0_1px_2px_rgba(15,23,42,0.04)] p-5 flex flex-col justify-between gap-4 <%= style[:stripe] %>">
   <div class="min-w-0">
     <div class="flex flex-wrap gap-1.5">
+      <%= test_kind_badge(test) %>
       <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium <%= label_class %>"><%= label %></span>
-      <% if test.pin_required? %>
-        <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">PIN</span>
-      <% end %>
-      <% if test.strict_mode? %>
-        <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400">Strict</span>
-      <% end %>
     </div>
     <h3 class="mt-2 font-semibold text-slate-900 dark:text-white truncate" title="<%= test.title %>"><%= test.title %></h3>
-    <p class="mt-1 text-sm text-slate-500 truncate"><%= [exam_name(test.exam_type), subjects.presence&.join(", "), "#{test.duration_minutes} min"].compact.join(" · ") %></p>
-    <p class="text-xs text-slate-400 mt-0.5">by <%= test.user.email_address.split("@").first.capitalize %></p>
+    <div class="mt-1.5 flex flex-wrap items-center gap-1.5 text-sm text-slate-500">
+      <%= exam_chip(test.exam_type) %>
+      <span class="truncate"><%= [subjects.presence&.join(", "), "#{test.duration_minutes} min"].compact.join(" · ") %></span>
+    </div>
+    <p class="text-xs text-slate-400 mt-1">by <%= test.author_name %></p>
   </div>
 
-  <% primary = "self-start rounded-lg px-3.5 py-2 text-sm font-medium bg-brand-700 text-white hover:bg-brand-800" %>
+  <% primary = "self-start rounded-lg px-3.5 py-2 text-sm font-medium #{style[:button]}" %>
   <% secondary = "self-start rounded-lg px-3.5 py-2 text-sm font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200" %>
   <% if mine&.blocked? %>
     <span class="text-sm font-medium text-red-700 dark:text-red-400">🚫 Blocked — ask your teacher</span>
@@ -33,6 +32,6 @@
   <% elsif test.open_access? %>
     <%= link_to (test.window_status == :live ? "Start test" : "View details"), test_intro_dashboard_path(test), class: (test.window_status == :live ? primary : secondary) %>
   <% else %>
-    <%= link_to "Enter PIN", join_test_sessions_path, class: secondary %>
+    <%= link_to "#{style[:icon]} Enter PIN", join_test_sessions_path, class: (test.window_status == :live ? primary : secondary) %>
   <% end %>
 </div>

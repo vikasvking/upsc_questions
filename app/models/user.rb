@@ -3,12 +3,15 @@ class User < ApplicationRecord
   has_many :sessions, dependent: :destroy
   has_many :user_responses, dependent: :destroy
   has_many :test_attempts, dependent: :destroy
-  has_many :test_sessions, dependent: :destroy
+  # A deleted teacher's tests and questions stay (shown under the exam's name)
+  has_many :test_sessions, dependent: :nullify
+  has_many :questions, dependent: :nullify
   has_many :test_pin_entries, dependent: :delete_all
 
   has_many :attempted_questions, -> { distinct }, through: :user_responses, source: :question
   enum :role, { student: 0, teacher: 1, admin: 2 }, default: :student
   normalizes :email_address, with: ->(e) { e.strip.downcase }
+  validates :email_address, presence: true, uniqueness: true
   normalizes :target_exam, with: ->(v) { Exam.normalize(v) }
   validates :target_exam, inclusion: { in: Exam.codes }, allow_nil: true
 

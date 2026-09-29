@@ -1,0 +1,39 @@
+<% sel = "rounded-xl border-0 py-2 px-3 bg-white dark:bg-slate-950 ring-1 ring-inset ring-slate-200 dark:ring-slate-800 text-sm text-slate-900 dark:text-white" %>
+<div class="py-8 sm:py-10">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-6">
+    <%= render "admin/shared/header", title: "Questions", subtitle: "Every question in the bank, from every teacher.",
+          action: link_to("+ New question", new_admin_question_path(exam: @exam), class: "rounded-lg bg-brand-700 hover:bg-brand-800 text-white text-sm font-medium px-4 py-2") %>
+
+    <%= form_with url: admin_questions_path, method: :get, class: "grid grid-cols-1 sm:grid-cols-5 gap-2" do %>
+      <%= search_field_tag :q, params[:q], placeholder: "Search question text…", class: "sm:col-span-2 #{sel}" %>
+      <%= select_tag :exam, options_for_select(Exam.options, @exam), include_blank: "All exams", class: sel %>
+      <%= select_tag :topic, options_for_select(@topics, @topic), include_blank: "All topics", class: sel %>
+      <div class="flex gap-2">
+        <%= select_tag :teacher, options_for_select([["Deleted teachers", "none"]] + @teachers.map { |t| [t.email_address, t.id] }, @teacher), include_blank: "All teachers", class: "flex-1 min-w-0 #{sel}" %>
+        <%= submit_tag "Filter", name: nil, class: "rounded-xl bg-brand-800 hover:bg-brand-900 text-white text-xs font-bold px-4 cursor-pointer" %>
+      </div>
+    <% end %>
+
+    <div class="overflow-x-auto rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 bg-white dark:bg-slate-900">
+      <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-sm">
+        <thead class="text-left text-xs text-slate-500">
+          <tr><th class="px-4 py-3 font-medium">Question</th><th class="px-4 py-3 font-medium">Exam · topic</th><th class="px-4 py-3 font-medium text-center">Answer</th><th class="px-4 py-3 font-medium text-center">In tests</th><th class="px-4 py-3 font-medium">Added by</th><th class="px-4 py-3"></th></tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+          <% @questions.each do |q| %>
+            <tr>
+              <td class="px-4 py-3 text-slate-900 dark:text-white max-w-md"><%= q.content.truncate(140) %></td>
+              <td class="px-4 py-3"><div class="flex flex-wrap items-center gap-1.5"><%= exam_chip(q.exam_type) if q.exam_type.present? %><span class="text-xs text-slate-500"><%= q.topic %><%= " · #{q.year}" if q.year %></span></div></td>
+              <td class="px-4 py-3 text-center font-mono font-semibold"><%= q.correct_answer %></td>
+              <td class="px-4 py-3 text-center"><%= @test_counts[q.id].to_i %></td>
+              <td class="px-4 py-3 text-xs text-slate-500"><%= q.user&.email_address || "Deleted teacher" %></td>
+              <td class="px-4 py-3 text-right"><%= link_to "Edit", edit_admin_question_path(q), class: "text-brand-700 dark:text-brand-300 font-medium" %></td>
+            </tr>
+          <% end %>
+          <% if @questions.empty? %><tr><td colspan="6" class="px-4 py-10 text-center text-slate-400">No questions match.</td></tr><% end %>
+        </tbody>
+      </table>
+    </div>
+    <%= render "admin/shared/pager" %>
+  </div>
+</div>

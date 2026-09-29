@@ -1,0 +1,8 @@
+<%# locals: record %>
+<% if record.errors.any? %>
+  <div class="rounded-xl bg-red-50 dark:bg-red-950/40 p-4 ring-1 ring-red-200 dark:ring-red-900/50">
+    <ul class="list-disc pl-5 text-sm text-red-800 dark:text-red-300 space-y-1">
+      <% record.errors.full_messages.each do |msg| %><li><%= msg %></li><% end %>
+    </ul>
+  </div>
+<% end %>

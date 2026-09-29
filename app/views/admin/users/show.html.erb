@@ -1,0 +1,50 @@
+<% card = "bg-white dark:bg-slate-900 rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-5" %>
+<div class="py-8 sm:py-10">
+  <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 space-y-6">
+    <%= render "admin/shared/header", title: @user.email_address,
+          subtitle: "#{@user.role.humanize} · joined #{l(@user.created_at.to_date, format: :long)}#{" · preparing for #{exam_name(@user.target_exam)}" if @user.target_exam}",
+          action: link_to("Edit", edit_admin_user_path(@user), class: "rounded-lg bg-brand-700 hover:bg-brand-800 text-white text-sm font-medium px-4 py-2") %>
+
+    <section class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <% [["Answers saved", @answers_count], ["Tests taken", @attempts.size], ["Tests created", @tests&.size.to_i], ["Questions added", @questions_count]].each do |label, value| %>
+        <div class="<%= card %>"><p class="text-sm text-slate-500"><%= label %></p><p class="mt-1 text-2xl font-semibold text-slate-900 dark:text-white"><%= value %></p></div>
+      <% end %>
+    </section>
+
+    <% if @tests.present? %>
+      <section class="<%= card %> space-y-2">
+        <h2 class="font-semibold text-slate-900 dark:text-white">Tests created</h2>
+        <ul class="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
+          <% @tests.each do |t| %>
+            <li class="py-2 flex items-center justify-between gap-3">
+              <span class="flex flex-wrap items-center gap-1.5 min-w-0"><%= test_kind_badge(t) %> <%= exam_chip(t.exam_type) %> <span class="truncate text-slate-900 dark:text-white"><%= t.title %></span></span>
+              <%= link_to "Edit", edit_admin_test_session_path(t), class: "shrink-0 text-brand-700 dark:text-brand-300 font-medium" %>
+            </li>
+          <% end %>
+        </ul>
+      </section>
+    <% end %>
+
+    <section class="<%= card %> space-y-2">
+      <h2 class="font-semibold text-slate-900 dark:text-white">Tests taken</h2>
+      <% if @attempts.any? %>
+        <ul class="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
+          <% @attempts.each do |a| %>
+            <li class="py-2 flex flex-wrap items-center justify-between gap-2">
+              <span class="text-slate-900 dark:text-white"><%= a.title %></span>
+              <span class="text-xs text-slate-500">
+                <%= l(a.started_at, format: :short) %> ·
+                <% if a.blocked? %><span class="text-red-700 dark:text-red-400 font-semibold">Blocked</span>
+                <% elsif a.finished? %>Submitted
+                <% else %>In progress<% end %>
+                <% if a.test_session %> · <%= link_to "Results", test_session_path(a.test_session), class: "text-brand-700 dark:text-brand-300" %><% end %>
+              </span>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p class="text-sm text-slate-500">No tests taken.</p>
+      <% end %>
+    </section>
+  </div>
+</div>

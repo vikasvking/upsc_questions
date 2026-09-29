@@ -1,0 +1,27 @@
+<div class="py-8 sm:py-10">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-6">
+    <%= render "admin/shared/header", title: "Edit “#{@test_session.title}”",
+          action: capture { test_kind_badge(@test_session) + " ".html_safe + exam_chip(@test_session.exam_type) } %>
+    <%= render "admin/test_sessions/form" %>
+
+    <% attempts = @test_session.test_attempts.count %>
+    <% locked = @test_session.editing_locked? %>
+    <section class="rounded-2xl ring-1 ring-red-200 dark:ring-red-900/60 bg-red-50/40 dark:bg-red-950/20 p-6 space-y-3">
+      <h2 class="font-semibold text-red-800 dark:text-red-300">Delete this test</h2>
+      <p class="text-sm text-slate-600 dark:text-slate-400">
+        <%= attempts.positive? ? "All #{pluralize(attempts, "student result")} for this test are deleted too." : "No student has taken it yet." %>
+        Its questions stay in the question bank.
+      </p>
+      <%= form_with url: admin_test_session_path(@test_session), method: :delete, class: "flex flex-col sm:flex-row gap-2",
+            data: { turbo_confirm: "Delete “#{@test_session.title}”? This cannot be undone." } do %>
+        <% if attempts.positive? %>
+          <%= text_field_tag :confirm_text, nil, placeholder: "Type the test title", autocomplete: "off",
+                class: "flex-1 rounded-xl border-0 py-2 px-3 bg-white dark:bg-slate-950 ring-1 ring-inset ring-red-200 dark:ring-red-900 text-sm" %>
+        <% end %>
+        <%= text_field_tag :reason, nil, placeholder: locked ? "Reason (required)" : "Reason (optional)",
+              class: "flex-1 rounded-xl border-0 py-2 px-3 bg-white dark:bg-slate-950 ring-1 ring-inset ring-slate-200 dark:ring-slate-800 text-sm" %>
+        <%= submit_tag "Delete test", name: nil, class: "rounded-xl bg-red-700 hover:bg-red-800 text-white text-sm font-medium px-4 py-2 cursor-pointer" %>
+      <% end %>
+    </section>
+  </div>
+</div>

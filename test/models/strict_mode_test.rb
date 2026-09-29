@@ -26,7 +26,7 @@ class StrictModeTest < ActiveSupport::TestCase
   end
 
   test "leaves are ignored on tests without strict mode" do
-    @test.update!(strict_mode: false)
+    @test.update_columns(strict_mode: false) # the test is locked once started, so skip validations here
     assert_equal :ignored, @attempt.reload.record_violation!("tab")
     assert_equal 0, @attempt.reload.leave_count
   end

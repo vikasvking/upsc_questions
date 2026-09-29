@@ -1,0 +1,16 @@
+<div class="py-8 sm:py-10">
+  <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 space-y-6">
+    <%= render "admin/shared/header", title: "Admin log", subtitle: "Who changed what, when and why. Changes to locked tests and deletions are shown in red." %>
+
+    <%= form_with url: admin_logs_path, method: :get, class: "flex gap-2" do %>
+      <%= select_tag :action_name, options_for_select(AdminLog::LABELS.invert.to_a, params[:action_name]), include_blank: "All changes",
+            class: "rounded-xl border-0 py-2 px-3 bg-white dark:bg-slate-950 ring-1 ring-inset ring-slate-200 dark:ring-slate-800 text-sm text-slate-900 dark:text-white" %>
+      <%= submit_tag "Filter", name: nil, class: "rounded-xl bg-brand-800 hover:bg-brand-900 text-white text-xs font-bold px-4 cursor-pointer" %>
+    <% end %>
+
+    <div class="bg-white dark:bg-slate-900 rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 px-5 py-2">
+      <%= render "admin/logs/list", logs: @logs %>
+    </div>
+    <%= render "admin/shared/pager" %>
+  </div>
+</div>

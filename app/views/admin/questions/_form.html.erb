@@ -1,0 +1,20 @@
+<%# locals: question, locked_tests (tests using this question that are locked) %>
+<%= render "admin/shared/errors", record: question %>
+<%= form_with model: [:admin, question], class: "bg-white dark:bg-slate-900 rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-6 space-y-6" do |form| %>
+  <% if locked_tests.present? %>
+    <div class="rounded-xl bg-red-50 dark:bg-red-950/30 ring-1 ring-red-200 dark:ring-red-900/60 p-4 space-y-2">
+      <p class="text-sm font-semibold text-red-800 dark:text-red-300">🔒 Used in a locked test: <%= locked_tests.map(&:title).to_sentence %></p>
+      <p class="text-xs text-slate-600 dark:text-slate-400">Students may already have answered it. Changing the correct answer re-marks everyone's saved answers. Only change it on the teacher's request.</p>
+      <%= label_tag :reason, "Reason for the change (required)", class: "block text-xs font-bold text-slate-500" %>
+      <%= text_field_tag :reason, params[:reason], placeholder: "e.g. Mr Sharma: answer key for this question was wrong",
+            class: "block w-full rounded-xl border-0 py-2.5 px-3 bg-white dark:bg-slate-950 ring-1 ring-inset ring-red-200 dark:ring-red-900 text-sm" %>
+    </div>
+  <% end %>
+
+  <%= render "questions/fields", form: form %>
+
+  <div class="flex gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+    <%= link_to "Cancel", admin_questions_path, class: "flex-1 text-center rounded-xl px-4 py-2.5 text-sm ring-1 ring-slate-200 dark:ring-slate-800 text-slate-600 dark:text-slate-300" %>
+    <%= form.submit (question.persisted? ? "Save question" : "Add question"), class: "flex-1 rounded-xl bg-brand-700 hover:bg-brand-800 text-white text-sm font-medium px-4 py-2.5 cursor-pointer" %>
+  </div>
+<% end %>

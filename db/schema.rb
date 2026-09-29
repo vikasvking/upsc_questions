@@ -10,9 +10,24 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_29_110100) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_29_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "admin_logs", force: :cascade do |t|
+    t.bigint "admin_id"
+    t.string "admin_email", null: false
+    t.string "action", null: false
+    t.string "record_type"
+    t.bigint "record_id"
+    t.string "record_label"
+    t.text "reason"
+    t.jsonb "details", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.index ["admin_id"], name: "index_admin_logs_on_admin_id"
+    t.index ["created_at"], name: "index_admin_logs_on_created_at"
+    t.index ["record_type", "record_id"], name: "index_admin_logs_on_record_type_and_record_id"
+  end
 
   create_table "leaderboard_snapshots", force: :cascade do |t|
     t.jsonb "rows", default: [], null: false
@@ -252,7 +267,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_110100) do
   end
 
   create_table "test_sessions", force: :cascade do |t|
-    t.bigint "user_id", null: false
+    t.bigint "user_id"
     t.string "title", null: false
     t.string "exam_type", null: false
     t.integer "duration_minutes", default: 60
@@ -293,7 +308,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_110100) do
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
   end
 
-  add_foreign_key "questions", "users"
+  add_foreign_key "admin_logs", "users", column: "admin_id", on_delete: :nullify
+  add_foreign_key "questions", "users", on_delete: :nullify
   add_foreign_key "sessions", "users"
   add_foreign_key "solid_queue_batch_executions", "solid_queue_batches", column: "batch_id", on_delete: :cascade
   add_foreign_key "solid_queue_batch_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
@@ -309,7 +325,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_110100) do
   add_foreign_key "test_pin_entries", "users"
   add_foreign_key "test_questions", "questions"
   add_foreign_key "test_questions", "test_sessions"
-  add_foreign_key "test_sessions", "users"
+  add_foreign_key "test_sessions", "users", on_delete: :nullify
   add_foreign_key "user_responses", "questions"
   add_foreign_key "user_responses", "users"
 end

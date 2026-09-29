@@ -5,6 +5,9 @@ class Question < ApplicationRecord
   belongs_to :user, optional: true
   has_many :user_responses, dependent: :destroy
   has_many :test_questions, dependent: :destroy
+  has_many :test_sessions, through: :test_questions
+
+  after_update :remark_saved_answers, if: :saved_change_to_correct_answer?
 
   normalizes :correct_answer, with: ->(v) { v.to_s.strip.upcase }
   # "UPSC", "JEE Main", "jee_main" -> exam code (see Exam)
@@ -16,6 +19,11 @@ class Question < ApplicationRecord
   validates :exam_type, inclusion: { in: Exam.codes, message: "must be one of: #{Exam.all.map(&:name).join(", ")}" }, allow_blank: true
 
   def exam = Exam.find(exam_type)
+
+  # Tests using this question that are locked (see TestSession#editing_locked?)
+  def locked_tests
+    test_sessions.select(&:editing_locked?)
+  end
 
   # Grouped by exam and year, then in the order the questions were added
   scope :in_order, -> { order(:exam_type, :year, :id) }
@@ -59,5 +67,13 @@ class Question < ApplicationRecord
   def self.cell_text(value)
     value = value.to_i if value.is_a?(Float) && value == value.floor
     value.to_s.strip
+  end
+
+  private
+
+  # A corrected answer key re-marks every saved answer, so marks and ranks follow the fix
+  def remark_saved_answers
+    UserResponse.where(question_id: id).where.not(chosen_option: "SKIPPED")
+                .update_all(["is_correct = (chosen_option = ?), updated_at = updated_at", correct_answer])
   end
 end

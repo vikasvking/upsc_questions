@@ -2,7 +2,13 @@
 class TestSession < ApplicationRecord
   ACCESS_TYPES = %w[open pin].freeze
 
-  belongs_to :user
+  class Locked < StandardError; end
+
+  # Set by the admin pages (with a reason, see AdminLog) to change a locked test on a teacher's request
+  attr_accessor :admin_override
+
+  # nil once the teacher's account is deleted; the test stays and is shown under its exam's name
+  belongs_to :user, optional: true
   has_many :test_questions, dependent: :destroy
   has_many :questions, through: :test_questions
   has_many :test_attempts, dependent: :destroy
@@ -10,6 +16,7 @@ class TestSession < ApplicationRecord
 
   normalizes :exam_type, with: ->(v) { Exam.normalize(v) || v.to_s.strip.upcase.presence }
 
+  validates :user, presence: true, on: :create
   validates :title, :exam_type, :pin_code, presence: true
   validates :pin_code, uniqueness: true
   validates :access_type, inclusion: { in: ACCESS_TYPES }
@@ -18,6 +25,9 @@ class TestSession < ApplicationRecord
   validates :pass_mark_percentage, numericality: { only_integer: true, in: 0..100 }
   validate  :window_is_valid
   validate  :strict_mode_is_valid
+  validate  :not_locked, on: :update
+
+  after_update :refresh_open_deadlines, if: -> { saved_change_to_ends_at? || saved_change_to_duration_minutes? }
 
   before_validation :generate_secure_pin, on: :create
 
@@ -32,9 +42,26 @@ class TestSession < ApplicationRecord
 
   # Strict and time-bound tests cannot be changed from 10 minutes before they open (or once anyone
   # has started, or after they close), so every student sits the same paper under the same rules.
+  # Judged on the saved values, so changing the times cannot be used to unlock a locked test.
   def editing_locked?(now = Time.current)
-    return false unless strict_mode? || time_bound?
-    (starts_at && now >= starts_at - EDIT_LOCK_BEFORE) || (ends_at && now >= ends_at) || test_attempts.exists?
+    return false if new_record?
+    starts, ends = starts_at_in_database, ends_at_in_database
+    return false unless strict_mode_in_database || starts || ends
+    (starts && now >= starts - EDIT_LOCK_BEFORE) || (ends && now >= ends) || test_attempts.exists?
+  end
+
+  # Questions are saved as soon as they are assigned, so the lock is checked here too
+  def question_ids=(ids)
+    if editing_locked? && !admin_override
+      new_ids = Array(ids).compact_blank.map(&:to_i).sort
+      raise Locked, "“#{title}” is locked; only an admin can change its questions" unless new_ids == question_ids.sort
+    end
+    super
+  end
+
+  # Shown instead of the teacher once their account is deleted
+  def author_name
+    user ? user.email_address.split("@").first.capitalize : exam.name
   end
 
   # When editing stops for a test that has not locked yet (nil if there is no opening time)
@@ -192,6 +219,21 @@ class TestSession < ApplicationRecord
     self.pin_code ||= loop do
       pin = SecureRandom.alphanumeric(6).upcase
       break pin unless TestSession.exists?(pin_code: pin)
+    end
+  end
+
+  def not_locked
+    return if admin_override || !has_changes_to_save? || !editing_locked?
+    errors.add(:base, "This test is locked: tests with a time window or strict mode cannot be changed from " \
+                      "#{EDIT_LOCK_BEFORE.in_minutes.to_i} minutes before they open, once a student has started, or after they close. " \
+                      "Ask an admin to change it.")
+  end
+
+  # Students already writing get the new closing time / duration
+  def refresh_open_deadlines
+    test_attempts.in_progress.find_each do |a|
+      limits = [a.started_at + duration_minutes.to_i.minutes, ends_at].compact
+      a.update_column(:deadline_at, limits.min)
     end
   end
 

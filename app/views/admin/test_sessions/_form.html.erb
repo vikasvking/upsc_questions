@@ -1,0 +1,39 @@
+<%# The teacher form's settings and question picker, plus owner and (for locked tests) the reason %>
+<% input = "mt-1.5 block w-full rounded-xl border-0 py-2.5 px-3 bg-white dark:bg-slate-950 ring-1 ring-inset ring-slate-200 dark:ring-slate-800 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-800" %>
+<% locked = @test_session.editing_locked? %>
+<%= form_with model: [:admin, @test_session], class: "space-y-8" do |f| %>
+  <% if locked %>
+    <div class="rounded-2xl bg-red-50 dark:bg-red-950/30 ring-1 ring-red-200 dark:ring-red-900/60 p-5 space-y-2">
+      <p class="text-sm font-semibold text-red-800 dark:text-red-300">🔒 This test is locked for teachers.</p>
+      <p class="text-xs text-slate-600 dark:text-slate-400">
+        <%= pluralize(@test_session.test_attempts.count, "student") %> started it.
+        Changing questions affects answers already given; a new closing time or duration also applies to students still writing.
+        Only change it on the teacher's request.
+      </p>
+      <%= label_tag :reason, "Reason for the change (required, kept in the admin log)", class: "block text-xs font-bold text-slate-500" %>
+      <%= text_field_tag :reason, params[:reason], placeholder: "e.g. Ms Rao asked to extend the closing time by 30 minutes",
+            class: "block w-full rounded-xl border-0 py-2.5 px-3 bg-white dark:bg-slate-950 ring-1 ring-inset ring-red-200 dark:ring-red-900 text-sm" %>
+    </div>
+  <% end %>
+
+  <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+    <%= f.label :user_id, "Teacher (owner)", class: "text-xs font-bold text-slate-400 dark:text-slate-500" %>
+    <%= f.select :user_id, @owners.map { |u| ["#{u.email_address} (#{u.role})", u.id] },
+          { include_blank: (@test_session.persisted? && @test_session.user_id.nil? ? "— teacher deleted (shown as #{exam_name(@test_session.exam_type)}) —" : "Choose a teacher") },
+          class: input, required: @test_session.new_record? %>
+  </div>
+
+  <%= render "test_sessions/edit_partials/settings_form", f: f %>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+    <%= render "test_sessions/edit_partials/active_blueprint" %>
+    <%= render "test_sessions/edit_partials/master_library" %>
+  </div>
+
+  <div class="flex gap-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+    <%= link_to "Cancel", admin_test_sessions_path, class: "flex-1 text-center font-bold text-xs border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-950 px-4 py-3 rounded-xl" %>
+    <%= f.submit (@test_session.persisted? ? (locked ? "Save changes to locked test" : "Save changes") : "Create test"),
+          class: "flex-1 rounded-xl #{locked ? "bg-red-700 hover:bg-red-800" : "bg-brand-800 hover:bg-brand-900"} px-4 py-3 text-xs font-bold text-white cursor-pointer" %>
+  </div>
+<% end %>
+<%= render "test_sessions/edit_partials/search_script" %>

@@ -50,5 +50,14 @@ Rails.application.routes.draw do
   get  "sign_up", to: "registrations#new", as: :new_registration
   post "sign_up", to: "registrations#create"
 
+  # Admins only: manage teachers, students, questions and tests (every change is logged)
+  namespace :admin do
+    root "dashboard#show"
+    resources :users
+    resources :questions, except: [:show]
+    resources :test_sessions, path: "tests", except: [:show]
+    resources :logs, only: [:index]
+  end
+
   get "up" => "rails/health#show", as: :rails_health_check
 end

@@ -36,7 +36,7 @@ class LiveViewAndLockTest < ActionDispatch::IntegrationTest
 
   test "a timed test locks 10 minutes before it opens" do
     sign_in_as users(:teacher)
-    @test.update!(starts_at: 11.minutes.from_now, ends_at: 2.hours.from_now)
+    @test.update_columns(starts_at: 11.minutes.from_now, ends_at: 2.hours.from_now)
     get edit_test_session_path(@test)
     assert_response :success
 

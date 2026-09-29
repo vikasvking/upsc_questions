@@ -1,0 +1,51 @@
+<% card = "bg-white dark:bg-slate-900 rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-5" %>
+<div class="py-8 sm:py-10">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-8">
+    <%= render "admin/shared/header", title: "Admin", subtitle: "Manage teachers, students, questions and tests. Every change is recorded in the admin log." %>
+
+    <section class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <% [["Teachers", @counts[:teachers], admin_users_path(role: "teacher")],
+          ["Students", @counts[:students], admin_users_path(role: "student")],
+          ["Questions", @counts[:questions], admin_questions_path],
+          ["Tests", @counts[:tests], admin_test_sessions_path],
+          ["Scheduled tests live now", @counts[:live_tests], admin_test_sessions_path(kind: "scheduled")],
+          ["Students writing now", @counts[:writing], admin_test_sessions_path],
+          ["Blocked students", @counts[:blocked], admin_test_sessions_path(kind: "strict")],
+          ["Admins", @counts[:admins], admin_users_path(role: "admin")]].each do |label, value, path| %>
+        <%= link_to path, class: "#{card} hover:ring-brand-300 transition" do %>
+          <p class="text-sm text-slate-500"><%= label %></p>
+          <p class="mt-1 text-2xl font-semibold tabular-nums <%= label == "Blocked students" && value.positive? ? "text-red-700 dark:text-red-400" : "text-slate-900 dark:text-white" %>"><%= number_with_delimiter(value) %></p>
+        <% end %>
+      <% end %>
+    </section>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <section class="<%= card %> space-y-3">
+        <h2 class="font-semibold text-slate-900 dark:text-white">🚫 Blocked students waiting</h2>
+        <% if @blocked.any? %>
+          <ul class="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
+            <% @blocked.each do |a| %>
+              <li class="py-2 flex items-center justify-between gap-3">
+                <div class="min-w-0">
+                  <p class="font-medium text-slate-900 dark:text-white truncate"><%= a.user.email_address %></p>
+                  <p class="text-xs text-slate-500 truncate"><%= a.test_session.title %> · <%= time_ago_in_words(a.blocked_at) %> ago</p>
+                </div>
+                <%= link_to "Open test", test_session_path(a.test_session), class: "shrink-0 text-xs font-semibold text-brand-700 dark:text-brand-300" %>
+              </li>
+            <% end %>
+          </ul>
+        <% else %>
+          <p class="text-sm text-slate-500">Nobody is blocked right now.</p>
+        <% end %>
+      </section>
+
+      <section class="<%= card %> space-y-3">
+        <div class="flex items-baseline justify-between">
+          <h2 class="font-semibold text-slate-900 dark:text-white">Recent admin changes</h2>
+          <%= link_to "Full log →", admin_logs_path, class: "text-sm text-brand-700 dark:text-brand-300" %>
+        </div>
+        <%= render "admin/logs/list", logs: @logs %>
+      </section>
+    </div>
+  </div>
+</div>

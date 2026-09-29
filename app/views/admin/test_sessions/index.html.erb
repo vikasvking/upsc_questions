@@ -1,0 +1,47 @@
+<% sel = "rounded-xl border-0 py-2 px-3 bg-white dark:bg-slate-950 ring-1 ring-inset ring-slate-200 dark:ring-slate-800 text-sm text-slate-900 dark:text-white" %>
+<div class="py-8 sm:py-10">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-6">
+    <%= render "admin/shared/header", title: "Tests", subtitle: "Every teacher's tests. Locked tests can be changed here on a teacher's request, with a reason.",
+          action: link_to("+ New test", new_admin_test_session_path, class: "rounded-lg bg-brand-700 hover:bg-brand-800 text-white text-sm font-medium px-4 py-2") %>
+
+    <%= form_with url: admin_test_sessions_path, method: :get, class: "grid grid-cols-1 sm:grid-cols-5 gap-2" do %>
+      <%= search_field_tag :q, params[:q], placeholder: "Search title…", class: "sm:col-span-2 #{sel}" %>
+      <%= select_tag :exam, options_for_select(Exam.options, @exam), include_blank: "All exams", class: sel %>
+      <%= select_tag :kind, options_for_select([["🟢 Open", "open"], ["🔐 PIN", "pin"], ["🛡️ Strict", "strict"], ["⏰ Scheduled", "scheduled"]], @kind), include_blank: "All types", class: sel %>
+      <div class="flex gap-2">
+        <%= select_tag :teacher, options_for_select([["Deleted teachers", "none"]] + @teachers.map { |t| [t.email_address, t.id] }, @teacher), include_blank: "All teachers", class: "flex-1 min-w-0 #{sel}" %>
+        <%= submit_tag "Filter", name: nil, class: "rounded-xl bg-brand-800 hover:bg-brand-900 text-white text-xs font-bold px-4 cursor-pointer" %>
+      </div>
+    <% end %>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <% @tests.each do |t| %>
+        <% label, label_class = test_window_badge(t) %>
+        <div class="bg-white dark:bg-slate-900 rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-5 space-y-3 <%= test_style(t)[:stripe] %>">
+          <div class="flex flex-wrap gap-1.5">
+            <%= test_kind_badge(t) %>
+            <%= exam_chip(t.exam_type) %>
+            <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium <%= label_class %>"><%= label %></span>
+            <% if t.editing_locked? %><span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">🔒 Locked</span><% end %>
+          </div>
+          <div>
+            <h3 class="font-semibold text-slate-900 dark:text-white truncate" title="<%= t.title %>"><%= t.title %></h3>
+            <p class="text-xs text-slate-500 mt-0.5">
+              by <%= t.user&.email_address || "#{exam_name(t.exam_type)} (teacher deleted)" %> ·
+              <%= pluralize(@question_counts[t.id].to_i, "question") %> · <%= t.duration_minutes %> min ·
+              <%= pluralize(@attempt_counts[t.id].to_i, "student") %>
+              <% if @blocked_counts[t.id].to_i.positive? %> · <span class="text-red-700 dark:text-red-400 font-semibold"><%= @blocked_counts[t.id] %> blocked</span><% end %>
+              <% if t.pin_required? %> · PIN <span class="font-mono font-semibold"><%= t.pin_code %></span><% end %>
+            </p>
+          </div>
+          <div class="flex gap-4 text-sm font-medium">
+            <%= link_to "Results / live", test_session_path(t), class: "text-brand-700 dark:text-brand-300" %>
+            <%= link_to (t.editing_locked? ? "Edit (override)" : "Edit"), edit_admin_test_session_path(t), class: "text-slate-600 dark:text-slate-300" %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+    <% if @tests.empty? %><p class="text-center text-slate-400 py-10">No tests match.</p><% end %>
+    <%= render "admin/shared/pager" %>
+  </div>
+</div>

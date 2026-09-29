@@ -9,7 +9,8 @@
     upload: "M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 4v12m0-12l-4 4m4-4l4 4",
     plus:   "M12 5v14M5 12h14",
     table:  "M3 10h18M3 14h18M10 3v18M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z",
-    user:   "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+    user:   "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z",
+    shield: "M12 3l7 3v6c0 4.5-3 8-7 9-4-1-7-4.5-7-9V6l7-3z"
   }
   links =
     if Current.user&.student?
@@ -23,6 +24,7 @@
        ["Add Question", new_question_path, :plus, current_page?(new_question_path)],
        ["Question Bank", questions_path, :table, controller_name == "questions" && !current_page?(new_question_path) && !current_page?(upload_form_questions_path)]]
     end
+  links.unshift(["Admin", admin_root_path, :shield, controller_path.start_with?("admin/")]) if Current.user&.admin?
   links << ["Profile", profile_path, :user, controller_name == "profiles"]
   home_path = Current.user&.student? ? dashboard_path : test_sessions_path
 %>

@@ -1,0 +1,29 @@
+<%# locals: logs %>
+<% if logs.any? %>
+  <ul class="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
+    <% logs.each do |log| %>
+      <li class="py-2.5 space-y-0.5">
+        <div class="flex flex-wrap items-baseline justify-between gap-2">
+          <p class="text-slate-900 dark:text-white">
+            <span class="font-semibold <%= log.action == "update_locked_test" || log.action.start_with?("delete") ? "text-red-700 dark:text-red-400" : "" %>"><%= log.action_label %></span>
+            <% if log.record_label %>· <span class="text-slate-600 dark:text-slate-300"><%= log.record_label.truncate(80) %></span><% end %>
+          </p>
+          <span class="text-xs text-slate-400"><%= l(log.created_at, format: :short) %></span>
+        </div>
+        <p class="text-xs text-slate-500">by <%= log.admin_email %><% if log.reason %> · Reason: <span class="text-slate-700 dark:text-slate-300"><%= log.reason %></span><% end %></p>
+        <% if log.details.present? %>
+          <details class="text-xs text-slate-500">
+            <summary class="cursor-pointer">What changed</summary>
+            <ul class="mt-1 space-y-0.5 font-mono">
+              <% log.details.each do |key, value| %>
+                <li><%= key.to_s.humanize %>: <%= value.is_a?(Hash) && value.key?("from") ? "#{value["from"].inspect} → #{value["to"].inspect}" : value.inspect %></li>
+              <% end %>
+            </ul>
+          </details>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+<% else %>
+  <p class="text-sm text-slate-500">No admin changes yet.</p>
+<% end %>
