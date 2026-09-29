@@ -5,7 +5,7 @@ class Admin::TestSessionsController < Admin::BaseController
   self.admin_area = :tests
   KINDS = %w[open pin strict scheduled free].freeze
 
-  before_action :set_test_session, only: [:edit, :update, :destroy]
+  before_action :set_test_session, only: [:edit, :update, :destroy, :toggle_gift]
   before_action :load_form_data, only: [:new, :edit]
 
   def index
@@ -32,6 +32,7 @@ class Admin::TestSessionsController < Admin::BaseController
     @question_counts = TestQuestion.where(test_session_id: ids).group(:test_session_id).count
     @attempt_counts  = TestAttempt.where(test_session_id: ids).group(:test_session_id).count
     @blocked_counts  = TestAttempt.blocked.in_progress.where(test_session_id: ids).group(:test_session_id).count
+    @free_count      = TestSession.where(free_sample: true).count
   end
 
   def new
@@ -96,6 +97,22 @@ class Admin::TestSessionsController < Admin::BaseController
       messages.each { |m| @test_session.errors.add(:base, m) }
       load_form_data
       render :edit, status: :unprocessable_entity
+    end
+  end
+
+  # PATCH /admin/tests/:id/toggle_gift -> make it a 🎁 free sample test, or stop. Admins only.
+  # Only the gift flag changes (never the paper), so this works on locked tests too.
+  def toggle_gift
+    return deny("Only admins choose the free sample tests.") unless Current.user.admin?
+    @test_session.admin_override = true
+    @test_session.free_sample = !@test_session.free_sample?
+    if @test_session.save
+      log!("update_test", record: @test_session, label: @test_session.title,
+           details: { "free_sample" => { "from" => !@test_session.free_sample?, "to" => @test_session.free_sample? } })
+      notice = @test_session.free_sample? ? "🎁 “#{@test_session.title}” is now a free sample test." : "“#{@test_session.title}” is no longer a free sample test."
+      redirect_back_or_to admin_test_sessions_path, notice: notice
+    else
+      redirect_back_or_to admin_test_sessions_path, alert: "Could not change the gift: #{@test_session.errors.full_messages.to_sentence}."
     end
   end
 

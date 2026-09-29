@@ -15,7 +15,7 @@
 
     <div class="space-y-2">
       <h1 class="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white"><%= test ? test.title : "#{@topic} Practice" %></h1>
-      <p class="text-sm text-slate-500 dark:text-slate-400">Read the rules before you start.</p>
+      <p class="text-sm text-slate-500 dark:text-slate-400"><%= @locked ? "🔒 Upgrade your membership to take this test." : "Read the rules before you start." %></p>
     </div>
 
     <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 text-left space-y-3.5 text-xs text-slate-600 dark:text-slate-400 leading-relaxed shadow-sm">
@@ -41,11 +41,28 @@
       <div class="flex gap-x-2"><span>•</span> <span>You can move between questions and change answers until you press Finish.</span></div>
     </div>
 
+    <% if @locked %>
+      <%# Test outside the student's tier: what unlocks it, instead of the Start button %>
+      <div class="rounded-2xl bg-amber-50 dark:bg-amber-950/30 ring-1 ring-amber-200 dark:ring-amber-900/60 p-5 text-left space-y-3">
+        <p class="text-sm font-semibold text-amber-900 dark:text-amber-200">
+          <%= Current.user.free_tier? ? "🌱 You're on the free trial: only the #{Tiers::FREE_SAMPLE_TESTS} 🎁 sample tests are included." : "⭐ Your Plus plan covers #{Current.user.allowed_exam_codes.map { |c| exam_name(c) }.to_sentence.presence || "your school's exams"} — this test is for #{exam_name(test.exam_type)}." %>
+        </p>
+        <ul class="text-xs text-slate-700 dark:text-slate-300 space-y-1.5">
+          <% if Current.user.free_tier? %>
+            <li>⭐ <strong>Plus</strong> — free through your school's plan: school tests and public tests in your exams.</li>
+          <% end %>
+          <li>⚔️ <strong>Warrior</strong> — every exam, all public tests and practice.</li>
+        </ul>
+      </div>
+    <% end %>
+
     <div class="flex gap-4 pt-2">
       <%= link_to "Cancel & Go Back", dashboard_path, class: "flex-1 text-center font-bold text-sm border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-950 px-4 py-3 rounded-xl hover:bg-slate-100 transition-colors shadow-sm" %>
 
       <% if test %>
-        <% if @existing_attempt&.blocked? %>
+        <% if @locked %>
+          <%= link_to "See upgrade options", membership_path, class: "flex-1 text-center font-bold text-sm bg-amber-500 hover:bg-amber-600 text-white px-4 py-3 rounded-xl shadow-sm" %>
+        <% elsif @existing_attempt&.blocked? %>
           <span class="flex-1 text-center font-bold text-sm bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-900/40 px-4 py-3 rounded-xl">🚫 Blocked — ask your teacher</span>
         <% elsif @existing_attempt&.finished? %>
           <%= link_to "View My Result", test_results_dashboard_path(token: @existing_attempt.token), class: "flex-1 text-center font-bold text-sm bg-brand-800 hover:bg-brand-900 text-white px-4 py-3 rounded-xl shadow-sm" %>

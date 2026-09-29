@@ -93,8 +93,12 @@ Rails.application.routes.draw do
     resource :mail_settings, only: [:edit, :update] do
       post :send_test, on: :member
     end
-    resources :questions, except: [:show]
-    resources :test_sessions, path: "tests", except: [:show]
+    resources :questions, except: [:show] do
+      patch :toggle_gift, on: :member # 🎁 free sample on/off in one click
+    end
+    resources :test_sessions, path: "tests", except: [:show] do
+      patch :toggle_gift, on: :member
+    end
     resources :logs, only: [:index]
     resources :moderation, only: [:index] do
       patch :hide_comment, on: :member

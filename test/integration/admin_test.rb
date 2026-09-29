@@ -13,6 +13,24 @@ class AdminTest < ActionDispatch::IntegrationTest
     assert_redirected_to dashboard_path
   end
 
+  test "admin gifts a test and a question in one click, and can take the gift back" do
+    test = test_sessions(:one)
+    question = questions(:one)
+    assert_not test.free_sample?
+
+    patch toggle_gift_admin_test_session_path(test)
+    assert test.reload.free_sample?
+    patch toggle_gift_admin_test_session_path(test)
+    assert_not test.reload.free_sample?
+
+    patch toggle_gift_admin_question_path(question)
+    assert question.reload.free_sample?
+
+    get admin_test_sessions_path
+    assert_select "button", text: "🎁 Gift"
+    assert_match "free sample tests chosen", response.body
+  end
+
   test "admin pages load" do
     [admin_root_path, admin_users_path, admin_user_path(users(:teacher)), new_admin_user_path, edit_admin_user_path(users(:one)),
      admin_questions_path, new_admin_question_path, edit_admin_question_path(questions(:one)),

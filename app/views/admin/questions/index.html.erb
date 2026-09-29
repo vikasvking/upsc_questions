@@ -28,7 +28,13 @@
               <td class="px-4 py-3 text-center font-mono font-semibold"><%= q.correct_answer %></td>
               <td class="px-4 py-3 text-center"><%= @test_counts[q.id].to_i %></td>
               <td class="px-4 py-3 text-xs text-slate-500"><%= q.user&.email_address || "Deleted teacher" %></td>
-              <td class="px-4 py-3 text-right"><%= link_to "Edit", edit_admin_question_path(q), class: "text-brand-700 dark:text-brand-300 font-medium" %></td>
+              <td class="px-4 py-3 text-right whitespace-nowrap">
+                <% if Current.user.admin? %>
+                  <%= button_to (q.free_sample? ? "Remove gift" : "🎁 Gift"), toggle_gift_admin_question_path(q), method: :patch,
+                        form_class: "inline mr-3", class: "text-pink-700 dark:text-pink-300 font-medium cursor-pointer hover:underline" %>
+                <% end %>
+                <%= link_to "Edit", edit_admin_question_path(q), class: "text-brand-700 dark:text-brand-300 font-medium" %>
+              </td>
             </tr>
           <% end %>
           <% if @questions.empty? %><tr><td colspan="6" class="px-4 py-10 text-center text-slate-400">No questions match.</td></tr><% end %>

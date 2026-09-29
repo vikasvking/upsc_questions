@@ -1,12 +1,15 @@
 <%# locals: test, mine (the student's attempt or nil), subjects (array of topic names) %>
 <% label, label_class = window_badge_for(test) %>
 <% style = style_for_test(test) %>
+<%# locked: shown to the student, but outside their tier (Free: all but the 🎁 samples; Plus: other exams) %>
+<% locked = !mine && @locked_test_ids&.include?(test.id) %>
 <div class="bg-white dark:bg-slate-900 rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 shadow-[0_1px_2px_rgba(15,23,42,0.04)] p-5 flex flex-col justify-between gap-4 <%= style[:stripe] %>">
   <div class="min-w-0">
     <div class="flex flex-wrap gap-1.5">
       <%= kind_badge_for(test) %>
       <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium <%= label_class %>"><%= label %></span>
       <%= audience_chip(test) %>
+      <% if locked %><span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300">🔒 <%= Current.user.free_tier? ? "Plus / Warrior" : "Warrior" %></span><% end %>
     </div>
     <h3 class="mt-2 font-semibold text-slate-900 dark:text-white truncate" title="<%= test.title %>"><%= test.title %></h3>
     <div class="mt-1.5 flex flex-wrap items-center gap-1.5 text-sm text-slate-500">
@@ -31,6 +34,11 @@
     </div>
   <% elsif mine %>
     <%= link_to "Resume test", test_intro_dashboard_path(test), class: primary %>
+  <% elsif locked && test.window_status == :closed %>
+    <span class="text-sm text-slate-400">Closed</span>
+  <% elsif locked %>
+    <%= link_to "🔒 Upgrade to unlock", test_intro_dashboard_path(test),
+          class: "self-start rounded-lg px-3.5 py-2 text-sm font-medium bg-amber-100 text-amber-900 hover:bg-amber-200 dark:bg-amber-900/40 dark:text-amber-200 dark:hover:bg-amber-900/60" %>
   <% elsif test.window_status == :closed %>
     <span class="text-sm text-slate-400">Missed</span>
   <% elsif test.open_access? %>

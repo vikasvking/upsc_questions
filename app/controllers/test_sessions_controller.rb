@@ -170,6 +170,9 @@ class TestSessionsController < ApplicationController
       # so the teacher's live panel can list students who entered the PIN but have not started
       TestPinEntry.create_or_find_by!(test_session: match, user: Current.user) if Current.user.student?
       redirect_to test_intro_dashboard_path(match), notice: "PIN accepted: #{match.title}"
+    elsif !match && (locked = TestSession.visible_to(Current.user).find_by(pin_code: params[:pin_code].to_s.strip.upcase))
+      # right PIN, but the test is outside the student's tier -> its page with the upgrade options
+      redirect_to test_intro_dashboard_path(locked)
     else
       redirect_to join_test_sessions_path, alert: "Invalid PIN. Please check it with your teacher."
     end

@@ -1,7 +1,7 @@
 class Admin::QuestionsController < Admin::BaseController
   include AudienceAssignment
   self.admin_area = :questions
-  before_action :set_question, only: [:edit, :update, :destroy]
+  before_action :set_question, only: [:edit, :update, :destroy, :toggle_gift]
 
   def index
     scope = Question.includes(:user).in_order
@@ -63,6 +63,20 @@ class Admin::QuestionsController < Admin::BaseController
       redirect_to admin_questions_path, notice: notice
     else
       render :edit, status: :unprocessable_entity
+    end
+  end
+
+  # PATCH /admin/questions/:id/toggle_gift -> make it a 🎁 free sample question, or stop. Admins only.
+  def toggle_gift
+    return deny("Only admins choose the free sample questions.") unless Current.user.admin?
+    @question.free_sample = !@question.free_sample?
+    if @question.save
+      log!("update_question", record: @question, label: @question.content,
+           details: { "free_sample" => { "from" => !@question.free_sample?, "to" => @question.free_sample? } })
+      notice = @question.free_sample? ? "🎁 Question is now a free sample." : "Question is no longer a free sample."
+      redirect_back_or_to admin_questions_path, notice: notice
+    else
+      redirect_back_or_to admin_questions_path, alert: "Could not change the gift: #{@question.errors.full_messages.to_sentence}."
     end
   end
 

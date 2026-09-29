@@ -16,15 +16,6 @@
     </div>
   <% end %>
 
-  <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-    <%= f.label :user_id, "Teacher (owner)", class: "text-xs font-bold text-slate-400 dark:text-slate-500" %>
-    <%= f.select :user_id, @owners.map { |u| ["#{u.email_address} (#{u.role})", u.id] },
-          { include_blank: (@test_session.persisted? && @test_session.user_id.nil? ? "— teacher deleted (shown as #{exam_name(@test_session.exam_type)}) —" : "Choose a teacher") },
-          class: input, required: @test_session.new_record? %>
-  </div>
-
-  <%= render "test_sessions/edit_partials/settings_form", f: f %>
-
   <% if Current.user.admin? %>
     <% used = TestSession.where(free_sample: true).where.not(id: @test_session.id).count %>
     <label class="flex items-start gap-3 rounded-2xl ring-1 ring-pink-200 dark:ring-pink-900/60 bg-pink-50/40 dark:bg-pink-950/20 p-4 cursor-pointer">
@@ -33,6 +24,15 @@
         <span class="block text-xs text-slate-500">Free students can take only the sample tests (<%= used %> of <%= Tiers::FREE_SAMPLE_TESTS %> other tests already chosen). Must be visible to everyone.</span></span>
     </label>
   <% end %>
+
+  <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+    <%= f.label :user_id, "Teacher (owner)", class: "text-xs font-bold text-slate-400 dark:text-slate-500" %>
+    <%= f.select :user_id, @owners.map { |u| ["#{u.email_address} (#{u.role})", u.id] },
+          { include_blank: (@test_session.persisted? && @test_session.user_id.nil? ? "— teacher deleted (shown as #{exam_name(@test_session.exam_type)}) —" : "Choose a teacher") },
+          class: input, required: @test_session.new_record? %>
+  </div>
+
+  <%= render "test_sessions/edit_partials/settings_form", f: f %>
 
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
     <%= render "test_sessions/edit_partials/active_blueprint" %>

@@ -21,12 +21,27 @@ class TiersAndPlansTest < ActionDispatch::IntegrationTest
     assert_equal "free", @free.tier
     sign_in_as @free
 
+    # every public test is listed; the non-sample one is locked with an upgrade button
     get all_tests_dashboard_path, params: { exam: "all" }
     assert_select "h3", text: @sample.title
-    assert_select "h3", text: @other.title, count: 0
+    assert_select "h3", text: @other.title
+    assert_select "a[href=?]", test_intro_dashboard_path(@other), text: /Upgrade to unlock/
+    assert_select "a[href=?]", test_intro_dashboard_path(@sample), text: /Upgrade/, count: 0
 
+    # clicking it shows the test's details with the upgrade options, not a Start button
+    get test_intro_dashboard_path(@other)
+    assert_response :success
+    assert_select "a[href=?]", membership_path, text: /upgrade options/
+    assert_select "button", text: "Start Test", count: 0
+
+    # starting it anyway is still refused, and lands on the upgrade page
     post start_test_dashboard_path, params: { test_session_id: @other.id }
-    assert_redirected_to all_tests_dashboard_path
+    assert_redirected_to test_intro_dashboard_path(@other)
+    assert_equal 0, @free.test_attempts.where(test_session: @other).count
+
+    # the right PIN for a locked test also leads to the upgrade page, not "Invalid PIN"
+    post verify_pin_test_sessions_path, params: { pin_code: @other.pin_code }
+    assert_redirected_to test_intro_dashboard_path(@other)
 
     post question_bank_answer_path, params: { question_id: questions(:one).id, answer_choice: "A" }
     assert_equal 1, @free.user_responses.count
@@ -56,6 +71,14 @@ class TiersAndPlansTest < ActionDispatch::IntegrationTest
     assert_includes available, @other           # public UPSC test
     assert_not_includes available, neet         # public, but not one of their exams
     assert_includes available, school_test      # school tests are always open to them
+
+    # Plus students see the other exam's public test too, locked, with the Warrior nudge
+    sign_in_as @free
+    get all_tests_dashboard_path, params: { exam: "all" }
+    assert_select "a[href=?]", test_intro_dashboard_path(neet), text: /Upgrade to unlock/
+    assert_select "a[href=?]", test_intro_dashboard_path(school_test), text: /Upgrade/, count: 0
+    get test_intro_dashboard_path(neet)
+    assert_match "Your Plus plan covers", response.body
 
     school.update!(subscription_status: "suspended")
     assert_equal "free", @free.reload.tier

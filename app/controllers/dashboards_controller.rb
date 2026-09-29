@@ -26,9 +26,9 @@ class DashboardsController < ApplicationController
     @rank_exam   = Exam.normalize(params[:exam]) || Current.user.ranking_exam_code
     @comparison  = Leaderboard.comparison_for(Current.user, @rank_exam)
 
-    # Only the 3 newest tests that are live or opening soon; the rest are on "All Tests"
-    # (only tests this student may see, for their exams)
-    latest = TestSession.available_to(Current.user).includes(:user, :institution, :audience_grants)
+    # Only the 3 newest tests that are live or opening soon; the rest are on "All Tests".
+    # Tests outside the student's tier are listed too, marked 🔒 with an upgrade button.
+    latest = TestSession.visible_to(Current.user).includes(:user, :institution, :audience_grants)
                         .where("test_sessions.ends_at IS NULL OR test_sessions.ends_at > ?", Time.current)
     latest = latest.where(exam_type: Current.user.exam_codes) if Current.user.exam_codes.any?
     @latest_tests = latest.newest_first.limit(3).to_a
@@ -36,8 +36,9 @@ class DashboardsController < ApplicationController
   end
 
   # GET /dashboard/all_tests?exam=mine|all|UPSC_PRELIMS&subject=Physics&institution=3&teacher=7
+  # Lists every test the student can see; ones their tier does not include show 🔒 Upgrade (see load_card_data)
   def all_tests
-    visible = TestSession.available_to(Current.user)
+    visible = TestSession.visible_to(Current.user)
     my_exams = Current.user.exam_codes
     @exam_choice = params[:exam].presence || (my_exams.any? ? "mine" : "all")
     @exam    = Exam.normalize(@exam_choice)
@@ -74,9 +75,14 @@ class DashboardsController < ApplicationController
   end
 
   # GET /dashboard/tests/:id -> rules page for a teacher test
+  # (for a test outside the student's tier: its details plus the upgrade options instead of Start)
   def test_intro
-    @test_session = TestSession.available_to(Current.user).find_by(id: params[:id])
-    return redirect_to(all_tests_dashboard_path, alert: not_available_message) unless @test_session
+    @test_session = TestSession.visible_to(Current.user).find_by(id: params[:id])
+    return redirect_to(all_tests_dashboard_path, alert: "That test is not available to you.") unless @test_session
+    @total_q_count = @test_session.questions.count
+    @locked = !TestSession.available_to(Current.user).exists?(@test_session.id)
+    return render(:test_confirmation) if @locked
+
     @existing_attempt = Current.user.test_attempts.find_by(test_session: @test_session)
     @existing_attempt&.enforce_presence!
 
@@ -85,7 +91,6 @@ class DashboardsController < ApplicationController
       return
     end
 
-    @total_q_count = @test_session.questions.count
     render :test_confirmation
   end
 
@@ -93,7 +98,11 @@ class DashboardsController < ApplicationController
   def start_test
     if params[:test_session_id].present?
       test = TestSession.available_to(Current.user).find_by(id: params[:test_session_id])
-      return redirect_to(all_tests_dashboard_path, alert: not_available_message) unless test
+      unless test
+        # a test they can see but their tier does not include -> its page with the upgrade options
+        visible = TestSession.visible_to(Current.user).find_by(id: params[:test_session_id])
+        return redirect_to(visible ? test_intro_dashboard_path(visible) : all_tests_dashboard_path, alert: not_available_message)
+      end
       start_teacher_test(test)
     else
       start_practice(params[:topic].to_s)
@@ -209,12 +218,18 @@ class DashboardsController < ApplicationController
   def upgrade_hint = "Join your school's plan (Plus) or become a Warrior to unlock more."
 
   def not_available_message
-    Current.user.free_tier? ? "Free members can take the #{Tiers::FREE_SAMPLE_TESTS} sample tests. #{upgrade_hint}" : "That test is not available to you."
+    case Current.user.tier
+    when "free" then "Free members can take the #{Tiers::FREE_SAMPLE_TESTS} sample tests. #{upgrade_hint}"
+    when "plus" then "This test is for an exam outside your school's plan. Become a Warrior to take every exam."
+    else "That test is not available to you."
+    end
   end
 
-  # Attempts and subject names for a list of test cards (2 queries in total)
+  # Attempts, subject names and 🔒 locks for a list of test cards
   def load_card_data(tests)
     ids = tests.map(&:id)
+    # tests shown but not included in the student's tier (Free: all but the samples; Plus: other exams)
+    @locked_test_ids = ids - TestSession.available_to(Current.user).where(id: ids).pluck(:id)
     @my_attempts_by_test = Current.user.test_attempts.where(test_session_id: ids).index_by(&:test_session_id)
     @rating_summaries = Rating.summaries("TestSession", ids)
 
