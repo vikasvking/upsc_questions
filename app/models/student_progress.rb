@@ -19,18 +19,21 @@ class StudentProgress
     def solved?    = correct_attempts.positive?
   end
 
-  attr_reader :user
+  attr_reader :user, :questions
 
-  def initialize(user)
+  # Only questions this student may see; optionally only some exams (their own by default on the pages)
+  def initialize(user, exams: nil)
     @user = user
+    @questions = Question.visible_to(user)
+    @questions = @questions.where(exam_type: exams) if exams.present?
   end
 
   # All topics, alphabetical, with this student's numbers (2 queries)
   def topic_stats
     @topic_stats ||= begin
-      totals = Question.where.not(topic: [nil, ""]).group(:topic).order(:topic).count
+      totals = questions.where.not(topic: [nil, ""]).group(:topic).order(:topic).count
 
-      mine = user.user_responses.joins(:question)
+      mine = user.user_responses.joins(:question).where(question_id: questions.select(:id))
                  .where.not(chosen_option: "SKIPPED")
                  .group("questions.topic")
                  .pluck(Arel.sql("questions.topic"),

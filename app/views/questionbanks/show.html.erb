@@ -5,6 +5,13 @@
       <div>
         <h1 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-3xl">Question Bank</h1>
         <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Every topic and your progress. A topic is completed when you have answered every question in it correctly at least once.</p>
+        <% if Current.user.exam_codes.any? %>
+          <div class="mt-3 flex flex-wrap items-center gap-1.5 text-sm">
+            <%= link_to "My exams", question_bank_path, class: "rounded-full px-3 py-1 font-medium #{@all_exams ? "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300" : "bg-brand-700 text-white"}" %>
+            <%= link_to "All exams", question_bank_path(exams: "all"), class: "rounded-full px-3 py-1 font-medium #{@all_exams ? "bg-brand-700 text-white" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"}" %>
+            <% unless @all_exams %><span class="text-xs text-slate-500 ml-1"><%= Current.user.exam_codes.map { |c| exam_name(c) }.join(", ") %></span><% end %>
+          </div>
+        <% end %>
       </div>
       <div class="shrink-0 text-right">
         <p class="text-xs font-bold text-slate-400">Topics completed</p>

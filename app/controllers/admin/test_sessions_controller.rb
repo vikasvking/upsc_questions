@@ -1,6 +1,7 @@
 # Admins can create, change and delete any test, including locked strict or scheduled tests
 # when a teacher asks. Changing a locked test needs a written reason, kept in the admin log.
 class Admin::TestSessionsController < Admin::BaseController
+  include AudienceAssignment
   self.admin_area = :tests
   KINDS = %w[open pin strict scheduled].freeze
 
@@ -8,7 +9,7 @@ class Admin::TestSessionsController < Admin::BaseController
   before_action :load_form_data, only: [:new, :edit]
 
   def index
-    scope = TestSession.includes(:user).newest_first
+    scope = TestSession.includes(:user, :institution, :audience_grants).newest_first
     @exam    = Exam.normalize(params[:exam])
     @kind    = params[:kind].presence_in(KINDS)
     @teacher = params[:teacher].presence
@@ -45,7 +46,8 @@ class Admin::TestSessionsController < Admin::BaseController
       @test_session.errors.add(:user, "must be a teacher or admin")
     end
 
-    if @test_session.errors.none? && @test_session.save
+    if @test_session.errors.none? && audience_valid?(@test_session) && @test_session.save
+      apply_audience!(@test_session)
       log!("create_test", record: @test_session, label: @test_session.title,
            details: { teacher: @test_session.user&.email_address, questions: @test_session.question_ids.size })
       redirect_to admin_test_sessions_path, notice: "Test created#{@test_session.pin_required? ? " · PIN #{@test_session.pin_code}" : ""}."
@@ -78,7 +80,9 @@ class Admin::TestSessionsController < Admin::BaseController
     saved = TestSession.transaction do
       @test_session.admin_override = true
       @test_session.assign_attributes(test_params)
-      @test_session.save || raise(ActiveRecord::Rollback)
+      (audience_valid?(@test_session) && @test_session.save) || raise(ActiveRecord::Rollback)
+      apply_audience!(@test_session)
+      true
     end
 
     if saved
@@ -116,7 +120,7 @@ class Admin::TestSessionsController < Admin::BaseController
 
   private
 
-  TRACKED = %w[title exam_type user_id duration_minutes pass_mark_percentage access_type starts_at ends_at strict_mode].freeze
+  TRACKED = %w[title exam_type user_id duration_minutes pass_mark_percentage access_type starts_at ends_at strict_mode visibility institution_id].freeze
 
   def set_test_session
     @test_session = TestSession.find(params[:id])
@@ -133,7 +137,7 @@ class Admin::TestSessionsController < Admin::BaseController
 
   def test_params
     params.require(:test_session).permit(:title, :exam_type, :user_id, :duration_minutes, :pass_mark_percentage,
-                                         :access_type, :starts_at, :ends_at, :strict_mode, question_ids: [])
+                                         :access_type, :starts_at, :ends_at, :strict_mode, :visibility, :institution_id, question_ids: [])
   end
 
   def change_details(before, before_questions)

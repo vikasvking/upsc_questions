@@ -1,4 +1,5 @@
 class Admin::QuestionsController < Admin::BaseController
+  include AudienceAssignment
   self.admin_area = :questions
   before_action :set_question, only: [:edit, :update, :destroy]
 
@@ -24,7 +25,8 @@ class Admin::QuestionsController < Admin::BaseController
 
   def create
     @question = Question.new(question_params.merge(user: Current.user))
-    if @question.save
+    if audience_valid?(@question) && @question.save
+      apply_audience!(@question)
       log!("create_question", record: @question, label: @question.content)
       redirect_to admin_questions_path, notice: "Question added to #{@question.exam.name} · #{@question.topic}."
     else
@@ -50,7 +52,8 @@ class Admin::QuestionsController < Admin::BaseController
 
     changes = @question.changes.except("updated_at").transform_values { |from, to| { "from" => from, "to" => to } }
     answer_changed = @question.correct_answer_changed?
-    if @question.save
+    if audience_valid?(@question) && @question.save
+      apply_audience!(@question)
       log!(@locked_tests.any? ? "update_locked_test" : "update_question", record: @question, label: @question.content,
            reason: reason_param, details: changes.merge("locked_tests" => @locked_tests.map(&:title)))
       notice = "Question saved."
@@ -85,6 +88,7 @@ class Admin::QuestionsController < Admin::BaseController
   end
 
   def question_params
-    params.require(:question).permit(:exam_type, :year, :topic, :content, :option_a, :option_b, :option_c, :option_d, :correct_answer, :explanation)
+    params.require(:question).permit(:exam_type, :year, :topic, :content, :option_a, :option_b, :option_c, :option_d, :correct_answer, :explanation,
+                                     :visibility, :institution_id)
   end
 end

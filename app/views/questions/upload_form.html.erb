@@ -76,6 +76,8 @@
           <p id="file-name-indicator" class="mt-3 text-xs font-mono font-bold text-brand-800 dark:text-brand-400 hidden bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-2.5 rounded-lg shadow-sm w-fit"></p>
         </div>
 
+        <%= render "shared/audience_fields", prefix: nil, record: Question.new %>
+
         <!-- Submit Buttons Action row -->
         <div class="flex gap-4 pt-4 border-t border-slate-200 dark:border-slate-800">
           <%= link_to "Cancel & Return", dashboard_path, class: "flex-1 text-center font-bold text-xs border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-950 px-4 py-3 rounded-xl hover:bg-slate-100 transition-colors shadow-sm" %>

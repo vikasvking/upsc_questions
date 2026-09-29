@@ -25,6 +25,9 @@ class User < ApplicationRecord
   has_many :approved_memberships, -> { approved }, class_name: "Membership"
   has_many :institutions, through: :approved_memberships
   has_many :guardian_consents, dependent: :delete_all
+  has_many :batches, dependent: :destroy                 # a teacher's saved groups
+  has_many :batch_members, dependent: :delete_all        # a student's places in batches
+  has_many :audience_grants, as: :grantee, dependent: :delete_all
 
   has_many :attempted_questions, -> { distinct }, through: :user_responses, source: :question
   enum :role, { student: 0, teacher: 1, admin: 2, sub_admin: 3 }, default: :student
@@ -58,6 +61,12 @@ class User < ApplicationRecord
   end
 
   def display_name = name.presence || email_address.split("@").first.capitalize
+
+  # Students a teacher can pick for "selected" tests and batches: those at the teacher's institutions
+  def reachable_students
+    return User.student if staff?
+    User.student.where(id: Membership.approved.where(institution_id: approved_memberships.select(:institution_id)).select(:user_id))
+  end
 
   # ---------- age and parent consent ----------
 

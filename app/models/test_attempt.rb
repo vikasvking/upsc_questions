@@ -27,7 +27,7 @@ class TestAttempt < ApplicationRecord
     if test_session
       test_session.ordered_questions
     else
-      Question.where(topic: topic).in_order
+      Question.visible_to(user).where(topic: topic).in_order
     end
   end
 

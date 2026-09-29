@@ -11,7 +11,7 @@ class DashboardsController < ApplicationController
   def show
     if params[:topic].present?
       @topic = params[:topic]
-      @total_q_count = Question.where(topic: @topic).count
+      @total_q_count = Question.visible_to(Current.user).where(topic: @topic).count
       @resume_attempt = Current.user.test_attempts.in_progress.find_by(topic: @topic, test_session_id: nil)
       render :test_confirmation
       return
@@ -19,7 +19,7 @@ class DashboardsController < ApplicationController
 
     set_global_dashboard_metrics
     @streak_days = generate_streak_calendar_data
-    @progress    = StudentProgress.new(Current.user)
+    @progress    = StudentProgress.new(Current.user, exams: Current.user.exam_codes)
 
     # Ranks are per exam: "Preparing for" (profile) unless the student picks another exam here
     @rank_exams  = (Exam.codes & ([Current.user.target_exam] + Current.user.exam_codes + Current.user.practised_exam_codes)).map { |c| Exam::BY_CODE[c] }
@@ -27,26 +27,45 @@ class DashboardsController < ApplicationController
     @comparison  = Leaderboard.comparison_for(Current.user, @rank_exam)
 
     # Only the 3 newest tests that are live or opening soon; the rest are on "All Tests"
-    @latest_tests = TestSession.includes(:user)
-                               .where("test_sessions.ends_at IS NULL OR test_sessions.ends_at > ?", Time.current)
-                               .newest_first.limit(3).to_a
+    # (only tests this student may see, for their exams)
+    latest = TestSession.visible_to(Current.user).includes(:user, :institution, :audience_grants)
+                        .where("test_sessions.ends_at IS NULL OR test_sessions.ends_at > ?", Time.current)
+    latest = latest.where(exam_type: Current.user.exam_codes) if Current.user.exam_codes.any?
+    @latest_tests = latest.newest_first.limit(3).to_a
     load_card_data(@latest_tests)
   end
 
-  # GET /dashboard/all_tests?exam=UPSC&subject=Physics
+  # GET /dashboard/all_tests?exam=mine|all|UPSC_PRELIMS&subject=Physics&institution=3&teacher=7
   def all_tests
-    @exam    = Exam.normalize(params[:exam])
+    visible = TestSession.visible_to(Current.user)
+    my_exams = Current.user.exam_codes
+    @exam_choice = params[:exam].presence || (my_exams.any? ? "mine" : "all")
+    @exam    = Exam.normalize(@exam_choice)
     @subject = params[:subject].presence
+    @institution = Current.user.institutions.find_by(id: params[:institution]) if params[:institution].present?
+    @teacher_id = params[:teacher].presence&.to_i
 
-    used = TestSession.distinct.pluck(:exam_type)
+    used = visible.distinct.pluck(:exam_type)
     @exam_options    = Exam.options.select { |_, code| used.include?(code) }
-    @subject_options = Question.joins(:test_questions).where.not(topic: [nil, ""]).distinct.order(:topic).pluck(:topic)
+    @subject_options = Question.joins(:test_questions).where(test_questions: { test_session_id: visible.select(:id) })
+                               .where.not(topic: [nil, ""]).distinct.order(:topic).pluck(:topic)
+    @institution_options = Current.user.institutions.ordered
+    @teacher_options = User.where(id: visible.select(:user_id)).order(:name, :email_address)
 
-    scope = TestSession.includes(:user)
-    scope = scope.where(exam_type: @exam) if @exam
+    scope = visible.includes(:user, :institution, :audience_grants)
+    scope =
+      if @exam then scope.where(exam_type: @exam)
+      elsif @exam_choice == "mine" && my_exams.any? then scope.where(exam_type: my_exams)
+      else scope
+      end
     if @subject
       scope = scope.where(id: TestQuestion.joins(:question).where(questions: { topic: @subject }).select(:test_session_id))
     end
+    if @institution
+      teacher_ids = @institution.teachers.select(:id)
+      scope = scope.where(institution_id: @institution.id).or(scope.where(user_id: teacher_ids))
+    end
+    scope = scope.where(user_id: @teacher_id) if @teacher_id
 
     # Live first, then opening soon, then closed; newest first inside each group
     rank = { live: 0, upcoming: 1, closed: 2 }
@@ -56,7 +75,8 @@ class DashboardsController < ApplicationController
 
   # GET /dashboard/tests/:id -> rules page for a teacher test
   def test_intro
-    @test_session = TestSession.find(params[:id])
+    @test_session = TestSession.visible_to(Current.user).find_by(id: params[:id])
+    return redirect_to(all_tests_dashboard_path, alert: "That test is not available to you.") unless @test_session
     @existing_attempt = Current.user.test_attempts.find_by(test_session: @test_session)
     @existing_attempt&.enforce_presence!
 
@@ -72,7 +92,9 @@ class DashboardsController < ApplicationController
   # POST /dashboard/start_test (topic=... OR test_session_id=...)
   def start_test
     if params[:test_session_id].present?
-      start_teacher_test(TestSession.find(params[:test_session_id]))
+      test = TestSession.visible_to(Current.user).find_by(id: params[:test_session_id])
+      return redirect_to(all_tests_dashboard_path, alert: "That test is not available to you.") unless test
+      start_teacher_test(test)
     else
       start_practice(params[:topic].to_s)
     end
@@ -210,7 +232,7 @@ class DashboardsController < ApplicationController
   # ---------- starting ----------
 
   def start_practice(topic)
-    if topic.blank? || !Question.exists?(topic: topic)
+    if topic.blank? || !Question.visible_to(Current.user).exists?(topic: topic)
       redirect_to dashboard_path, alert: "That topic has no questions."
       return
     end
@@ -371,7 +393,7 @@ class DashboardsController < ApplicationController
   def set_global_dashboard_metrics
     @current_streak_count = calculate_active_streak
     responses = Current.user.user_responses
-    total_platform_questions = Question.count
+    total_platform_questions = Question.visible_to(Current.user).count
     @bank_total = total_platform_questions
 
     @lifetime_correct_count = responses.where(is_correct: true).distinct.count(:question_id)

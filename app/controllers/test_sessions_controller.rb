@@ -1,4 +1,5 @@
 class TestSessionsController < ApplicationController
+  include AudienceAssignment
   FACULTY_ACTIONS = [:index, :new, :create, :show, :edit, :update, :reinstate, :live, :upload_form, :import, :download_template].freeze
   ONLINE_WITHIN = 35.seconds # two missed heartbeats = "no signal"
 
@@ -20,7 +21,7 @@ class TestSessionsController < ApplicationController
     end
 
     scope = Current.user.admin? ? TestSession.all : Current.user.test_sessions
-    @test_sessions = scope.includes(:user).newest_first
+    @test_sessions = scope.includes(:user, :institution, :audience_grants).newest_first
     @question_counts = TestQuestion.where(test_session_id: @test_sessions.map(&:id)).group(:test_session_id).count
     render :teacher_index
   end
@@ -54,8 +55,9 @@ class TestSessionsController < ApplicationController
       return
     end
 
-    if @test_session.save
-      message = @test_session.open_access? ? "Test created. It is open to all students." : "Test created. Share PIN: #{@test_session.pin_code}"
+    if audience_valid?(@test_session) && @test_session.save
+      apply_audience!(@test_session)
+      message = @test_session.open_access? ? "Test created (#{@test_session.audience_label.downcase})." : "Test created. Share PIN: #{@test_session.pin_code}"
       redirect_to test_sessions_path, notice: message
     else
       load_question_library
@@ -74,7 +76,9 @@ class TestSessionsController < ApplicationController
       return
     end
 
-    if @test_session.update(test_session_params)
+    @test_session.assign_attributes(test_session_params)
+    if audience_valid?(@test_session) && @test_session.save
+      apply_audience!(@test_session)
       redirect_to test_sessions_path, notice: "Test updated."
     else
       load_question_library
@@ -157,7 +161,7 @@ class TestSessionsController < ApplicationController
   end
 
   def verify_pin
-    match = TestSession.find_by(pin_code: params[:pin_code].to_s.strip.upcase)
+    match = TestSession.visible_to(Current.user).find_by(pin_code: params[:pin_code].to_s.strip.upcase)
 
     if match && match.questions.exists?
       session[:unlocked_test_ids] = (Array(session[:unlocked_test_ids]) | [match.id]).last(50)
@@ -176,7 +180,7 @@ class TestSessionsController < ApplicationController
   end
 
   def load_question_library
-    @questions = Question.in_order
+    @questions = Question.visible_to(Current.user).in_order # questions this teacher may use
   end
 
   def ensure_test_ownership
@@ -202,6 +206,6 @@ class TestSessionsController < ApplicationController
 
   def test_session_params
     params.require(:test_session).permit(:title, :exam_type, :duration_minutes, :pass_mark_percentage,
-                                         :access_type, :starts_at, :ends_at, :strict_mode, question_ids: [])
+                                         :access_type, :starts_at, :ends_at, :strict_mode, :visibility, :institution_id, question_ids: [])
   end
 end

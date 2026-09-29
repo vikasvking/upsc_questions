@@ -1,5 +1,7 @@
 # app/models/question.rb
 class Question < ApplicationRecord
+  include Audience
+
   ANSWER_KEYS = %w[A B C D].freeze
 
   belongs_to :user, optional: true
@@ -28,7 +30,8 @@ class Question < ApplicationRecord
   # Grouped by exam and year, then in the order the questions were added
   scope :in_order, -> { order(:exam_type, :year, :id) }
 
-  def self.import_from_excel(file_path, exam_type_param, year_param, creator_id)
+  # Returns the created questions. visibility/institution_id apply to every imported question.
+  def self.import_from_excel(file_path, exam_type_param, year_param, creator_id, visibility: "public", institution_id: nil)
     # The downloadable template (.xls) is tab-separated text; real .xlsx files are opened natively.
     # An old "Q.No" column, if present, is simply ignored.
     xlsx = if File.extname(file_path).downcase == ".xls"
@@ -40,11 +43,13 @@ class Question < ApplicationRecord
     header = xlsx.row(1).map { |h| h.to_s.strip }
 
     ActiveRecord::Base.transaction do
-      (2..xlsx.last_row).each do |i|
+      (2..xlsx.last_row).filter_map do |i|
         row = Hash[[header, xlsx.row(i)].transpose]
         next if row["Question"].blank?
 
         Question.create!(
+          visibility:     visibility,
+          institution_id: institution_id,
           user_id:        creator_id,
           year:           year_param.presence,
           exam_type:      exam_type_param.strip.upcase,

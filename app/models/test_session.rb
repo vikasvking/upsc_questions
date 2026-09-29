@@ -1,5 +1,7 @@
 # app/models/test_session.rb
 class TestSession < ApplicationRecord
+  include Audience
+
   ACCESS_TYPES = %w[open pin].freeze
 
   class Locked < StandardError; end
@@ -32,6 +34,12 @@ class TestSession < ApplicationRecord
   before_validation :generate_secure_pin, on: :create
 
   scope :newest_first, -> { order(created_at: :desc) }
+
+  # Everyone the test is shown to, plus students who already started it (they keep seeing their result)
+  def self.visible_to(user)
+    scope = super
+    user && !user.staff? ? scope.or(where(id: user.test_attempts.select(:test_session_id))) : scope
+  end
 
   def open_access? = access_type == "open"
   def pin_required? = access_type == "pin"

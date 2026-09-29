@@ -66,6 +66,7 @@ Rails.application.routes.draw do
   resources :institutions, only: [:index, :create] do
     post :regenerate_code, on: :member
   end
+  resources :batches, except: [:show] # a teacher's saved groups of students
   resources :memberships, only: [:create, :destroy] do
     patch :approve, on: :member
   end

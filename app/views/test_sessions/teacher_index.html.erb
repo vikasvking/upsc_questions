@@ -42,6 +42,7 @@
                   <%= exam_chip(test.exam_type) %>
                   <%= test_kind_badge(test) %>
                   <span class="inline-block px-2 py-0.5 rounded text-xs font-semibold <%= status_class %>"><%= status_label %></span>
+                  <%= audience_chip(test) %>
                 </div>
                 <h4 class="text-base font-semibold text-slate-900 dark:text-white mt-1 truncate"><%= test.title %></h4>
                 <p class="text-xs text-slate-400 mt-0.5">

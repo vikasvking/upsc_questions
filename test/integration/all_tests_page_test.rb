@@ -6,7 +6,7 @@ class AllTestsPageTest < ActionDispatch::IntegrationTest
   test "dashboard shows at most 3 latest live or upcoming tests" do
     test_sessions(:two).update!(starts_at: 2.days.ago, ends_at: 1.day.ago) # closed
     4.times do |i|
-      TestSession.create!(user: users(:teacher), title: "New Test #{i}", exam_type: "SSC",
+      TestSession.create!(user: users(:teacher), title: "New Test #{i}", exam_type: "UPSC", # the student prepares for UPSC
                           duration_minutes: 10, pass_mark_percentage: 40, access_type: "open")
     end
 

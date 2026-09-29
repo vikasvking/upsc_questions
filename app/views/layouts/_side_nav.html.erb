@@ -25,7 +25,8 @@
        ["Upload Questions", upload_form_questions_path, :upload, current_page?(upload_form_questions_path)],
        ["Add Question", new_question_path, :plus, current_page?(new_question_path)],
        ["Question Bank", questions_path, :table, controller_name == "questions" && !current_page?(new_question_path) && !current_page?(upload_form_questions_path)],
-       ["Institutions", institutions_path, :home, controller_name == "institutions"]]
+       ["Institutions", institutions_path, :home, controller_name == "institutions"],
+       ["Batches", batches_path, :list, controller_name == "batches"]]
     end
   links.unshift(["Admin", admin_root_path, :shield, controller_path.start_with?("admin/")]) if Current.user&.staff?
   links << ["Profile", profile_path, :user, controller_name == "profiles"]

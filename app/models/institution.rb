@@ -7,6 +7,7 @@ class Institution < ApplicationRecord
   has_many :memberships, dependent: :delete_all
   has_many :approved_memberships, -> { approved }, class_name: "Membership"
   has_many :members, through: :approved_memberships, source: :user
+  has_many :audience_grants, as: :grantee, dependent: :delete_all
 
   normalizes :name, with: ->(v) { v.to_s.squish }
   normalizes :city, with: ->(v) { v.to_s.squish.presence }
@@ -41,6 +42,12 @@ class Institution < ApplicationRecord
         else
           m.update!(institution: self)
         end
+      end
+      # tests, questions and batches shown to the duplicate now belong to this one
+      [TestSession, Question, Batch].each { |model| model.where(institution_id: other.id).update_all(institution_id: id) }
+      mine = AudienceGrant.where(grantee_type: "Institution", grantee_id: id).pluck(:item_type, :item_id)
+      AudienceGrant.where(grantee_type: "Institution", grantee_id: other.id).find_each do |g|
+        mine.include?([g.item_type, g.item_id]) ? g.delete : g.update_columns(grantee_id: id)
       end
       other.reload.destroy!
     end

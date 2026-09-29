@@ -10,10 +10,22 @@
     </div>
 
     <!-- Filters: changing a dropdown reloads the list -->
-    <%= form_with url: all_tests_dashboard_path, method: :get, id: "test-filters", class: "flex flex-col sm:flex-row gap-3 sm:items-end bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800" do %>
+    <%= form_with url: all_tests_dashboard_path, method: :get, id: "test-filters", class: "flex flex-col sm:flex-row flex-wrap gap-3 sm:items-end bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800" do %>
       <div class="flex-1">
         <%= label_tag :exam, "Exam", class: "text-xs font-bold text-slate-400" %>
-        <%= select_tag :exam, options_for_select(@exam_options, @exam), include_blank: "All exams",
+        <%= select_tag :exam, options_for_select((Current.user.exam_codes.any? ? [["My exams", "mine"]] : []) + [["All exams", "all"]] + @exam_options, @exam || @exam_choice),
+              class: "mt-1 block w-full rounded-xl border-0 py-2 px-3 bg-white dark:bg-slate-950 ring-1 ring-inset ring-slate-200 dark:ring-slate-800 text-sm text-slate-900 dark:text-white" %>
+      </div>
+      <% if @institution_options.any? %>
+        <div class="flex-1">
+          <%= label_tag :institution, "School / coaching", class: "text-xs font-bold text-slate-400" %>
+          <%= select_tag :institution, options_for_select(@institution_options.map { |i| [i.name, i.id] }, @institution&.id), include_blank: "Any",
+                class: "mt-1 block w-full rounded-xl border-0 py-2 px-3 bg-white dark:bg-slate-950 ring-1 ring-inset ring-slate-200 dark:ring-slate-800 text-sm text-slate-900 dark:text-white" %>
+        </div>
+      <% end %>
+      <div class="flex-1">
+        <%= label_tag :teacher, "Teacher", class: "text-xs font-bold text-slate-400" %>
+        <%= select_tag :teacher, options_for_select(@teacher_options.map { |t| [t.display_name, t.id] }, @teacher_id), include_blank: "Any teacher",
               class: "mt-1 block w-full rounded-xl border-0 py-2 px-3 bg-white dark:bg-slate-950 ring-1 ring-inset ring-slate-200 dark:ring-slate-800 text-sm text-slate-900 dark:text-white" %>
       </div>
       <div class="flex-1">
@@ -23,7 +35,7 @@
       </div>
       <div class="flex gap-2">
         <%= submit_tag "Filter", name: nil, class: "rounded-xl bg-brand-800 hover:bg-brand-900 text-white text-xs font-bold px-4 py-2.5 cursor-pointer" %>
-        <% if @exam || @subject %>
+        <% if @exam || @subject || @institution || @teacher_id || params[:exam] == "all" %>
           <%= link_to "Clear", all_tests_dashboard_path, class: "rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold px-4 py-2.5 bg-white dark:bg-slate-950" %>
         <% end %>
       </div>

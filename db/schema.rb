@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_29_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_29_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -27,6 +27,37 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_130000) do
     t.index ["admin_id"], name: "index_admin_logs_on_admin_id"
     t.index ["created_at"], name: "index_admin_logs_on_created_at"
     t.index ["record_type", "record_id"], name: "index_admin_logs_on_record_type_and_record_id"
+  end
+
+  create_table "audience_grants", force: :cascade do |t|
+    t.string "item_type", null: false
+    t.bigint "item_id", null: false
+    t.string "grantee_type", null: false
+    t.bigint "grantee_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["grantee_type", "grantee_id"], name: "index_audience_grants_on_grantee_type_and_grantee_id"
+    t.index ["item_type", "item_id", "grantee_type", "grantee_id"], name: "index_audience_grants_unique", unique: true
+  end
+
+  create_table "batch_members", force: :cascade do |t|
+    t.bigint "batch_id", null: false
+    t.bigint "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["batch_id", "user_id"], name: "index_batch_members_on_batch_id_and_user_id", unique: true
+    t.index ["batch_id"], name: "index_batch_members_on_batch_id"
+    t.index ["user_id"], name: "index_batch_members_on_user_id"
+  end
+
+  create_table "batches", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "institution_id"
+    t.string "name", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["institution_id"], name: "index_batches_on_institution_id"
+    t.index ["user_id"], name: "index_batches_on_user_id"
   end
 
   create_table "guardian_consents", force: :cascade do |t|
@@ -120,7 +151,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_130000) do
     t.datetime "updated_at", null: false
     t.string "exam_type"
     t.bigint "user_id"
+    t.string "visibility", default: "public", null: false
+    t.bigint "institution_id"
+    t.index ["institution_id"], name: "index_questions_on_institution_id"
     t.index ["user_id"], name: "index_questions_on_user_id"
+    t.index ["visibility"], name: "index_questions_on_visibility"
   end
 
   create_table "sessions", force: :cascade do |t|
@@ -355,8 +390,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_130000) do
     t.datetime "starts_at"
     t.datetime "ends_at"
     t.boolean "strict_mode", default: false, null: false
+    t.string "visibility", default: "public", null: false
+    t.bigint "institution_id"
+    t.index ["institution_id"], name: "index_test_sessions_on_institution_id"
     t.index ["pin_code"], name: "index_test_sessions_on_pin_code", unique: true
     t.index ["user_id"], name: "index_test_sessions_on_user_id"
+    t.index ["visibility"], name: "index_test_sessions_on_visibility"
   end
 
   create_table "user_exams", force: :cascade do |t|
@@ -400,12 +439,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_130000) do
   end
 
   add_foreign_key "admin_logs", "users", column: "admin_id", on_delete: :nullify
+  add_foreign_key "batch_members", "batches", on_delete: :cascade
+  add_foreign_key "batch_members", "users", on_delete: :cascade
+  add_foreign_key "batches", "institutions", on_delete: :nullify
+  add_foreign_key "batches", "users", on_delete: :cascade
   add_foreign_key "guardian_consents", "users", on_delete: :cascade
   add_foreign_key "institutions", "users", column: "created_by_id", on_delete: :nullify
   add_foreign_key "memberships", "institutions", on_delete: :cascade
   add_foreign_key "memberships", "users", column: "approved_by_id", on_delete: :nullify
   add_foreign_key "memberships", "users", on_delete: :cascade
   add_foreign_key "pending_signups", "users", on_delete: :cascade
+  add_foreign_key "questions", "institutions", on_delete: :nullify
   add_foreign_key "questions", "users", on_delete: :nullify
   add_foreign_key "sessions", "users"
   add_foreign_key "solid_queue_batch_executions", "solid_queue_batches", column: "batch_id", on_delete: :cascade
@@ -423,6 +467,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_130000) do
   add_foreign_key "test_pin_entries", "users"
   add_foreign_key "test_questions", "questions"
   add_foreign_key "test_questions", "test_sessions"
+  add_foreign_key "test_sessions", "institutions", on_delete: :nullify
   add_foreign_key "test_sessions", "users", on_delete: :nullify
   add_foreign_key "user_exams", "users", on_delete: :cascade
   add_foreign_key "user_responses", "questions"

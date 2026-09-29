@@ -1,11 +1,22 @@
 # app/controllers/questions_controller.rb
 class QuestionsController < ApplicationController
+  include AudienceAssignment
   before_action :ensure_teacher_or_admin_access
   before_action :set_question, only: [:edit, :update]
   before_action :ensure_modification_permission, only: [:edit, :update]
 
+  # Questions this teacher may use, filtered by exam, subject (topic) and who can see them
   def index
-    @questions = Question.includes(:user).in_order
+    scope = Question.visible_to(Current.user).includes(:user, :institution, :audience_grants).in_order
+    @exam = Exam.normalize(params[:exam])
+    @topic = params[:topic].presence
+    @visibility = params[:visibility].presence_in(Audience::VISIBILITIES.keys)
+    scope = scope.where(exam_type: @exam) if @exam
+    scope = scope.where(topic: @topic) if @topic
+    scope = scope.where(visibility: @visibility) if @visibility
+    scope = scope.where(user_id: Current.user.id) if params[:mine] == "1"
+    @topics = Question.visible_to(Current.user).where.not(topic: [nil, ""]).distinct.order(:topic).pluck(:topic)
+    @questions = scope
   end
 
   def upload_form
@@ -27,9 +38,16 @@ class QuestionsController < ApplicationController
       return
     end
 
+    audience = Question.new(visibility: params[:visibility].presence || "public", institution_id: params[:institution_id])
+    unless audience_valid?(audience)
+      redirect_to upload_form_questions_path, alert: audience.errors.full_messages.to_sentence
+      return
+    end
+
     begin
-      # 🚀 PASSING EXACTLY 4 PARAMETERS: file, exam, year, creator_id
-      Question.import_from_excel(file.path, exam, year, Current.user.id)
+      imported = Question.import_from_excel(file.path, exam, year, Current.user.id,
+                                            visibility: audience.visibility, institution_id: audience.institution_id)
+      imported.each { |q| apply_audience!(q) } unless audience.everyone?
 
       redirect_to upload_form_questions_path, notice: "Questions for #{Exam.name_for(exam)} successfully imported into your Question Bank!"
     rescue StandardError => e
@@ -57,7 +75,8 @@ class QuestionsController < ApplicationController
   def create
     @question = Question.new(question_params.merge(user: Current.user))
 
-    if @question.save
+    if audience_valid?(@question) && @question.save
+      apply_audience!(@question)
       if params[:add_another]
         redirect_to new_question_path(exam_type: @question.exam_type, year: @question.year, topic: @question.topic),
                     notice: "Saved in #{@question.topic}. Add the next one."
@@ -73,8 +92,10 @@ class QuestionsController < ApplicationController
   end
 
   def update
-    if @question.update(question_params)
-      redirect_to questions_path, notice: "Question sequence updated successfully."
+    @question.assign_attributes(question_params)
+    if audience_valid?(@question) && @question.save
+      apply_audience!(@question)
+      redirect_to questions_path, notice: "Question saved."
     else
       render :edit, status: :unprocessable_entity
     end
@@ -100,6 +121,7 @@ class QuestionsController < ApplicationController
   end
 
   def question_params
-    params.require(:question).permit(:exam_type, :year, :topic, :content, :option_a, :option_b, :option_c, :option_d, :correct_answer, :explanation)
+    params.require(:question).permit(:exam_type, :year, :topic, :content, :option_a, :option_b, :option_c, :option_d, :correct_answer, :explanation,
+                                     :visibility, :institution_id)
   end
 end

@@ -13,21 +13,21 @@ class QuestionbanksController < ApplicationController
 
   # GET /question_bank -> every topic with this student's progress
   def show
-    @progress = StudentProgress.new(Current.user)
+    @progress = StudentProgress.new(Current.user, exams: exam_filter)
     @topics = @progress.topic_stats
   end
 
   # GET /question_bank/topic?name=Physics&filter=wrong -> every question in one topic
   def topic
     @topic = params[:name].to_s
-    @progress = StudentProgress.new(Current.user)
+    @progress = StudentProgress.new(Current.user) # every visible question of the topic, whichever exam
     @stat = @progress.topic_stat(@topic)
     unless @stat
       redirect_to question_bank_path, alert: "Topic not found."
       return
     end
 
-    all_questions = Question.where(topic: @topic).in_order.to_a
+    all_questions = @progress.questions.where(topic: @topic).in_order.to_a
     @question_stats = @progress.question_stats(all_questions)
     @filter = FILTERS.include?(params[:filter]) ? params[:filter] : "all"
     @filter_counts = FILTERS.to_h { |f| [f, all_questions.count { |q| matches_filter?(q, f) }] }
@@ -39,7 +39,7 @@ class QuestionbanksController < ApplicationController
 
   # POST /question_bank/answer -> practise one question on its own (not part of any test)
   def answer
-    question = Question.find(params[:question_id])
+    question = Question.visible_to(Current.user).find(params[:question_id])
     choice = params[:answer_choice].to_s.strip.upcase
     back = question_bank_topic_path(name: question.topic, filter: params[:filter].presence, anchor: "q-#{question.id}")
 
@@ -63,6 +63,12 @@ class QuestionbanksController < ApplicationController
   end
 
   private
+
+  # My exams by default; ?exams=all shows every exam's questions
+  def exam_filter
+    @all_exams = params[:exams] == "all" || Current.user.exam_codes.empty?
+    @all_exams ? nil : Current.user.exam_codes
+  end
 
   def topic_icon(topic)
     ICONS[topic] || "📚"

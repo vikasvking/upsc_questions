@@ -1,0 +1,28 @@
+<div class="py-10 min-h-screen w-full">
+  <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+      <div>
+        <h1 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">Batches</h1>
+        <p class="text-sm text-slate-500 mt-1">Saved groups of students. Pick a batch under "Visible to" on a test or question instead of ticking students one by one.</p>
+      </div>
+      <%= link_to "+ New batch", new_batch_path, class: "rounded-lg bg-brand-700 hover:bg-brand-800 text-white text-sm font-medium px-4 py-2 text-center" %>
+    </div>
+    <% if notice %><div class="rounded-xl bg-emerald-50 dark:bg-emerald-950/40 px-4 py-3 text-sm text-emerald-800 dark:text-emerald-300"><%= notice %></div><% end %>
+    <% if alert %><div class="rounded-xl bg-red-50 dark:bg-red-950/40 px-4 py-3 text-sm text-red-800 dark:text-red-300"><%= alert %></div><% end %>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <% @batches.each do |b| %>
+        <div class="bg-white dark:bg-slate-900 rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-5 space-y-2">
+          <h2 class="font-semibold text-slate-900 dark:text-white"><%= b.name %></h2>
+          <p class="text-xs text-slate-500"><%= pluralize(b.students.size, "student") %><%= " · #{b.institution.name}" if b.institution %></p>
+          <p class="text-xs text-slate-600 dark:text-slate-400 line-clamp-2"><%= b.students.map(&:display_name).sort.join(", ") %></p>
+          <div class="flex gap-4 text-sm pt-1">
+            <%= link_to "Edit", edit_batch_path(b), class: "font-medium text-brand-700 dark:text-brand-300" %>
+            <%= button_to "Delete", batch_path(b), method: :delete, data: { turbo_confirm: "Delete batch “#{b.name}”?" }, class: "text-slate-500 hover:text-red-700 cursor-pointer" %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+    <% if @batches.empty? %><p class="text-sm text-slate-500">No batches yet.</p><% end %>
+  </div>
+</div>
