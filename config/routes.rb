@@ -80,6 +80,9 @@ Rails.application.routes.draw do
     resources :users do
       patch :approve, on: :member
     end
+    resources :approvals, only: [:index] do
+      patch :approve_teacher, on: :member
+    end
     resources :institutions, except: [:show] do
       post :merge, on: :member
       post :regenerate_code, on: :member

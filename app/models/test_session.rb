@@ -39,7 +39,7 @@ class TestSession < ApplicationRecord
   # Everyone the test is shown to, plus students who already started it (they keep seeing their result)
   def self.visible_to(user)
     scope = super
-    user && !user.staff? ? scope.or(where(id: user.test_attempts.select(:test_session_id))) : scope
+    user && !user.admin? ? scope.or(where(id: user.test_attempts.select(:test_session_id))) : scope
   end
 
   def open_access? = access_type == "open"

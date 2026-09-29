@@ -18,8 +18,7 @@
       <% elsif @user.teacher? %>
         <div><p class="text-xs font-bold text-slate-400">Subjects</p><p class="mt-1"><%= @user.subject_names.join(", ").presence || "—" %></p></div>
         <div><p class="text-xs font-bold text-slate-400">About</p><p class="mt-1 whitespace-pre-line"><%= @user.bio.presence || "—" %></p></div>
-      <% elsif @user.sub_admin? %>
-        <div class="sm:col-span-2"><p class="text-xs font-bold text-slate-400">Can manage</p><p class="mt-1"><%= Array(@user.permissions).map { |p| User::ADMIN_AREAS[p] }.compact.join(" · ").presence || "Nothing yet" %></p></div>
+        <div class="sm:col-span-2"><p class="text-xs font-bold text-slate-400">Sub-admin</p><p class="mt-1"><%= Array(@user.permissions).map { |p| User::ADMIN_AREAS[p] }.compact.join(" · ").presence || "No (normal teacher)" %></p></div>
       <% end %>
       <div class="sm:col-span-2">
         <p class="text-xs font-bold text-slate-400">Schools and coachings</p>

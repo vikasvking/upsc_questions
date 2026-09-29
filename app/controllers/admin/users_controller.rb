@@ -1,6 +1,7 @@
 class Admin::UsersController < Admin::BaseController
-  # Sub-admins see students and/or teachers (their areas); only admins manage admins and sub-admins,
-  # hand out permissions, delete accounts and see parents' consent details.
+  # People's accounts are managed by admins only. An admin makes a teacher a sub-admin by ticking areas.
+  self.admin_area = :admin_only
+
   before_action :set_user, only: [:show, :edit, :update, :destroy, :approve]
   before_action :require_user_access, only: [:show, :edit, :update, :destroy, :approve]
   before_action :require_admin_for_delete, only: :destroy
@@ -76,7 +77,6 @@ class Admin::UsersController < Admin::BaseController
 
   # PATCH /admin/users/:id/approve -> a new teacher account may now create tests and questions
   def approve
-    return deny("Only admins and sub-admins for teachers can approve teachers.") unless can_manage?(:teachers)
     if @user.pending_teacher?
       @user.update_column(:approved_at, Time.current)
       log!("approve_teacher", record: @user, label: @user.email_address)
@@ -110,30 +110,18 @@ class Admin::UsersController < Admin::BaseController
 
   private
 
-  # Roles this admin or sub-admin may see and edit
-  def visible_roles
-    return User.roles.keys if Current.user.admin?
-    roles = []
-    roles << "student" if can_manage?(:students)
-    roles << "teacher" if can_manage?(:teachers)
-    roles
-  end
+  def visible_roles = User.roles.keys
   helper_method :visible_roles
 
-  def assignable_roles = Current.user.admin? ? %w[student teacher sub_admin admin] : visible_roles
+  def assignable_roles = %w[student teacher admin]
   helper_method :assignable_roles
 
   def set_user
     @user = User.find(params[:id])
   end
 
-  def require_user_access
-    deny("You cannot open #{@user.role.humanize.downcase} accounts.") unless visible_roles.include?(@user.role)
-  end
-
-  def require_admin_for_delete
-    deny("Only admins can delete accounts.") unless Current.user.admin?
-  end
+  def require_user_access = nil
+  def require_admin_for_delete = nil
 
   def has_results?(user)
     user.test_attempts.exists? || user.user_responses.exists?
@@ -152,16 +140,16 @@ class Admin::UsersController < Admin::BaseController
   end
 
   def user_params
-    keys = [:name, :email_address, :role, :password, :password_confirmation, :date_of_birth, :bio]
-    keys << :approved << { permissions: [] } if Current.user.admin?
-    keys << :approved if can_manage?(:teachers)
-    permitted = params.require(:user).permit(*keys.uniq)
+    keys = [:name, :email_address, :role, :password, :password_confirmation, :date_of_birth, :bio, :approved, { permissions: [] }]
+    permitted = params.require(:user).permit(*keys)
 
     permitted.delete(:role) unless assignable_roles.include?(permitted[:role].to_s)
     if permitted.key?(:approved)
       permitted[:approved_at] = permitted.delete(:approved) == "1" ? (@user&.approved_at || Time.current) : nil
     end
     permitted[:permissions] = Array(permitted[:permissions]) & User::ADMIN_AREAS.keys if permitted.key?(:permissions)
+    # Only teachers can be sub-admins
+    permitted[:permissions] = [] if permitted.key?(:permissions) && (permitted[:role] || @user&.role || "student") != "teacher"
     permitted
   end
 end

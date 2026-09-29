@@ -2,7 +2,8 @@
 <%
   me = Current.user
   tabs = [["Overview", admin_root_path, controller_name == "dashboard", true],
-          ["People", admin_users_path, controller_name == "users", me.admin? || me.can_manage?(:students) || me.can_manage?(:teachers)],
+          ["Approvals", admin_approvals_path, controller_name == "approvals", me.can_manage?(:approvals)],
+          ["People", admin_users_path, controller_name == "users", me.admin?],
           ["Schools & coachings", admin_institutions_path, controller_name == "institutions", me.can_manage?(:institutions)],
           ["Questions", admin_questions_path, controller_name == "questions", me.can_manage?(:questions)],
           ["Tests", admin_test_sessions_path, controller_name == "test_sessions", me.can_manage?(:tests)],

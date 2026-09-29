@@ -409,8 +409,6 @@ class DashboardsController < ApplicationController
   def ensure_student_access
     if Current.user&.faculty?
       redirect_to test_sessions_path, notice: "Teachers and admins manage tests from here."
-    elsif Current.user&.sub_admin?
-      redirect_to admin_root_path
     end
   end
 end

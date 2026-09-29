@@ -16,7 +16,8 @@ class AdminTest < ActionDispatch::IntegrationTest
   test "admin pages load" do
     [admin_root_path, admin_users_path, admin_user_path(users(:teacher)), new_admin_user_path, edit_admin_user_path(users(:one)),
      admin_questions_path, new_admin_question_path, edit_admin_question_path(questions(:one)),
-     admin_test_sessions_path, new_admin_test_session_path, edit_admin_test_session_path(test_sessions(:one)), admin_logs_path].each do |path|
+     admin_test_sessions_path, new_admin_test_session_path, edit_admin_test_session_path(test_sessions(:one)), admin_logs_path,
+     admin_approvals_path, admin_institutions_path, admin_moderation_index_path, edit_admin_mail_settings_path].each do |path|
       get path
       assert_response :success, path
     end

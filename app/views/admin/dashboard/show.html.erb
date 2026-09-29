@@ -1,27 +1,30 @@
 <% card = "bg-white dark:bg-slate-900 rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-5" %>
 <div class="py-8 sm:py-10">
   <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-8">
-    <%= render "admin/shared/header", title: "Admin", subtitle: "Manage teachers, students, questions and tests. Every change is recorded in the admin log." %>
+    <%= render "admin/shared/header", title: (Current.user.admin? ? "Admin" : "Sub-admin"), subtitle: (Current.user.admin? ? "Manage teachers, students, questions and tests. Every change is recorded in the admin log." : "The areas an admin gave you: #{Array(Current.user.permissions).map { |p| User::ADMIN_AREAS[p] }.compact.join("; ")}. Everything you change is logged.") %>
 
     <section class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      <% [["Teachers", @counts[:teachers], admin_users_path(role: "teacher")],
-          ["Students", @counts[:students], admin_users_path(role: "student")],
-          ["Questions", @counts[:questions], admin_questions_path],
-          ["Tests", @counts[:tests], admin_test_sessions_path],
-          ["Scheduled tests live now", @counts[:live_tests], admin_test_sessions_path(kind: "scheduled")],
-          ["Students writing now", @counts[:writing], admin_test_sessions_path],
-          ["Blocked students", @counts[:blocked], admin_test_sessions_path(kind: "strict")],
-          ["Teachers waiting for approval", @counts[:pending_teachers], admin_users_path(role: "teacher", pending: "1")],
-          ["Schools & coachings", @counts[:institutions], admin_institutions_path],
-          ["Admins", @counts[:admins], admin_users_path(role: "admin")]].each do |label, value, path| %>
+      <% me = Current.user %>
+      <% [["Teachers waiting for approval", @counts[:pending_teachers], admin_approvals_path, me.can_manage?(:approvals)],
+          ["Join requests waiting", @counts[:pending_requests], admin_approvals_path, me.can_manage?(:approvals)],
+          ["Teachers", @counts[:teachers], admin_users_path(role: "teacher"), me.admin?],
+          ["Students", @counts[:students], admin_users_path(role: "student"), me.admin?],
+          ["Questions", @counts[:questions], admin_questions_path, me.can_manage?(:questions)],
+          ["Tests", @counts[:tests], admin_test_sessions_path, me.can_manage?(:tests)],
+          ["Scheduled tests live now", @counts[:live_tests], admin_test_sessions_path(kind: "scheduled"), me.can_manage?(:tests)],
+          ["Students writing now", @counts[:writing], admin_test_sessions_path, me.can_manage?(:tests)],
+          ["Blocked students", @counts[:blocked], admin_test_sessions_path(kind: "strict"), me.can_manage?(:tests)],
+          ["Schools & coachings", @counts[:institutions], admin_institutions_path, me.can_manage?(:institutions)],
+          ["Admins", @counts[:admins], admin_users_path(role: "admin"), me.admin?]].select(&:last).each do |label, value, path, _| %>
         <%= link_to path, class: "#{card} hover:ring-brand-300 transition" do %>
           <p class="text-sm text-slate-500"><%= label %></p>
-          <p class="mt-1 text-2xl font-semibold tabular-nums <%= ["Blocked students", "Teachers waiting for approval"].include?(label) && value.positive? ? "text-red-700 dark:text-red-400" : "text-slate-900 dark:text-white" %>"><%= number_with_delimiter(value) %></p>
+          <p class="mt-1 text-2xl font-semibold tabular-nums <%= ["Blocked students", "Teachers waiting for approval", "Join requests waiting"].include?(label) && value.positive? ? "text-red-700 dark:text-red-400" : "text-slate-900 dark:text-white" %>"><%= number_with_delimiter(value) %></p>
         <% end %>
       <% end %>
     </section>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <% if Current.user.admin? %>
       <section class="<%= card %> space-y-3">
         <h2 class="font-semibold text-slate-900 dark:text-white">🚫 Blocked students waiting</h2>
         <% if @blocked.any? %>
@@ -40,6 +43,7 @@
           <p class="text-sm text-slate-500">Nobody is blocked right now.</p>
         <% end %>
       </section>
+      <% end %>
 
       <section class="<%= card %> space-y-3">
         <div class="flex items-baseline justify-between">

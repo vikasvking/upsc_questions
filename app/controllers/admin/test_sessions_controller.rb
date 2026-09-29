@@ -98,8 +98,9 @@ class Admin::TestSessionsController < Admin::BaseController
     end
   end
 
-  # A test with results needs its title typed; a locked test also needs a reason.
+  # A test with results needs its title typed; a locked test also needs a reason. Admins only.
   def destroy
+    return deny("Only admins can delete tests. Sub-admins can change them.") unless Current.user.admin?
     attempts = @test_session.test_attempts.count
     locked = @test_session.editing_locked?
     if attempts.positive? && !confirmed?(@test_session.title)

@@ -49,6 +49,7 @@ class SignupAndAccountsTest < ActionDispatch::IntegrationTest
     request = User.find_by(email_address: "ravi@example.com").memberships.first
     assert request.pending?
 
+    users(:teacher).update!(permissions: ["approvals"]) # a sub-admin of this coaching approves requests
     sign_in_as users(:teacher)
     patch approve_membership_path(request)
     assert request.reload.approved?
@@ -128,30 +129,57 @@ class SignupAndAccountsTest < ActionDispatch::IntegrationTest
     assert_equal %w[SSC_CGL UPSC_PRELIMS], users(:one).reload.exam_codes.sort
   end
 
-  test "a sub-admin sees only the areas they were given" do
-    sub = User.create!(name: "Helper", email_address: "helper@example.com", role: "sub_admin",
-                       password: "Assistant2026", permissions: ["students"])
-    sign_in_as sub
+  test "a teacher sub-admin approves only at their own institution and deletes nothing" do
+    mine  = Institution.create!(name: "Sunrise Academy", kind: "coaching")
+    other = Institution.create!(name: "Other Coaching", kind: "coaching")
+    Membership.create!(user: users(:teacher), institution: mine, status: "approved")
+    users(:teacher).update!(permissions: %w[approvals tests])
+    assert users(:teacher).sub_admin?
+
+    here  = Membership.create!(user: users(:one), institution: mine)
+    there = Membership.create!(user: users(:two), institution: other)
+    new_teacher = User.create!(name: "New Teacher", email_address: "newt@example.com", role: "teacher", password: "Chalkboard2026")
+    Membership.create!(user: new_teacher, institution: mine)
+
+    sign_in_as users(:teacher)
+    get admin_approvals_path
+    assert_response :success
+    assert_match "New Teacher", response.body
+    assert_no_match users(:two).display_name, response.body
+
+    patch approve_membership_path(here)
+    assert here.reload.approved?
+    patch approve_membership_path(there)
+    assert there.reload.pending?
+
+    patch approve_teacher_admin_approval_path(new_teacher)
+    assert new_teacher.reload.approved?
 
     get admin_users_path
-    assert_response :success
-    assert_match users(:one).email_address, response.body
-    assert_no_match users(:teacher).email_address, response.body
-
-    get edit_admin_user_path(users(:teacher))
     assert_redirected_to admin_root_path
-
-    delete admin_user_path(users(:one)), params: { confirm_text: users(:one).email_address }
-    assert User.exists?(users(:one).id)
-
     get edit_admin_mail_settings_path
     assert_redirected_to admin_root_path
 
-    get admin_questions_path
-    assert_redirected_to admin_root_path
+    test = test_sessions(:one)
+    delete admin_test_session_path(test)
+    assert TestSession.exists?(test.id)
+    get edit_admin_test_session_path(test)
+    assert_response :success # can still change tests
 
-    patch admin_user_path(users(:one)), params: { user: { role: "admin" } }
-    assert users(:one).reload.student?
+    get admin_questions_path
+    assert_redirected_to admin_root_path # not given the questions area
+  end
+
+  test "only teachers can be sub-admins, and ordinary teachers cannot approve" do
+    user = users(:one)
+    assert_not user.update(permissions: ["approvals"])
+
+    inst = Institution.create!(name: "Sunrise Academy", kind: "coaching")
+    Membership.create!(user: users(:teacher_two), institution: inst, status: "approved")
+    request = Membership.create!(user: users(:two), institution: inst)
+    sign_in_as users(:teacher_two)
+    patch approve_membership_path(request)
+    assert request.reload.pending?
   end
 
   test "admin saves email settings; the password is stored encrypted" do

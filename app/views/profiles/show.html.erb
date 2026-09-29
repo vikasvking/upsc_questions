@@ -91,7 +91,7 @@
       </section>
     <% end %>
 
-    <% unless @user.staff? %>
+    <% unless @user.admin? %>
       <section class="<%= card %> space-y-4">
         <div class="flex items-baseline justify-between">
           <h2 class="font-semibold text-slate-900 dark:text-white">My schools and coachings</h2>

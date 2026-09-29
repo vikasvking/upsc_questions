@@ -8,7 +8,7 @@ module AudienceAssignment
   def audience_valid?(record)
     user = Current.user
     if record.visibility == "institution"
-      allowed = user.staff? || user.approved_memberships.exists?(institution_id: record.institution_id)
+      allowed = user.admin? || user.approved_memberships.exists?(institution_id: record.institution_id)
       record.errors.add(:base, "Pick one of your own schools or coachings for \"my school or coaching\"") unless record.institution_id && allowed
     elsif record.visibility == "selected"
       sel = audience_selection(record)
@@ -37,12 +37,12 @@ module AudienceAssignment
       by_email = User.student.where(email_address: emails).pluck(:email_address, :id).to_h
 
       picked = Array(a[:user_ids]).compact_blank.map(&:to_i)
-      unless user.staff?
+      unless user.admin?
         allowed = user.reachable_students.where(id: picked).pluck(:id) | (record.persisted? ? record.granted_ids("User") : [])
         picked &= allowed
       end
       batches = Array(a[:batch_ids]).compact_blank.map(&:to_i)
-      batches &= (user.staff? ? Batch.where(id: batches) : user.batches.where(id: batches)).pluck(:id) | (record.persisted? ? record.granted_ids("Batch") : [])
+      batches &= (user.admin? ? Batch.where(id: batches) : user.batches.where(id: batches)).pluck(:id) | (record.persisted? ? record.granted_ids("Batch") : [])
 
       { user_ids: (picked + by_email.values).uniq,
         institution_ids: Institution.where(id: Array(a[:institution_ids]).compact_blank).pluck(:id),

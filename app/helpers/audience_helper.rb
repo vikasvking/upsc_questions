@@ -4,13 +4,13 @@ module AudienceHelper
   # What the current teacher (or admin) can pick on a "Visible to" section
   def audience_choices(record)
     user = Current.user
-    own = user.staff? ? Institution.ordered.to_a : user.institutions.ordered.to_a
+    own = user.admin? ? Institution.ordered.to_a : user.institutions.ordered.to_a
     own |= [record.institution] if record.institution
 
     granted_students = record.persisted? ? User.where(id: record.granted_ids("User")).to_a : []
     students = (user.reachable_students.order(:name, :email_address).limit(300).to_a | granted_students)
 
-    batches = user.staff? ? Batch.ordered.includes(:user).to_a : user.batches.ordered.to_a
+    batches = user.admin? ? Batch.ordered.includes(:user).to_a : user.batches.ordered.to_a
     batches |= Batch.where(id: record.granted_ids("Batch")).to_a if record.persisted?
 
     Choices.new(own_institutions: own, all_institutions: Institution.ordered.to_a, students: students, batches: batches)

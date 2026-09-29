@@ -59,12 +59,12 @@
       </div>
     </div>
     <div>
-      <p class="text-xs font-bold text-slate-400">Batches <%= link_to "(manage)", batches_path, class: "font-normal text-brand-700 dark:text-brand-300" unless Current.user.staff? %></p>
+      <p class="text-xs font-bold text-slate-400">Batches <%= link_to "(manage)", batches_path, class: "font-normal text-brand-700 dark:text-brand-300" unless Current.user.admin? %></p>
       <div class="mt-1 <%= box %>">
         <%= hidden_field_tag "audience[batch_ids][]", "", id: nil %>
         <% choices.batches.each do |b| %>
           <label class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-            <%= check_box_tag "audience[batch_ids][]", b.id, granted_batches.include?(b.id), id: "aud_batch_#{b.id}" %> <%= b.name %><%= " (#{b.user.display_name})" if Current.user.staff? %>
+            <%= check_box_tag "audience[batch_ids][]", b.id, granted_batches.include?(b.id), id: "aud_batch_#{b.id}" %> <%= b.name %><%= " (#{b.user.display_name})" if Current.user.admin? %>
           </label>
         <% end %>
         <% if choices.batches.empty? %><p class="text-xs text-slate-500">No batches yet.</p><% end %>

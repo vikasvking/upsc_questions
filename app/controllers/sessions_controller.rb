@@ -9,9 +9,7 @@ class SessionsController < ApplicationController
   def create
     if user = User.authenticate_by(params.permit(:email_address, :password))
       start_new_session_for user
-      if user.sub_admin?
-        redirect_to admin_root_path, notice: "Welcome, #{user.display_name}"
-      elsif user.faculty?
+      if user.faculty?
         redirect_to upload_form_questions_path, notice: "Welcome Faculty"
       else
       redirect_to dashboard_path,notice: "Signed in successfully"

@@ -13,9 +13,7 @@
     shield: "M12 3l7 3v6c0 4.5-3 8-7 9-4-1-7-4.5-7-9V6l7-3z"
   }
   links =
-    if Current.user&.sub_admin?
-      []
-    elsif Current.user&.student?
+    if Current.user&.student?
       [["Dashboard", dashboard_path, :home, current_page?(dashboard_path)],
        ["All Tests", all_tests_dashboard_path, :list, current_page?(all_tests_dashboard_path)],
        ["Question Bank", question_bank_path, :book, controller_name == "questionbanks"],
@@ -31,7 +29,7 @@
     end
   links.unshift(["Admin", admin_root_path, :shield, controller_path.start_with?("admin/")]) if Current.user&.staff?
   links << ["Profile", profile_path, :user, controller_name == "profiles"]
-  home_path = Current.user&.student? ? dashboard_path : (Current.user&.sub_admin? ? admin_root_path : test_sessions_path)
+  home_path = Current.user&.student? ? dashboard_path : test_sessions_path
 %>
 <aside id="app-sidebar" aria-label="Main menu"
        class="fixed inset-y-0 left-0 z-40 w-60 overflow-y-auto -translate-x-full lg:translate-x-0 transition-transform duration-200 ease-out bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col justify-between">
@@ -48,7 +46,7 @@
     </div>
 
     <% unless Current.user&.student? %>
-      <p class="px-3 text-xs font-medium text-brand-700 dark:text-brand-300"><%= Current.user&.staff? ? "Admin panel" : "Teacher panel" %></p>
+      <p class="px-3 text-xs font-medium text-brand-700 dark:text-brand-300"><%= Current.user&.admin? ? "Admin panel" : (Current.user&.sub_admin? ? "Teacher · sub-admin" : "Teacher panel") %></p>
     <% end %>
 
     <nav class="space-y-0.5">

@@ -25,16 +25,22 @@ class MembershipsController < ApplicationController
     end
   end
 
-  # PATCH /memberships/:id/approve (a teacher of that institution, or an admin)
+  # PATCH /memberships/:id/approve (a sub-admin of that institution, or an admin)
   def approve
     unless can_manage_institution?(@membership.institution)
-      return redirect_back(fallback_location: root_path, alert: "Only teachers of #{@membership.institution.name} can approve requests.")
+      return redirect_back(fallback_location: root_path, alert: "Only a sub-admin of #{@membership.institution.name} (or an admin) can approve requests.")
     end
     @membership.approve!(by: Current.user)
+    # approving a new teacher's request also approves the teacher account
+    if @membership.user.pending_teacher?
+      @membership.user.update_column(:approved_at, Time.current)
+      AdminLog.record!(admin: Current.user, action: "approve_teacher", record: @membership.user, label: @membership.user.email_address,
+                       details: { institution: @membership.institution.label })
+    end
     redirect_back fallback_location: institutions_path, notice: "#{@membership.user.display_name} joined #{@membership.institution.name}."
   end
 
-  # DELETE /memberships/:id (leave or cancel your own; a teacher can remove or reject someone at their institution)
+  # DELETE /memberships/:id (leave or cancel your own; a sub-admin can remove or reject someone at their institution)
   def destroy
     own = @membership.user_id == Current.user.id
     unless own || can_manage_institution?(@membership.institution)
@@ -52,7 +58,6 @@ class MembershipsController < ApplicationController
   end
 
   def can_manage_institution?(institution)
-    Current.user.can_manage?(:institutions) ||
-      (Current.user.faculty? && Current.user.approved_memberships.exists?(institution_id: institution.id))
+    Current.user.can_approve_at?(institution)
   end
 end

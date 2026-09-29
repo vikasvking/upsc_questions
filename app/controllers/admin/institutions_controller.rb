@@ -64,6 +64,7 @@ class Admin::InstitutionsController < Admin::BaseController
   end
 
   def destroy
+    return deny("Only admins can delete schools and coachings.") unless Current.user.admin?
     label = @institution.label
     members = @institution.memberships.count
     if members.positive? && !confirmed?(@institution.name)

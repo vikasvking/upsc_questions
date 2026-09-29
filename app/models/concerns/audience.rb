@@ -2,7 +2,7 @@
 #   public      -> everyone
 #   institution -> approved members of one school/coaching (the teacher's)
 #   selected    -> students, institutions and batches the teacher picked (AudienceGrant)
-# The owner and admins/sub-admins always see it.
+# The owner and admins always see it.
 module Audience
   extend ActiveSupport::Concern
 
@@ -23,7 +23,7 @@ module Audience
   class_methods do
     def visible_to(user)
       return where(visibility: "public") if user.nil?
-      return all if user.staff?
+      return all if user.admin?
 
       institution_ids = user.approved_memberships.pluck(:institution_id)
       batch_ids = BatchMember.where(user_id: user.id).pluck(:batch_id)

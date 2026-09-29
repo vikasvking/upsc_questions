@@ -65,6 +65,7 @@ class Admin::QuestionsController < Admin::BaseController
   end
 
   def destroy
+    return deny("Only admins can delete questions. Sub-admins can change them.") unless Current.user.admin?
     locked = @question.locked_tests
     answers = @question.user_responses.count
     if (locked.any? || answers.positive?) && (!confirmed?("delete") || reason_param.blank?)

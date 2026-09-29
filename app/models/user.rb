@@ -1,13 +1,12 @@
 class User < ApplicationRecord
-  # Areas an admin can hand to a sub-admin. Email settings, admin/sub-admin accounts, deleting accounts
-  # and parents' consent details are never delegated.
+  # A sub-admin is an approved teacher to whom an admin gave some of these areas.
+  # Never delegated: people's accounts, email settings, deleting anything, parents' consent details, the full log.
   ADMIN_AREAS = {
-    "students"     => "Students (view and edit)",
-    "teachers"     => "Teachers (view, edit and approve)",
-    "questions"    => "Questions",
-    "tests"        => "Tests (including locked tests)",
-    "institutions" => "Schools and coachings",
-    "ratings"      => "Ratings and reports"
+    "approvals"    => "Approve new teachers and join requests at their own schools/coachings",
+    "questions"    => "Change any question (no deleting)",
+    "tests"        => "Change any test, including locked tests on request (no deleting)",
+    "institutions" => "Edit and merge schools/coachings (no deleting)",
+    "ratings"      => "Answer reports and hide abusive rating comments"
   }.freeze
   ADULT_AGE = 18
 
@@ -33,7 +32,7 @@ class User < ApplicationRecord
   has_many :question_reports, dependent: :delete_all
 
   has_many :attempted_questions, -> { distinct }, through: :user_responses, source: :question
-  enum :role, { student: 0, teacher: 1, admin: 2, sub_admin: 3 }, default: :student
+  enum :role, { student: 0, teacher: 1, admin: 2 }, default: :student
 
   normalizes :email_address, with: ->(e) { e.strip.downcase }
   normalizes :name, with: ->(v) { v.to_s.squish.presence }
@@ -43,6 +42,7 @@ class User < ApplicationRecord
   validates :name, length: { maximum: 80 }
   validates :bio, length: { maximum: 1000 }
   validates :target_exam, inclusion: { in: Exam.codes }, allow_nil: true
+  validate  :only_teachers_have_admin_areas
   validate  :password_is_strong, if: -> { password.present? }
   validate  :email_can_receive_mail, if: :will_save_change_to_email_address?
   validate  :birth_date_is_sensible, if: -> { date_of_birth.present? }
@@ -56,18 +56,30 @@ class User < ApplicationRecord
   def approved? = approved_at.present?
   def pending_teacher? = teacher? && !approved?
   def faculty? = (teacher? && approved?) || admin? # can create tests and questions
-  def staff? = admin? || sub_admin?                 # can open the admin pages
+  def sub_admin? = teacher? && approved? && Array(permissions).any? # a teacher with admin areas
+  def staff? = admin? || sub_admin?                                  # can open the admin pages
 
   # Admins can do everything; sub-admins only the areas they were given
   def can_manage?(area)
     admin? || (sub_admin? && Array(permissions).include?(area.to_s))
   end
 
+  # Institutions whose teachers and join requests this person may approve (nil = all, for admins)
+  def approvable_institution_ids
+    return nil if admin?
+    can_manage?(:approvals) ? approved_memberships.pluck(:institution_id) : []
+  end
+
+  def can_approve_at?(institution)
+    ids = approvable_institution_ids
+    ids.nil? || ids.include?(institution.id)
+  end
+
   def display_name = name.presence || email_address.split("@").first.capitalize
 
   # Students a teacher can pick for "selected" tests and batches: those at the teacher's institutions
   def reachable_students
-    return User.student if staff?
+    return User.student if admin?
     User.student.where(id: Membership.approved.where(institution_id: approved_memberships.select(:institution_id)).select(:user_id))
   end
 
@@ -134,7 +146,7 @@ class User < ApplicationRecord
 
   # What is still missing before this account can be used (empty = complete)
   def missing_profile_items
-    return [] if staff?
+    return [] if admin?
 
     items = []
     items << "your full name" if name.blank?
@@ -156,6 +168,10 @@ class User < ApplicationRecord
   def email_can_receive_mail
     problem = EmailCheck.problem(email_address)
     errors.add(:email_address, problem) if problem
+  end
+
+  def only_teachers_have_admin_areas
+    errors.add(:permissions, "can only be given to teachers") if Array(permissions).any? && !teacher?
   end
 
   def birth_date_is_sensible

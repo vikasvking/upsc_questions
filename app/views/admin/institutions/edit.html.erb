@@ -11,10 +11,12 @@
         <% @members.each do |m| %>
           <li class="py-2 flex items-center justify-between gap-3">
             <span><span class="font-medium text-slate-900 dark:text-white"><%= m.user.display_name %></span> <span class="text-xs text-slate-500"><%= m.user.role %><%= " · waiting" if m.pending? %></span></span>
-            <span class="flex gap-2">
-              <% if m.pending? %><%= button_to "Approve", approve_membership_path(m), method: :patch, class: "text-xs font-semibold text-emerald-700 cursor-pointer" %><% end %>
-              <%= button_to "Remove", membership_path(m), method: :delete, class: "text-xs text-slate-500 hover:text-red-700 cursor-pointer" %>
-            </span>
+            <% if Current.user.can_approve_at?(@institution) %>
+              <span class="flex gap-2">
+                <% if m.pending? %><%= button_to "Approve", approve_membership_path(m), method: :patch, class: "text-xs font-semibold text-emerald-700 cursor-pointer" %><% end %>
+                <%= button_to "Remove", membership_path(m), method: :delete, class: "text-xs text-slate-500 hover:text-red-700 cursor-pointer" %>
+              </span>
+            <% end %>
           </li>
         <% end %>
         <% if @members.empty? %><li class="py-2 text-slate-500">No members yet.</li><% end %>
@@ -32,6 +34,7 @@
       </section>
     <% end %>
 
+    <% if Current.user.admin? %>
     <section class="rounded-2xl ring-1 ring-red-200 dark:ring-red-900/60 bg-red-50/40 dark:bg-red-950/20 p-6 space-y-3">
       <h2 class="font-semibold text-red-800 dark:text-red-300">Delete</h2>
       <%= form_with url: admin_institution_path(@institution), method: :delete, class: "flex flex-col sm:flex-row gap-2", data: { turbo_confirm: "Delete #{@institution.name}?" } do %>
@@ -40,5 +43,6 @@
         <%= submit_tag "Delete", name: nil, class: "rounded-xl bg-red-700 hover:bg-red-800 text-white text-sm font-medium px-4 py-2 cursor-pointer" %>
       <% end %>
     </section>
+    <% end %>
   </div>
 </div>
