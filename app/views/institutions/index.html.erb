@@ -1,0 +1,83 @@
+<% input = "mt-1 block w-full rounded-xl border-0 py-2.5 px-3 ring-1 ring-inset ring-slate-300 dark:ring-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white text-sm" %>
+<div class="py-10 min-h-screen w-full">
+  <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 space-y-6">
+    <div>
+      <h1 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">My schools and coachings</h1>
+      <p class="text-sm text-slate-500 mt-1">Share an institution's join code with your students so they join straight away, or approve students who asked without it.</p>
+    </div>
+    <% if notice %><div class="rounded-xl bg-emerald-50 dark:bg-emerald-950/40 px-4 py-3 text-sm text-emerald-800 dark:text-emerald-300"><%= notice %></div><% end %>
+    <% if alert %><div class="rounded-xl bg-red-50 dark:bg-red-950/40 px-4 py-3 text-sm text-red-800 dark:text-red-300"><%= alert %></div><% end %>
+
+    <% @institutions.each do |inst| %>
+      <% pending = inst.memberships.select(&:pending?) %>
+      <% approved = inst.memberships.select(&:approved?) %>
+      <section class="bg-white dark:bg-slate-900 rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-6 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h2 class="font-semibold text-slate-900 dark:text-white"><%= inst.label %></h2>
+            <p class="text-xs text-slate-500"><%= pluralize(approved.count { |m| m.user.student? }, "student") %> · <%= pluralize(approved.count { |m| m.user.teacher? }, "teacher") %></p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-slate-500">Join code</span>
+            <span class="font-mono font-bold text-lg text-brand-800 dark:text-brand-300 bg-brand-50 dark:bg-brand-950/40 px-3 py-1 rounded-lg select-all"><%= inst.join_code %></span>
+            <%= button_to "New code", regenerate_code_institution_path(inst), method: :post,
+                  data: { turbo_confirm: "Make a new code? The old one stops working." },
+                  class: "text-xs text-slate-500 hover:text-brand-700 cursor-pointer" %>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Requests waiting (<%= pending.size %>)</h3>
+          <% if pending.any? %>
+            <ul class="mt-2 divide-y divide-slate-100 dark:divide-slate-800 text-sm">
+              <% pending.each do |m| %>
+                <li class="py-2 flex items-center justify-between gap-3">
+                  <span class="min-w-0 truncate"><span class="font-medium text-slate-900 dark:text-white"><%= m.user.display_name %></span> <span class="text-xs text-slate-500"><%= m.user.role %> · asked <%= time_ago_in_words(m.created_at) %> ago</span></span>
+                  <span class="flex shrink-0 gap-2">
+                    <%= button_to "Approve", approve_membership_path(m), method: :patch, class: "rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold px-3 py-1.5 cursor-pointer" %>
+                    <%= button_to "Reject", membership_path(m), method: :delete, class: "rounded-lg ring-1 ring-slate-200 dark:ring-slate-800 text-xs px-3 py-1.5 text-slate-600 dark:text-slate-300 cursor-pointer" %>
+                  </span>
+                </li>
+              <% end %>
+            </ul>
+          <% else %>
+            <p class="mt-1 text-sm text-slate-500">No requests.</p>
+          <% end %>
+        </div>
+
+        <details class="text-sm">
+          <summary class="cursor-pointer text-slate-600 dark:text-slate-300">Members (<%= approved.size %>)</summary>
+          <ul class="mt-2 divide-y divide-slate-100 dark:divide-slate-800">
+            <% approved.sort_by { |m| m.user.display_name.downcase }.each do |m| %>
+              <li class="py-1.5 flex items-center justify-between gap-3">
+                <span><%= m.user.display_name %> <span class="text-xs text-slate-500"><%= m.user.role %></span></span>
+                <% unless m.user_id == Current.user.id %>
+                  <%= button_to "Remove", membership_path(m), method: :delete, data: { turbo_confirm: "Remove #{m.user.display_name} from #{inst.name}?" },
+                        class: "text-xs text-slate-500 hover:text-red-700 cursor-pointer" %>
+                <% end %>
+              </li>
+            <% end %>
+          </ul>
+        </details>
+      </section>
+    <% end %>
+    <% if @institutions.empty? %>
+      <p class="text-sm text-slate-500">You're not a teacher at any school or coaching yet. Join one from <%= link_to "your profile", profile_path, class: "text-brand-700 dark:text-brand-300" %> or add it below.</p>
+    <% end %>
+
+    <section class="bg-white dark:bg-slate-900 rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-6 space-y-3">
+      <h2 class="font-semibold text-slate-900 dark:text-white">Add a school or coaching</h2>
+      <% if @new_institution.errors.any? %>
+        <ul class="rounded-lg bg-red-50 dark:bg-red-950/40 px-4 py-2 text-sm text-red-800 dark:text-red-300 list-disc pl-8">
+          <% @new_institution.errors.full_messages.each do |m| %><li><%= m %></li><% end %>
+        </ul>
+      <% end %>
+      <%= form_with model: @new_institution, url: institutions_path, class: "grid grid-cols-1 sm:grid-cols-4 gap-3 items-end" do |f| %>
+        <div class="sm:col-span-2"><%= f.label :name, "Name", class: "text-xs font-bold text-slate-500" %><%= f.text_field :name, required: true, class: input %></div>
+        <div><%= f.label :kind, "Type", class: "text-xs font-bold text-slate-500" %><%= f.select :kind, [["Coaching", "coaching"], ["School", "school"]], {}, class: input %></div>
+        <div><%= f.label :city, "City", class: "text-xs font-bold text-slate-500" %><%= f.text_field :city, class: input %></div>
+        <%= f.submit "Add", class: "sm:col-span-4 rounded-xl bg-brand-700 hover:bg-brand-800 text-white text-sm font-medium px-4 py-2.5 cursor-pointer" %>
+      <% end %>
+    </section>
+  </div>
+</div>

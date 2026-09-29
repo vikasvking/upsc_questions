@@ -1,13 +1,41 @@
 <% card = "bg-white dark:bg-slate-900 rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-5" %>
 <div class="py-8 sm:py-10">
   <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 space-y-6">
-    <%= render "admin/shared/header", title: @user.email_address,
-          subtitle: "#{@user.role.humanize} · joined #{l(@user.created_at.to_date, format: :long)}#{" · preparing for #{exam_name(@user.target_exam)}" if @user.target_exam}",
+    <%= render "admin/shared/header", title: @user.display_name,
+          subtitle: "#{@user.email_address} · #{@user.role.humanize}#{" (waiting for approval)" if @user.pending_teacher?} · joined #{l(@user.created_at.to_date, format: :long)}#{" · email confirmed" if @user.email_confirmed?}",
           action: link_to("Edit", edit_admin_user_path(@user), class: "rounded-lg bg-brand-700 hover:bg-brand-800 text-white text-sm font-medium px-4 py-2") %>
 
     <section class="grid grid-cols-2 sm:grid-cols-4 gap-4">
       <% [["Answers saved", @answers_count], ["Tests taken", @attempts.size], ["Tests created", @tests&.size.to_i], ["Questions added", @questions_count]].each do |label, value| %>
         <div class="<%= card %>"><p class="text-sm text-slate-500"><%= label %></p><p class="mt-1 text-2xl font-semibold text-slate-900 dark:text-white"><%= value %></p></div>
+      <% end %>
+    </section>
+
+    <section class="<%= card %> grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+      <% if @user.student? %>
+        <div><p class="text-xs font-bold text-slate-400">Date of birth</p><p class="mt-1"><%= @user.date_of_birth ? "#{l(@user.date_of_birth, format: :long)} (#{@user.age})" : "—" %></p></div>
+        <div><p class="text-xs font-bold text-slate-400">Exams</p><div class="mt-1 flex flex-wrap gap-1"><% @user.exam_codes.each do |c| %><%= exam_chip(c) %><% end %></div></div>
+      <% elsif @user.teacher? %>
+        <div><p class="text-xs font-bold text-slate-400">Subjects</p><p class="mt-1"><%= @user.subject_names.join(", ").presence || "—" %></p></div>
+        <div><p class="text-xs font-bold text-slate-400">About</p><p class="mt-1 whitespace-pre-line"><%= @user.bio.presence || "—" %></p></div>
+      <% elsif @user.sub_admin? %>
+        <div class="sm:col-span-2"><p class="text-xs font-bold text-slate-400">Can manage</p><p class="mt-1"><%= Array(@user.permissions).map { |p| User::ADMIN_AREAS[p] }.compact.join(" · ").presence || "Nothing yet" %></p></div>
+      <% end %>
+      <div class="sm:col-span-2">
+        <p class="text-xs font-bold text-slate-400">Schools and coachings</p>
+        <p class="mt-1"><%= @memberships.map { |m| "#{m.institution.label}#{" (waiting)" if m.pending?}" }.join(" · ").presence || "—" %></p>
+      </div>
+      <% if @consents %>
+        <div class="sm:col-span-2 rounded-xl bg-amber-50/60 dark:bg-amber-950/20 p-3">
+          <p class="text-xs font-bold text-amber-800 dark:text-amber-300">Parent's consent (admins only)</p>
+          <% if @consents.any? %>
+            <% @consents.each do |c| %>
+              <p class="mt-1"><%= c.parent_email %> · <%= c.parent_phone %> · given <%= l(c.consented_at, format: :short) %> · text version <%= c.consent_version %><%= " · from #{c.ip_address}" if c.ip_address %></p>
+            <% end %>
+          <% else %>
+            <p class="mt-1 text-slate-600 dark:text-slate-400"><%= @user.minor? ? "Not given yet (the student is asked on login)." : "Not needed." %></p>
+          <% end %>
+        </div>
       <% end %>
     </section>
 

@@ -3,19 +3,28 @@ one:
   email_address: one@example.com
   password_digest: <%= password_digest %>
   role: student
+  name: Student One
+  date_of_birth: 2000-01-01
 two:
   email_address: two@example.com
   password_digest: <%= password_digest %>
   role: student
+  name: Student Two
+  date_of_birth: 2001-02-02
 teacher:
   email_address: teacher@example.com
   password_digest: <%= password_digest %>
   role: teacher
+  name: Asha Rao
+  approved_at: <%= 1.month.ago.to_fs(:db) %>
 admin:
   email_address: admin@example.com
   password_digest: <%= password_digest %>
   role: admin
+  name: Admin
 teacher_two:
   email_address: teacher2@example.com
   password_digest: <%= password_digest %>
   role: teacher
+  name: Vikram Singh
+  approved_at: <%= 1.month.ago.to_fs(:db) %>

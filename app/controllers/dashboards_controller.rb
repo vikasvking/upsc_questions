@@ -22,7 +22,7 @@ class DashboardsController < ApplicationController
     @progress    = StudentProgress.new(Current.user)
 
     # Ranks are per exam: "Preparing for" (profile) unless the student picks another exam here
-    @rank_exams  = (Exam.codes & ([Current.user.target_exam] + Current.user.practised_exam_codes)).map { |c| Exam::BY_CODE[c] }
+    @rank_exams  = (Exam.codes & ([Current.user.target_exam] + Current.user.exam_codes + Current.user.practised_exam_codes)).map { |c| Exam::BY_CODE[c] }
     @rank_exam   = Exam.normalize(params[:exam]) || Current.user.ranking_exam_code
     @comparison  = Leaderboard.comparison_for(Current.user, @rank_exam)
 
@@ -386,6 +386,8 @@ class DashboardsController < ApplicationController
   def ensure_student_access
     if Current.user&.faculty?
       redirect_to test_sessions_path, notice: "Teachers and admins manage tests from here."
+    elsif Current.user&.sub_admin?
+      redirect_to admin_root_path
     end
   end
 end

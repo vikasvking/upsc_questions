@@ -1,14 +1,33 @@
-# Admin pages: admins only. Every change is written to AdminLog.
+# Admin pages: admins, and sub-admins for the areas an admin gave them. Every change is written to AdminLog.
 class Admin::BaseController < ApplicationController
   PER_PAGE = 50
 
-  before_action :require_admin
+  class_attribute :admin_area, default: nil # nil = any admin or sub-admin; :admin_only = admins only
+
+  before_action :require_staff
+  before_action :require_area
+
+  helper_method :can_manage?
 
   private
 
-  def require_admin
-    return if Current.user&.admin?
+  def require_staff
+    return if Current.user&.staff?
     redirect_to (Current.user&.faculty? ? test_sessions_path : dashboard_path), alert: "Only admins can open the admin pages."
+  end
+
+  def require_area
+    case admin_area
+    when nil then nil
+    when :admin_only then deny unless Current.user.admin?
+    else deny unless can_manage?(admin_area)
+    end
+  end
+
+  def can_manage?(area) = Current.user.can_manage?(area)
+
+  def deny(message = "You do not have access to that admin area. Ask an admin.")
+    redirect_to admin_root_path, alert: message
   end
 
   # Simple page-by-page lists (?page=2) without extra gems

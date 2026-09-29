@@ -1,5 +1,11 @@
+<%
+  input = "mt-1.5 block w-full rounded-lg border-0 py-2.5 px-3 ring-1 ring-inset ring-slate-300 dark:ring-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-brand-600 bg-white dark:bg-slate-950 text-slate-900 dark:text-white"
+  label = "block text-sm font-medium text-slate-700 dark:text-slate-300"
+  hint  = "mt-1 text-xs text-slate-500"
+  f_err = ->(attr) { @form.errors[attr].presence && tag.p(@form.errors[attr].to_sentence.upcase_first, class: "mt-1 text-xs text-red-700 dark:text-red-400") }
+%>
 <div class="min-h-[calc(100vh-4rem)] flex flex-col justify-center px-6 py-12">
-  <div class="mx-auto w-full max-w-sm">
+  <div class="mx-auto w-full max-w-xl">
     <div class="text-center">
       <a href="<%= root_path %>" class="inline-grid h-10 w-10 place-items-center rounded-xl bg-brand-700 text-white font-semibold">R</a>
       <h1 class="mt-5 text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">Create your free account</h1>
@@ -7,28 +13,151 @@
     </div>
 
     <div class="mt-8 rounded-2xl bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 shadow-sm px-6 py-7">
-      <% if @user.errors.any? %>
+      <% if notice %><p class="mb-5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 px-4 py-3 text-sm text-emerald-800 dark:text-emerald-300"><%= notice %></p><% end %>
+      <% if alert %><p class="mb-5 rounded-lg bg-red-50 dark:bg-red-950/40 px-4 py-3 text-sm text-red-800 dark:text-red-300"><%= alert %></p><% end %>
+      <% if @form.errors[:base].any? %>
         <ul class="mb-5 rounded-lg bg-red-50 dark:bg-red-950/40 px-4 py-3 text-sm text-red-800 dark:text-red-300 ring-1 ring-red-200 dark:ring-red-900/50 list-disc pl-8 space-y-1">
-          <% @user.errors.full_messages.each do |msg| %>
-            <li><%= msg %></li>
-          <% end %>
+          <% @form.errors[:base].each do |msg| %><li><%= msg %></li><% end %>
         </ul>
       <% end %>
 
-      <%= form_with url: sign_up_path, class: "space-y-5" do |form| %>
+      <%= form_with model: @form, scope: :signup, url: sign_up_path, class: "space-y-5",
+            data: { controller: "signup", signup_adult_age_value: User::ADULT_AGE, signup_min_length_value: PasswordPolicy::MIN_LENGTH } do |f| %>
+
+        <fieldset>
+          <legend class="<%= label %>">I am a</legend>
+          <div class="mt-2 grid grid-cols-2 gap-3">
+            <% [["student", "🎓 Student"], ["teacher", "🧑‍🏫 Teacher"]].each do |value, text| %>
+              <label class="flex items-center gap-2 rounded-lg px-3 py-2.5 ring-1 ring-slate-300 dark:ring-slate-700 cursor-pointer has-[:checked]:ring-2 has-[:checked]:ring-brand-600">
+                <%= f.radio_button :role, value, data: { action: "signup#toggleRole" }, class: "accent-brand-700" %>
+                <span class="text-sm font-medium text-slate-900 dark:text-white"><%= text %></span>
+              </label>
+            <% end %>
+          </div>
+          <p class="<%= hint %>" data-signup-target="teacher">Teacher accounts are checked by an admin before you can create tests.</p>
+        </fieldset>
+
         <div>
-          <%= form.label :email_address, "Email", class: "block text-sm font-medium text-slate-700 dark:text-slate-300" %>
-          <%= form.email_field :email_address, value: @user.email_address, required: true, autofocus: true, autocomplete: "email", class: "mt-1.5 block w-full rounded-lg border-0 py-2.5 px-3 ring-1 ring-inset ring-slate-300 dark:ring-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-brand-600 bg-white dark:bg-slate-950 text-slate-900 dark:text-white" %>
+          <%= f.label :name, "Full name", class: label %>
+          <%= f.text_field :name, required: true, autocomplete: "name", class: input %>
+          <%= f_err.(:name) %>
         </div>
+
         <div>
-          <%= form.label :password, "Password", class: "block text-sm font-medium text-slate-700 dark:text-slate-300" %>
-          <%= form.password_field :password, required: true, autocomplete: "new-password", class: "mt-1.5 block w-full rounded-lg border-0 py-2.5 px-3 ring-1 ring-inset ring-slate-300 dark:ring-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-brand-600 bg-white dark:bg-slate-950 text-slate-900 dark:text-white" %>
+          <%= f.label :email_address, "Email", class: label %>
+          <%= f.email_field :email_address, required: true, autocomplete: "email", class: input %>
+          <%= f_err.(:email_address) %>
         </div>
-        <div>
-          <%= form.label :password_confirmation, "Confirm password", class: "block text-sm font-medium text-slate-700 dark:text-slate-300" %>
-          <%= form.password_field :password_confirmation, required: true, autocomplete: "new-password", class: "mt-1.5 block w-full rounded-lg border-0 py-2.5 px-3 ring-1 ring-inset ring-slate-300 dark:ring-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-brand-600 bg-white dark:bg-slate-950 text-slate-900 dark:text-white" %>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <%= f.label :password, "Password", class: label %>
+            <%= f.password_field :password, required: true, autocomplete: "new-password", minlength: PasswordPolicy::MIN_LENGTH,
+                  data: { signup_target: "password", action: "input->signup#checkPassword" }, class: input %>
+            <div class="mt-2 h-1.5 rounded-full bg-slate-100 dark:bg-slate-800"><div data-signup-target="meter" class="h-1.5 rounded-full w-0"></div></div>
+            <p class="<%= hint %>" data-signup-target="meterText"></p>
+            <%= f_err.(:password) %>
+          </div>
+          <div>
+            <%= f.label :password_confirmation, "Repeat password", class: label %>
+            <%= f.password_field :password_confirmation, required: true, autocomplete: "new-password", class: input %>
+            <%= f_err.(:password_confirmation) %>
+          </div>
         </div>
-        <%= form.submit "Create account", class: "w-full rounded-lg bg-brand-700 px-3 py-2.5 text-sm font-medium text-white hover:bg-brand-800 cursor-pointer" %>
+
+        <!-- Students -->
+        <div class="space-y-5" data-signup-target="student">
+          <div>
+            <%= f.label :date_of_birth, "Date of birth", class: label %>
+            <%= f.date_field :date_of_birth, max: Date.current - 5.years, data: { signup_target: "dob", action: "change->signup#checkAge" }, class: input %>
+            <%= f_err.(:date_of_birth) %>
+          </div>
+
+          <div data-signup-target="parent" class="hidden rounded-xl bg-amber-50 dark:bg-amber-950/30 ring-1 ring-amber-200 dark:ring-amber-900/60 p-4 space-y-3">
+            <p class="text-sm font-semibold text-amber-900 dark:text-amber-200">You are under 18: we need a parent's or guardian's consent</p>
+            <p class="text-xs text-slate-600 dark:text-slate-400">We will email your parent a code together with what they are agreeing to. Your account is created once you enter that code.</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <%= f.label :parent_email, "Parent's email", class: label %>
+                <%= f.email_field :parent_email, class: input %>
+                <%= f_err.(:parent_email) %>
+              </div>
+              <div>
+                <%= f.label :parent_phone, "Parent's mobile number", class: label %>
+                <%= f.telephone_field :parent_phone, placeholder: "98XXXXXXXX", class: input %>
+                <%= f_err.(:parent_phone) %>
+              </div>
+            </div>
+            <details class="text-xs text-slate-600 dark:text-slate-400">
+              <summary class="cursor-pointer font-medium">What your parent agrees to</summary>
+              <p class="mt-2 whitespace-pre-line"><%= GuardianConsent::TEXT %></p>
+            </details>
+          </div>
+
+          <fieldset>
+            <legend class="<%= label %>">Exams I'm preparing for</legend>
+            <div class="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-2">
+              <% chosen = @form.exam_codes %>
+              <% Exam.all.each do |e| %>
+                <label class="flex items-center gap-2 rounded-lg px-3 py-2 ring-1 ring-slate-200 dark:ring-slate-800 text-sm cursor-pointer has-[:checked]:ring-2 has-[:checked]:ring-brand-600 has-[:checked]:bg-brand-50 dark:has-[:checked]:bg-brand-950/40">
+                  <%= check_box_tag "signup[exam_codes][]", e.code, chosen.include?(e.code), id: "exam_#{e.code}", class: "accent-brand-700" %>
+                  <span class="text-slate-900 dark:text-white"><%= e.name %></span>
+                </label>
+              <% end %>
+            </div>
+            <p class="<%= hint %>">Pick one or more. You'll see tests and ranks for these exams first.</p>
+          </fieldset>
+        </div>
+
+        <!-- Teachers -->
+        <div class="space-y-5" data-signup-target="teacher">
+          <div>
+            <%= f.label :subjects, "Subjects I teach", class: label %>
+            <%= f.text_field :subjects, placeholder: "e.g. Polity, Modern History", list: "subject-suggestions", class: input %>
+            <datalist id="subject-suggestions"><% @subject_suggestions.each do |s| %><option value="<%= s %>"></option><% end %></datalist>
+            <p class="<%= hint %>">Separate several subjects with commas.</p>
+          </div>
+          <div>
+            <%= f.label :bio, "About me (optional)", class: label %>
+            <%= f.text_area :bio, rows: 3, maxlength: 1000, placeholder: "Experience, qualifications, what students can expect", class: input %>
+          </div>
+        </div>
+
+        <!-- School / coaching -->
+        <div class="space-y-3">
+          <div>
+            <%= f.label :institution_id, "My school or coaching (optional)", class: label %>
+            <%= f.select :institution_id,
+                  [["None / add later", ""]] + @institutions.map { |i| [i.label, i.id] } + [["➕ Not in the list: add it (teachers)", "new"]],
+                  {}, data: { signup_target: "institutionSelect", action: "change->signup#toggleInstitution" }, class: input %>
+            <p class="<%= hint %>">You can add more later in your profile.</p>
+            <%= f_err.(:institution_id) %>
+          </div>
+          <div data-signup-target="joinCode" class="hidden">
+            <%= f.label :join_code, "Join code (optional)", class: label %>
+            <%= f.text_field :join_code, autocomplete: "off", placeholder: "Code from your teacher, e.g. K7PQ2MXA", class: "#{input} uppercase" %>
+            <p class="<%= hint %>">With the code you join straight away. Without it, a teacher there approves you.</p>
+            <%= f_err.(:join_code) %>
+          </div>
+          <div data-signup-target="newInstitution" class="hidden grid grid-cols-1 sm:grid-cols-3 gap-3 rounded-xl ring-1 ring-slate-200 dark:ring-slate-800 p-4">
+            <div class="sm:col-span-3"><p class="text-xs text-slate-500">You'll be its first teacher and get its join code for your students.</p></div>
+            <div>
+              <%= f.label :new_institution_name, "Name", class: label %>
+              <%= f.text_field :new_institution_name, class: input %>
+              <%= f_err.(:new_institution_name) %>
+            </div>
+            <div>
+              <%= f.label :new_institution_kind, "Type", class: label %>
+              <%= f.select :new_institution_kind, [["Coaching", "coaching"], ["School", "school"]], {}, class: input %>
+            </div>
+            <div>
+              <%= f.label :new_institution_city, "City", class: label %>
+              <%= f.text_field :new_institution_city, class: input %>
+            </div>
+          </div>
+        </div>
+
+        <%= f.submit "Create account", class: "w-full rounded-lg bg-brand-700 px-3 py-2.5 text-sm font-medium text-white hover:bg-brand-800 cursor-pointer" %>
       <% end %>
 
       <p class="mt-6 text-center text-sm text-slate-500">Already have an account? <%= link_to "Log in", new_session_path, class: "font-medium text-brand-700 dark:text-brand-300 hover:underline" %></p>

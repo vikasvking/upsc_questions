@@ -18,7 +18,8 @@ class ExamRankingTest < ActiveSupport::TestCase
     assert_nil Leaderboard.comparison_for(users(:two), "UPSC_PRELIMS")[:rank]
   end
 
-  test "rank defaults to 'Preparing for', else the most practised exam" do
+  test "rank defaults to the chosen exam, else the most practised exam" do
+    users(:one).user_exams.delete_all
     jee_q = Question.create!(topic: "Physics", content: "JEE question", exam_type: "JEE_MAIN", correct_answer: "A", option_a: "x")
     answer(users(:one), jee_q, "A")
     answer(users(:one), jee_q, "B")

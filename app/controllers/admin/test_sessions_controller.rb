@@ -1,6 +1,7 @@
 # Admins can create, change and delete any test, including locked strict or scheduled tests
 # when a teacher asks. Changing a locked test needs a written reason, kept in the admin log.
 class Admin::TestSessionsController < Admin::BaseController
+  self.admin_area = :tests
   KINDS = %w[open pin strict scheduled].freeze
 
   before_action :set_test_session, only: [:edit, :update, :destroy]

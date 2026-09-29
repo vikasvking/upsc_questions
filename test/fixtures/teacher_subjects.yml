@@ -1,0 +1,6 @@
+teacher_physics:
+  user: teacher
+  name: Physics
+teacher_two_polity:
+  user: teacher_two
+  name: Polity

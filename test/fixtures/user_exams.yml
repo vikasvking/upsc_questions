@@ -1,0 +1,6 @@
+one_upsc:
+  user: one
+  exam_type: UPSC_PRELIMS
+two_upsc:
+  user: two
+  exam_type: UPSC_PRELIMS

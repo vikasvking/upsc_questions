@@ -1,0 +1,42 @@
+<% input = "mt-1 block w-full rounded-xl border-0 py-2.5 px-3 bg-white dark:bg-slate-950 ring-1 ring-inset ring-slate-200 dark:ring-slate-800 text-sm text-slate-900 dark:text-white" %>
+<% label = "block text-xs font-bold text-slate-500" %>
+<div class="py-8 sm:py-10">
+  <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 space-y-6">
+    <%= render "admin/shared/header", title: "Email",
+          subtitle: "Outgoing email (SMTP) for parent consent codes, email confirmation and password resets. Admins only." %>
+
+    <div class="rounded-2xl p-4 text-sm <%= @setting.active? ? "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300" : "bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:text-amber-200" %>">
+      <% if @setting.active? %>
+        ✅ Email sending is <strong>ON</strong>, from <%= @setting.from_address %> via <%= @setting.address %>.
+      <% else %>
+        ⏸️ Email sending is <strong>OFF</strong>. Until it's on: students under 18 cannot sign up (their parent's code cannot be sent), email addresses stay unconfirmed, and password resets must be done by an admin.
+      <% end %>
+    </div>
+
+    <%= render "admin/shared/errors", record: @setting %>
+    <%= form_with model: @setting, url: admin_mail_settings_path, method: :patch, class: "bg-white dark:bg-slate-900 rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-6 grid grid-cols-1 sm:grid-cols-2 gap-4" do |f| %>
+      <label class="sm:col-span-2 flex items-center gap-3 rounded-xl ring-1 ring-slate-200 dark:ring-slate-800 p-3 cursor-pointer">
+        <%= f.check_box :enabled, class: "h-5 w-5 accent-emerald-600" %>
+        <span><span class="block text-sm font-semibold text-slate-900 dark:text-white">Send email</span><span class="block text-xs text-slate-500">Switch off to stop all emails without losing these settings.</span></span>
+      </label>
+      <div><%= f.label :address, "SMTP server", class: label %><%= f.text_field :address, placeholder: "smtp-relay.brevo.com", class: input %></div>
+      <div><%= f.label :port, "Port", class: label %><%= f.number_field :port, placeholder: "587", class: input %></div>
+      <div><%= f.label :user_name, "Username", class: label %><%= f.text_field :user_name, autocomplete: "off", class: input %></div>
+      <div>
+        <%= f.label :password, "Password", class: label %>
+        <%= f.password_field :password, value: nil, autocomplete: "new-password", placeholder: @setting.password_saved? ? "Saved (leave blank to keep)" : "", class: input %>
+      </div>
+      <div><%= f.label :from_address, "Send from", class: label %><%= f.email_field :from_address, placeholder: "no-reply@yourdomain.in", class: input %></div>
+      <div><%= f.label :domain, "HELO domain (optional)", class: label %><%= f.text_field :domain, placeholder: "yourdomain.in", class: input %></div>
+      <div><%= f.label :authentication, "Authentication", class: label %><%= f.select :authentication, MailSetting::AUTHENTICATIONS, {}, class: input %></div>
+      <label class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300 self-end pb-2"><%= f.check_box :enable_starttls %> Use STARTTLS (usual for port 587)</label>
+      <div class="sm:col-span-2 flex gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+        <%= f.submit "Save", class: "flex-1 rounded-xl bg-brand-700 hover:bg-brand-800 text-white text-sm font-medium px-4 py-2.5 cursor-pointer" %>
+      </div>
+    <% end %>
+
+    <%= button_to "Send a test email to #{Current.user.email_address}", send_test_admin_mail_settings_path, method: :post,
+          class: "w-full rounded-xl ring-1 ring-slate-200 dark:ring-slate-800 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-300 cursor-pointer" %>
+    <p class="text-xs text-slate-500">The password is stored encrypted using your app's secret key. If that key ever changes, enter the password again.</p>
+  </div>
+</div>

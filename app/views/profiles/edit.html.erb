@@ -1,64 +1,98 @@
-<div class="py-10 min-h-screen w-full transition-colors duration-200">
-  <div class="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 space-y-8">
-
+<%
+  input = "mt-1.5 block w-full rounded-xl border-0 py-2.5 px-3 ring-1 ring-inset ring-slate-300 dark:ring-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white sm:text-sm focus:ring-2 focus:ring-brand-700"
+  label = "block text-sm font-semibold text-slate-900 dark:text-slate-200"
+  card  = "bg-white dark:bg-slate-900 px-6 py-7 rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 space-y-5"
+  missing = @user.missing_profile_items
+%>
+<div class="py-10 min-h-screen w-full">
+  <div class="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 space-y-6">
     <div>
-      <h1 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-3xl">Modify Profile</h1>
-      <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Update your email coordinates and change encryption keys.</p>
+      <h1 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-3xl">Edit profile</h1>
+      <% if missing.any? %>
+        <p class="mt-2 rounded-xl bg-amber-50 dark:bg-amber-950/30 px-4 py-3 text-sm text-amber-900 dark:text-amber-200">Please add <%= missing.to_sentence %> to continue.</p>
+      <% end %>
     </div>
 
-    <div class="bg-white dark:bg-slate-900 px-6 py-8 shadow-sm rounded-2xl border border-slate-200 dark:border-slate-800">
+    <% if alert %><div class="rounded-xl bg-red-50 dark:bg-red-950/40 px-4 py-3 text-sm text-red-800 dark:text-red-300"><%= alert %></div><% end %>
+    <% if @user.errors.any? %>
+      <ul class="rounded-xl bg-red-50 dark:bg-red-950/40 px-4 py-3 text-sm text-red-800 dark:text-red-300 list-disc pl-8 space-y-1">
+        <% @user.errors.full_messages.each do |msg| %><li><%= msg %></li><% end %>
+      </ul>
+    <% end %>
 
-      <% if @user.errors.any? %>
-        <div class="mb-6 rounded-xl bg-red-50 dark:bg-red-950/40 p-4 border border-red-200 dark:border-red-900/50">
-          <ul class="list-disc pl-5 text-xs text-red-800 dark:text-red-400 space-y-1">
-            <% @user.errors.full_messages.each do |msg| %>
-              <li><%= msg %></li>
-            <% end %>
-          </ul>
-        </div>
-      <% end %>
+    <%# Details: no password needed %>
+    <%= form_with model: @user, url: profile_details_path, method: :patch, class: card do |f| %>
+      <h2 class="font-semibold text-slate-900 dark:text-white">About you</h2>
+      <div>
+        <%= f.label :name, "Full name", class: label %>
+        <%= f.text_field :name, required: true, class: input %>
+      </div>
 
-      <%= form_with model: @user, url: profile_path, method: :patch, class: "space-y-6" do |form| %>
+      <% if @user.student? %>
         <div>
-          <%= form.label :email_address, "Update Email Address", class: "block text-sm font-semibold leading-6 text-slate-900 dark:text-slate-200" %>
-          <div class="mt-2">
-            <%= form.email_field :email_address, required: true, class: "block w-full rounded-xl border-0 py-2.5 px-3 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-brand-800 dark:focus:ring-brand-500 bg-white dark:bg-slate-950 text-slate-900 dark:text-white sm:text-sm" %>
-          </div>
+          <%= f.label :date_of_birth, "Date of birth", class: label %>
+          <% if @user.date_of_birth_in_database.present? %>
+            <p class="mt-1.5 text-sm text-slate-700 dark:text-slate-300"><%= l(@user.date_of_birth_in_database, format: :long) %> <span class="text-xs text-slate-500">· to correct it, ask the Rankwise admin</span></p>
+          <% else %>
+            <%= f.date_field :date_of_birth, required: true, max: Date.current - 5.years, class: input %>
+            <p class="mt-1 text-xs text-slate-500">Students under 18 need a parent's consent (a code is emailed to the parent).</p>
+          <% end %>
         </div>
-
-        <div class="border-t border-slate-200 dark:border-slate-800 pt-6">
-          <p class="text-xs font-bold text-slate-400 mb-4">Change Password (Leave blank to keep unchanged)</p>
-
-          <div class="space-y-4">
-            <div>
-              <%= form.label :password, "New Secure Password", class: "block text-sm font-semibold leading-6 text-slate-900 dark:text-slate-200" %>
-              <div class="mt-2">
-                <%= form.password_field :password, autocomplete: "new-password", class: "block w-full rounded-xl border-0 py-2.5 px-3 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-slate-700 focus:ring-2 focus:ring-inset focus:ring-brand-800 dark:focus:ring-brand-500 bg-white dark:bg-slate-950 text-slate-900 dark:text-white sm:text-sm" %>
-              </div>
-            </div>
-
-            <div>
-              <%= form.label :password_confirmation, "Confirm New Password", class: "block text-sm font-semibold leading-6 text-slate-900 dark:text-slate-200" %>
-              <div class="mt-2">
-                <%= form.password_field :password_confirmation, class: "block w-full rounded-xl border-0 py-2.5 px-3 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-slate-700 focus:ring-2 focus:ring-inset focus:ring-brand-800 dark:focus:ring-brand-500 bg-white dark:bg-slate-950 text-slate-900 dark:text-white sm:text-sm" %>
-              </div>
-            </div>
+        <fieldset>
+          <legend class="<%= label %>">Exams I'm preparing for</legend>
+          <% chosen = params.dig(:user, :exam_codes) ? Array(params.dig(:user, :exam_codes)) : @user.exam_codes %>
+          <div class="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <% Exam.all.each do |e| %>
+              <label class="flex items-center gap-2 rounded-lg px-3 py-2 ring-1 ring-slate-200 dark:ring-slate-800 text-sm cursor-pointer has-[:checked]:ring-2 has-[:checked]:ring-brand-600">
+                <%= check_box_tag "user[exam_codes][]", e.code, chosen.include?(e.code), id: "profile_exam_#{e.code}", class: "accent-brand-700" %>
+                <span class="text-slate-900 dark:text-white"><%= e.name %></span>
+              </label>
+            <% end %>
           </div>
+        </fieldset>
+      <% elsif @user.teacher? %>
+        <div>
+          <%= label_tag "user[subjects]", "Subjects I teach", class: label %>
+          <%= text_field_tag "user[subjects]", params.dig(:user, :subjects) || @user.subject_names.join(", "), list: "subject-suggestions", placeholder: "e.g. Polity, Modern History", class: input %>
+          <datalist id="subject-suggestions"><% @subject_suggestions.each do |s| %><option value="<%= s %>"></option><% end %></datalist>
+          <p class="mt-1 text-xs text-slate-500">Separate several subjects with commas.</p>
         </div>
-
-        <div class="border-t border-slate-200 dark:border-slate-800 pt-6">
-          <%= label_tag "user[current_password]", "Current Password (required to save changes)", class: "block text-sm font-semibold leading-6 text-slate-900 dark:text-slate-200" %>
-          <div class="mt-2">
-            <%= password_field_tag "user[current_password]", nil, required: true, autocomplete: "current-password", class: "block w-full rounded-xl border-0 py-2.5 px-3 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-slate-700 focus:ring-2 focus:ring-inset focus:ring-brand-800 dark:focus:ring-brand-500 bg-white dark:bg-slate-950 text-slate-900 dark:text-white sm:text-sm" %>
-          </div>
-        </div>
-
-        <div class="flex gap-4 pt-4 border-t border-slate-200 dark:border-slate-800">
-          <%= link_to "Cancel Changes", profile_path, class: "flex-1 text-center font-bold text-xs border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-950 px-4 py-3 rounded-xl hover:bg-slate-100 transition-colors shadow-sm" %>
-          <%= form.submit "Apply Profile Changes", class: "flex-1 justify-center rounded-xl bg-brand-800 dark:bg-brand-700 px-4 py-3 text-xs font-bold text-white shadow-sm hover:bg-brand-900 dark:hover:bg-brand-600 transition-colors cursor-pointer" %>
+        <div>
+          <%= f.label :bio, "About me", class: label %>
+          <%= f.text_area :bio, rows: 4, maxlength: 1000, class: input %>
         </div>
       <% end %>
 
-    </div>
+      <div class="flex gap-3 pt-2">
+        <%= link_to "Cancel", profile_path, class: "flex-1 text-center rounded-xl px-4 py-2.5 text-sm ring-1 ring-slate-200 dark:ring-slate-800 text-slate-600 dark:text-slate-300" %>
+        <%= f.submit "Save", class: "flex-1 rounded-xl bg-brand-700 hover:bg-brand-800 text-white text-sm font-medium px-4 py-2.5 cursor-pointer" %>
+      </div>
+    <% end %>
+
+    <%# Email and password: current password required %>
+    <%= form_with model: @user, url: profile_path, method: :patch, class: card do |f| %>
+      <h2 class="font-semibold text-slate-900 dark:text-white">Email and password</h2>
+      <div>
+        <%= f.label :email_address, "Email", class: label %>
+        <%= f.email_field :email_address, required: true, class: input %>
+        <p class="mt-1 text-xs text-slate-500">A new email must be confirmed again.</p>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <%= f.label :password, "New password (leave blank to keep)", class: label %>
+          <%= f.password_field :password, autocomplete: "new-password", class: input %>
+          <p class="mt-1 text-xs text-slate-500">At least <%= PasswordPolicy::MIN_LENGTH %> characters, with letters and numbers.</p>
+        </div>
+        <div>
+          <%= f.label :password_confirmation, "Repeat new password", class: label %>
+          <%= f.password_field :password_confirmation, autocomplete: "new-password", class: input %>
+        </div>
+      </div>
+      <div>
+        <%= label_tag "user[current_password]", "Current password (required to save these)", class: label %>
+        <%= password_field_tag "user[current_password]", nil, required: true, autocomplete: "current-password", class: input %>
+      </div>
+      <%= f.submit "Save email and password", class: "w-full rounded-xl bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 text-white text-sm font-medium px-4 py-2.5 cursor-pointer" %>
+    <% end %>
   </div>
 </div>

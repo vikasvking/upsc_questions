@@ -1,14 +1,17 @@
 <%# locals: title, subtitle (optional), action (optional html for the right side) %>
 <%
-  tabs = [["Overview", admin_root_path, controller_name == "dashboard"],
-          ["People", admin_users_path, controller_name == "users"],
-          ["Questions", admin_questions_path, controller_name == "questions"],
-          ["Tests", admin_test_sessions_path, controller_name == "test_sessions"],
-          ["Admin log", admin_logs_path, controller_name == "logs"]]
+  me = Current.user
+  tabs = [["Overview", admin_root_path, controller_name == "dashboard", true],
+          ["People", admin_users_path, controller_name == "users", me.admin? || me.can_manage?(:students) || me.can_manage?(:teachers)],
+          ["Schools & coachings", admin_institutions_path, controller_name == "institutions", me.can_manage?(:institutions)],
+          ["Questions", admin_questions_path, controller_name == "questions", me.can_manage?(:questions)],
+          ["Tests", admin_test_sessions_path, controller_name == "test_sessions", me.can_manage?(:tests)],
+          ["Email", edit_admin_mail_settings_path, controller_name == "mail_settings", me.admin?],
+          ["Admin log", admin_logs_path, controller_name == "logs", me.admin?]].select(&:last)
 %>
 <div class="space-y-5">
   <nav class="flex flex-wrap gap-1 border-b border-slate-200 dark:border-slate-800 pb-3" aria-label="Admin sections">
-    <% tabs.each do |label, path, active| %>
+    <% tabs.each do |label, path, active, _| %>
       <%= link_to label, path, class: "rounded-lg px-3 py-1.5 text-sm #{active ? "bg-brand-50 text-brand-800 font-semibold dark:bg-brand-950/60 dark:text-brand-200" : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"}" %>
     <% end %>
   </nav>

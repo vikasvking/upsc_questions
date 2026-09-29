@@ -1,0 +1,11 @@
+Hello,
+
+<%= @student_name %> (<%= @student_email %>) wants to create an account on Rankwise and gave your email as their parent or guardian.
+
+What you are agreeing to:
+<%= GuardianConsent::TEXT %>
+If you agree, give this code to <%= @student_name %> to finish creating the account:
+
+    <%= @code %>
+
+The code works for <%= @minutes %> minutes. If you do not agree, do nothing: no account will be created.

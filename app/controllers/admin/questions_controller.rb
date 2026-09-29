@@ -1,4 +1,5 @@
 class Admin::QuestionsController < Admin::BaseController
+  self.admin_area = :questions
   before_action :set_question, only: [:edit, :update, :destroy]
 
   def index

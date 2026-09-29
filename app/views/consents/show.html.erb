@@ -1,0 +1,25 @@
+<div class="min-h-[calc(100vh-4rem)] flex flex-col justify-center px-6 py-12">
+  <div class="mx-auto w-full max-w-sm space-y-6">
+    <div class="text-center">
+      <div class="inline-grid h-12 w-12 place-items-center rounded-xl bg-amber-100 dark:bg-amber-950/60 text-2xl">👪</div>
+      <h1 class="mt-4 text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">Enter your parent's code</h1>
+      <p class="mt-2 text-sm text-slate-500">We emailed a 6-digit code to <strong><%= mask(@pending.parent_email) %></strong> together with what they are agreeing to. Ask your parent for it.</p>
+    </div>
+
+    <% if notice %><p class="rounded-lg bg-emerald-50 dark:bg-emerald-950/40 px-4 py-3 text-sm text-emerald-800 dark:text-emerald-300"><%= notice %></p><% end %>
+    <% if alert %><p class="rounded-lg bg-red-50 dark:bg-red-950/40 px-4 py-3 text-sm text-red-800 dark:text-red-300"><%= alert %></p><% end %>
+
+    <div class="rounded-2xl bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 px-6 py-6 space-y-4">
+      <%= form_with url: verify_consent_path(@pending.token), class: "space-y-4" do %>
+        <%= text_field_tag :code, nil, inputmode: "numeric", autocomplete: "one-time-code", maxlength: 6, required: true, autofocus: true,
+              placeholder: "••••••", class: "block w-full text-center tracking-[0.5em] text-2xl font-semibold rounded-lg border-0 py-3 ring-1 ring-inset ring-slate-300 dark:ring-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white" %>
+        <%= submit_tag "Confirm and continue", name: nil, class: "w-full rounded-lg bg-brand-700 px-3 py-2.5 text-sm font-medium text-white hover:bg-brand-800 cursor-pointer" %>
+      <% end %>
+      <p class="text-xs text-slate-500 text-center">
+        The code works for <%= PendingSignup::CODE_TTL.in_minutes.to_i %> minutes<% unless @pending.expired? %> (until <%= l(@pending.expires_at, format: "%H:%M") %>)<% end %>.
+      </p>
+      <%= button_to "Send a new code", resend_consent_path(@pending.token), method: :post,
+            class: "w-full rounded-lg px-3 py-2 text-sm ring-1 ring-slate-200 dark:ring-slate-800 text-slate-600 dark:text-slate-300 cursor-pointer" %>
+    </div>
+  </div>
+</div>

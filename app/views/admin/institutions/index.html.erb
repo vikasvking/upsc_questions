@@ -1,0 +1,35 @@
+<% sel = "rounded-xl border-0 py-2 px-3 bg-white dark:bg-slate-950 ring-1 ring-inset ring-slate-200 dark:ring-slate-800 text-sm text-slate-900 dark:text-white" %>
+<div class="py-8 sm:py-10">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-6">
+    <%= render "admin/shared/header", title: "Schools & coachings", subtitle: "Edit names, merge duplicates and manage join codes.",
+          action: link_to("+ Add", new_admin_institution_path, class: "rounded-lg bg-brand-700 hover:bg-brand-800 text-white text-sm font-medium px-4 py-2") %>
+
+    <%= form_with url: admin_institutions_path, method: :get, class: "flex flex-col sm:flex-row gap-2" do %>
+      <%= search_field_tag :q, params[:q], placeholder: "Search name or city…", class: "flex-1 #{sel}" %>
+      <%= select_tag :kind, options_for_select([["Schools", "school"], ["Coachings", "coaching"]], params[:kind]), include_blank: "All types", class: sel %>
+      <%= submit_tag "Search", name: nil, class: "rounded-xl bg-brand-800 hover:bg-brand-900 text-white text-xs font-bold px-4 py-2 cursor-pointer" %>
+    <% end %>
+
+    <div class="overflow-x-auto rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 bg-white dark:bg-slate-900">
+      <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-sm">
+        <thead class="text-left text-xs text-slate-500">
+          <tr><th class="px-4 py-3 font-medium">Name</th><th class="px-4 py-3 font-medium text-center">Teachers</th><th class="px-4 py-3 font-medium text-center">Students</th><th class="px-4 py-3 font-medium text-center">Requests</th><th class="px-4 py-3 font-medium">Join code</th><th class="px-4 py-3"></th></tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+          <% @institutions.each do |i| %>
+            <tr>
+              <td class="px-4 py-3 font-medium text-slate-900 dark:text-white"><%= i.label %></td>
+              <td class="px-4 py-3 text-center"><%= @member_counts[[i.id, User.roles["teacher"]]].to_i + @member_counts[[i.id, "teacher"]].to_i %></td>
+              <td class="px-4 py-3 text-center"><%= @member_counts[[i.id, User.roles["student"]]].to_i + @member_counts[[i.id, "student"]].to_i %></td>
+              <td class="px-4 py-3 text-center"><%= @pending_counts[i.id].to_i %></td>
+              <td class="px-4 py-3 font-mono"><%= i.join_code %></td>
+              <td class="px-4 py-3 text-right"><%= link_to "Edit", edit_admin_institution_path(i), class: "text-brand-700 dark:text-brand-300 font-medium" %></td>
+            </tr>
+          <% end %>
+          <% if @institutions.empty? %><tr><td colspan="6" class="px-4 py-10 text-center text-slate-400">None yet.</td></tr><% end %>
+        </tbody>
+      </table>
+    </div>
+    <%= render "admin/shared/pager" %>
+  </div>
+</div>

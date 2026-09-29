@@ -11,10 +11,12 @@
           ["Scheduled tests live now", @counts[:live_tests], admin_test_sessions_path(kind: "scheduled")],
           ["Students writing now", @counts[:writing], admin_test_sessions_path],
           ["Blocked students", @counts[:blocked], admin_test_sessions_path(kind: "strict")],
+          ["Teachers waiting for approval", @counts[:pending_teachers], admin_users_path(role: "teacher", pending: "1")],
+          ["Schools & coachings", @counts[:institutions], admin_institutions_path],
           ["Admins", @counts[:admins], admin_users_path(role: "admin")]].each do |label, value, path| %>
         <%= link_to path, class: "#{card} hover:ring-brand-300 transition" do %>
           <p class="text-sm text-slate-500"><%= label %></p>
-          <p class="mt-1 text-2xl font-semibold tabular-nums <%= label == "Blocked students" && value.positive? ? "text-red-700 dark:text-red-400" : "text-slate-900 dark:text-white" %>"><%= number_with_delimiter(value) %></p>
+          <p class="mt-1 text-2xl font-semibold tabular-nums <%= ["Blocked students", "Teachers waiting for approval"].include?(label) && value.positive? ? "text-red-700 dark:text-red-400" : "text-slate-900 dark:text-white" %>"><%= number_with_delimiter(value) %></p>
         <% end %>
       <% end %>
     </section>
@@ -41,8 +43,8 @@
 
       <section class="<%= card %> space-y-3">
         <div class="flex items-baseline justify-between">
-          <h2 class="font-semibold text-slate-900 dark:text-white">Recent admin changes</h2>
-          <%= link_to "Full log →", admin_logs_path, class: "text-sm text-brand-700 dark:text-brand-300" %>
+          <h2 class="font-semibold text-slate-900 dark:text-white"><%= Current.user.admin? ? "Recent admin changes" : "Your recent changes" %></h2>
+          <% if Current.user.admin? %><%= link_to "Full log →", admin_logs_path, class: "text-sm text-brand-700 dark:text-brand-300" %><% end %>
         </div>
         <%= render "admin/logs/list", logs: @logs %>
       </section>

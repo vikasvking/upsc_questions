@@ -24,8 +24,8 @@ class AdminTest < ActionDispatch::IntegrationTest
 
   test "admin creates a teacher and it is logged" do
     assert_difference -> { User.teacher.count }, 1 do
-      post admin_users_path, params: { user: { email_address: "new.teacher@example.com", role: "teacher",
-                                               password: "secret123", password_confirmation: "secret123" } }
+      post admin_users_path, params: { user: { name: "New Teacher", email_address: "new.teacher@example.com", role: "teacher",
+                                               password: "Chalkboard2026", password_confirmation: "Chalkboard2026" } }
     end
     assert_equal "create_user", AdminLog.last.action
     assert_equal users(:admin), AdminLog.last.admin

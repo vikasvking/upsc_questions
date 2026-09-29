@@ -1,0 +1,7 @@
+<p>Hello,</p>
+<p><strong><%= @student_name %></strong> (<%= @student_email %>) wants to create an account on Rankwise and gave your email as their parent or guardian.</p>
+<p>Please read what you are agreeing to:</p>
+<div style="border-left: 3px solid #ccc; padding-left: 12px; white-space: pre-line;"><%= GuardianConsent::TEXT %></div>
+<p>If you agree, give this code to <%= @student_name %> to finish creating the account:</p>
+<p style="font-size: 28px; font-weight: bold; letter-spacing: 6px;"><%= @code %></p>
+<p>The code works for <%= @minutes %> minutes. If you do not agree, do nothing: no account will be created.</p>

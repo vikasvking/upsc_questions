@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_29_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_29_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -29,6 +29,31 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_120000) do
     t.index ["record_type", "record_id"], name: "index_admin_logs_on_record_type_and_record_id"
   end
 
+  create_table "guardian_consents", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "parent_email", null: false
+    t.string "parent_phone", null: false
+    t.string "consent_version", null: false
+    t.datetime "consented_at", null: false
+    t.string "ip_address"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_guardian_consents_on_user_id"
+  end
+
+  create_table "institutions", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "kind", default: "coaching", null: false
+    t.string "city"
+    t.string "join_code", null: false
+    t.bigint "created_by_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index "lower((name)::text), lower((COALESCE(city, ''::character varying))::text)", name: "index_institutions_on_name_and_city", unique: true
+    t.index ["created_by_id"], name: "index_institutions_on_created_by_id"
+    t.index ["join_code"], name: "index_institutions_on_join_code", unique: true
+  end
+
   create_table "leaderboard_snapshots", force: :cascade do |t|
     t.jsonb "rows", default: [], null: false
     t.datetime "computed_at", null: false
@@ -36,6 +61,48 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_120000) do
     t.datetime "updated_at", null: false
     t.string "exam_type"
     t.index ["exam_type", "computed_at"], name: "index_leaderboard_snapshots_on_exam_type_and_computed_at"
+  end
+
+  create_table "mail_settings", force: :cascade do |t|
+    t.boolean "enabled", default: false, null: false
+    t.string "address"
+    t.integer "port", default: 587
+    t.string "domain"
+    t.string "user_name"
+    t.text "encrypted_password"
+    t.string "authentication", default: "plain"
+    t.boolean "enable_starttls", default: true, null: false
+    t.string "from_address"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "memberships", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "institution_id", null: false
+    t.string "status", default: "pending", null: false
+    t.bigint "approved_by_id"
+    t.datetime "approved_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["approved_by_id"], name: "index_memberships_on_approved_by_id"
+    t.index ["institution_id"], name: "index_memberships_on_institution_id"
+    t.index ["user_id", "institution_id"], name: "index_memberships_on_user_id_and_institution_id", unique: true
+    t.index ["user_id"], name: "index_memberships_on_user_id"
+  end
+
+  create_table "pending_signups", force: :cascade do |t|
+    t.string "token", null: false
+    t.string "email_address", null: false
+    t.jsonb "data", default: {}, null: false
+    t.string "code_digest", null: false
+    t.integer "attempts", default: 0, null: false
+    t.datetime "expires_at", null: false
+    t.bigint "user_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["token"], name: "index_pending_signups_on_token", unique: true
+    t.index ["user_id"], name: "index_pending_signups_on_user_id"
   end
 
   create_table "questions", force: :cascade do |t|
@@ -226,6 +293,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_120000) do
     t.index ["key"], name: "index_solid_queue_semaphores_on_key", unique: true
   end
 
+  create_table "teacher_subjects", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "name", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "name"], name: "index_teacher_subjects_on_user_id_and_name", unique: true
+    t.index ["user_id"], name: "index_teacher_subjects_on_user_id"
+  end
+
   create_table "test_attempts", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "test_session_id"
@@ -283,6 +359,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_120000) do
     t.index ["user_id"], name: "index_test_sessions_on_user_id"
   end
 
+  create_table "user_exams", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "exam_type", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "exam_type"], name: "index_user_exams_on_user_id_and_exam_type", unique: true
+    t.index ["user_id"], name: "index_user_exams_on_user_id"
+  end
+
   create_table "user_responses", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "question_id", null: false
@@ -305,10 +390,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_120000) do
     t.datetime "updated_at", null: false
     t.integer "role", default: 0, null: false
     t.string "target_exam"
+    t.string "name"
+    t.date "date_of_birth"
+    t.text "bio"
+    t.datetime "approved_at"
+    t.datetime "email_confirmed_at"
+    t.jsonb "permissions", default: [], null: false
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
   end
 
   add_foreign_key "admin_logs", "users", column: "admin_id", on_delete: :nullify
+  add_foreign_key "guardian_consents", "users", on_delete: :cascade
+  add_foreign_key "institutions", "users", column: "created_by_id", on_delete: :nullify
+  add_foreign_key "memberships", "institutions", on_delete: :cascade
+  add_foreign_key "memberships", "users", column: "approved_by_id", on_delete: :nullify
+  add_foreign_key "memberships", "users", on_delete: :cascade
+  add_foreign_key "pending_signups", "users", on_delete: :cascade
   add_foreign_key "questions", "users", on_delete: :nullify
   add_foreign_key "sessions", "users"
   add_foreign_key "solid_queue_batch_executions", "solid_queue_batches", column: "batch_id", on_delete: :cascade
@@ -319,6 +416,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_120000) do
   add_foreign_key "solid_queue_ready_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_recurring_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_scheduled_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
+  add_foreign_key "teacher_subjects", "users", on_delete: :cascade
   add_foreign_key "test_attempts", "test_sessions"
   add_foreign_key "test_attempts", "users"
   add_foreign_key "test_pin_entries", "test_sessions"
@@ -326,6 +424,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_120000) do
   add_foreign_key "test_questions", "questions"
   add_foreign_key "test_questions", "test_sessions"
   add_foreign_key "test_sessions", "users", on_delete: :nullify
+  add_foreign_key "user_exams", "users", on_delete: :cascade
   add_foreign_key "user_responses", "questions"
   add_foreign_key "user_responses", "users"
 end

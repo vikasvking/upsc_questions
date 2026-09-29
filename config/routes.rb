@@ -44,16 +44,45 @@ Rails.application.routes.draw do
   end
 
   resource :profile, only: [:show, :edit, :update]
-  patch "profile/exam", to: "profiles#update_exam", as: :profile_exam # "Preparing for" (no password needed)
+  patch "profile/exam", to: "profiles#update_exam", as: :profile_exam # exam used for the dashboard rank
+  patch "profile/details", to: "profiles#update_details", as: :profile_details # name, exams, subjects... (no password)
   resource :session
   resources :passwords, param: :token
   get  "sign_up", to: "registrations#new", as: :new_registration
   post "sign_up", to: "registrations#create"
 
+  # Under-18 students: the parent's code (new signups by token; existing accounts via parent_consent)
+  get  "consent/:token",        to: "consents#show",   as: :consent
+  post "consent/:token",        to: "consents#verify", as: :verify_consent
+  post "consent/:token/resend", to: "consents#resend", as: :resend_consent
+  get  "parent_consent/new",    to: "consents#new",    as: :new_parent_consent
+  post "parent_consent",        to: "consents#create", as: :parent_consent
+
+  get  "confirm_email/:token", to: "email_confirmations#show", as: :email_confirmation
+  post "confirm_email",        to: "email_confirmations#create", as: :resend_email_confirmation
+  get  "pending_approval",     to: "account_status#pending_approval", as: :pending_approval
+
+  # Schools and coachings: join with a code or ask; teachers approve requests and share the code
+  resources :institutions, only: [:index, :create] do
+    post :regenerate_code, on: :member
+  end
+  resources :memberships, only: [:create, :destroy] do
+    patch :approve, on: :member
+  end
+
   # Admins only: manage teachers, students, questions and tests (every change is logged)
   namespace :admin do
     root "dashboard#show"
-    resources :users
+    resources :users do
+      patch :approve, on: :member
+    end
+    resources :institutions, except: [:show] do
+      post :merge, on: :member
+      post :regenerate_code, on: :member
+    end
+    resource :mail_settings, only: [:edit, :update] do
+      post :send_test, on: :member
+    end
     resources :questions, except: [:show]
     resources :test_sessions, path: "tests", except: [:show]
     resources :logs, only: [:index]

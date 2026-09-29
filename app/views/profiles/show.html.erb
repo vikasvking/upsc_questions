@@ -1,62 +1,116 @@
-<div class="py-10 min-h-screen w-full transition-colors duration-200">
-  <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 space-y-8">
+<%
+  card = "bg-white dark:bg-slate-900 rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-6"
+  sel  = "rounded-xl border-0 py-2 px-3 bg-white dark:bg-slate-950 ring-1 ring-inset ring-slate-200 dark:ring-slate-800 text-sm text-slate-900 dark:text-white"
+  status_badge = { "approved" => ["Member", "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"],
+                   "pending"  => ["Waiting for approval", "bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300"] }
+%>
+<div class="py-10 min-h-screen w-full">
+  <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 space-y-6">
 
-    <!-- Header Block Component -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 dark:border-slate-800 pb-6 gap-4">
-      <div>
-        <h1 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-3xl">Aspirant Profile</h1>
-        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage your identity, core details, and security metrics.</p>
-      </div>
-      <%= link_to "Edit Profile Data 📝", edit_profile_path, class: "rounded-xl bg-brand-800 hover:bg-brand-900 dark:bg-brand-700 dark:hover:bg-brand-600 text-white font-bold text-xs px-4 py-2.5 shadow-sm text-center transition-all cursor-pointer" %>
-    </div>
-
-    <% if notice %>
-      <div class="rounded-xl bg-emerald-50 dark:bg-emerald-950/40 p-3 border border-emerald-200 dark:border-emerald-900/40 text-xs text-emerald-800 dark:text-emerald-300 font-bold"><%= notice %></div>
-    <% end %>
-    <% if alert %>
-      <div class="rounded-xl bg-red-50 dark:bg-red-950/40 p-3 border border-red-200 dark:border-red-900/40 text-xs text-red-800 dark:text-red-300 font-bold"><%= alert %></div>
-    <% end %>
-
-    <!-- Main Biodata Grid Layout Card -->
-    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-sm space-y-6">
-      <div class="flex items-center gap-x-4 border-b border-slate-200/60 dark:border-slate-800 pb-6">
-        <div class="h-16 w-16 rounded-full bg-brand-800/10 dark:bg-brand-500/10 border border-brand-800/30 flex items-center justify-center text-2xl">👤</div>
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div class="flex items-center gap-4">
+        <div class="h-14 w-14 rounded-full bg-brand-100 dark:bg-brand-900 text-brand-800 dark:text-brand-100 grid place-items-center text-xl font-semibold"><%= @user.display_name.first.upcase %></div>
         <div>
-          <h3 class="text-lg font-semibold text-slate-900 dark:text-white"><%= @user.email_address %></h3>
-          <p class="text-xs text-brand-800 dark:text-brand-400 font-bold mt-0.5">Verified Account Tier</p>
+          <h1 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white"><%= @user.display_name %></h1>
+          <p class="text-sm text-slate-500"><%= @user.role.humanize %><%= " · awaiting admin approval" if @user.pending_teacher? %> · joined <%= l(@user.created_at.to_date, format: :long) %></p>
         </div>
       </div>
-
-      <!-- Information Fields Matrix Layout -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm">
-        <div class="space-y-1">
-          <span class="text-xs font-bold text-slate-400 text-xs">Registered Email</span>
-          <p class="font-medium text-slate-900 dark:text-white bg-white dark:bg-slate-950 p-3 rounded-xl border border-slate-200/60 dark:border-slate-850"><%= @user.email_address %></p>
-        </div>
-
-        <div class="space-y-1">
-          <span class="text-xs font-bold text-slate-400 text-xs">Preparing for</span>
-          <%= form_with url: profile_exam_path, method: :patch, class: "flex gap-2" do %>
-            <%= select_tag :target_exam, options_for_select(Exam.options, @user.target_exam), include_blank: "Choose your exam",
-                  class: "flex-1 font-medium text-slate-900 dark:text-white bg-white dark:bg-slate-950 p-3 rounded-xl border border-slate-200/60 dark:border-slate-850 text-sm" %>
-            <%= submit_tag "Save", name: nil, class: "rounded-xl bg-brand-800 hover:bg-brand-900 text-white text-xs font-bold px-4 cursor-pointer" %>
-          <% end %>
-          <p class="text-xs text-slate-400">Your rank is calculated only among students of this exam.</p>
-        </div>
-
-        <div class="space-y-1">
-          <span class="text-xs font-bold text-slate-400 text-xs">Account Created On</span>
-          <p class="font-medium text-slate-900 dark:text-white bg-white dark:bg-slate-950 p-3 rounded-xl border border-slate-200/60 dark:border-slate-850"><%= @user.created_at.strftime("%B %d, %Y") %></p>
-        </div>
-
-        <div class="space-y-1">
-          <span class="text-xs font-bold text-slate-400 text-xs">Security Lock Mode</span>
-          <p class="font-medium text-emerald-600 bg-white dark:bg-slate-950 p-3 rounded-xl border border-slate-200/60 dark:border-slate-850 flex items-center gap-x-2">
-            <span class="h-2 w-2 rounded-full bg-emerald-500"></span> Native Rails 8 Enforced
-          </p>
-        </div>
-      </div>
+      <%= link_to "Edit profile", edit_profile_path, class: "rounded-lg bg-brand-700 hover:bg-brand-800 text-white text-sm font-medium px-4 py-2 text-center" %>
     </div>
 
+    <% if notice %><div class="rounded-xl bg-emerald-50 dark:bg-emerald-950/40 px-4 py-3 text-sm text-emerald-800 dark:text-emerald-300"><%= notice %></div><% end %>
+    <% if alert %><div class="rounded-xl bg-red-50 dark:bg-red-950/40 px-4 py-3 text-sm text-red-800 dark:text-red-300"><%= alert %></div><% end %>
+
+    <section class="<%= card %> grid grid-cols-1 sm:grid-cols-2 gap-5 text-sm">
+      <div>
+        <p class="text-xs font-bold text-slate-400">Email</p>
+        <p class="mt-1 text-slate-900 dark:text-white"><%= @user.email_address %></p>
+        <% if @user.email_confirmed? %>
+          <p class="mt-1 text-xs text-emerald-600">✓ Confirmed</p>
+        <% else %>
+          <div class="mt-1 flex items-center gap-2 text-xs">
+            <span class="text-amber-700 dark:text-amber-400">Not confirmed yet</span>
+            <% if Mailing.enabled? %>
+              <%= button_to "Send link again", resend_email_confirmation_path, method: :post, class: "text-brand-700 dark:text-brand-300 underline cursor-pointer" %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+
+      <% if @user.student? %>
+        <div>
+          <p class="text-xs font-bold text-slate-400">Date of birth</p>
+          <p class="mt-1 text-slate-900 dark:text-white"><%= @user.date_of_birth ? l(@user.date_of_birth, format: :long) : "—" %></p>
+        </div>
+        <div class="sm:col-span-2">
+          <p class="text-xs font-bold text-slate-400">Preparing for</p>
+          <div class="mt-1.5 flex flex-wrap gap-1.5"><% @user.exam_codes.each do |c| %><%= exam_chip(c) %><% end %></div>
+          <% if @user.exam_codes.size > 1 %>
+            <%= form_with url: profile_exam_path, method: :patch, class: "mt-3 flex gap-2 items-center" do %>
+              <span class="text-xs text-slate-500">Rank on my dashboard by</span>
+              <%= select_tag :target_exam, options_for_select(@user.exam_codes.map { |c| [exam_name(c), c] }, @user.ranking_exam_code), class: sel %>
+              <%= submit_tag "Save", name: nil, class: "rounded-lg bg-brand-800 hover:bg-brand-900 text-white text-xs font-bold px-3 py-2 cursor-pointer" %>
+            <% end %>
+          <% end %>
+        </div>
+        <% if @user.minor? %>
+          <div class="sm:col-span-2">
+            <p class="text-xs font-bold text-slate-400">Parent's consent</p>
+            <% if @consent %>
+              <p class="mt-1 text-slate-900 dark:text-white">Given on <%= l(@consent.consented_at.to_date, format: :long) %> by <%= mask(@consent.parent_email) %></p>
+              <p class="text-xs text-slate-500">To change your parent's details, ask the Rankwise admin.</p>
+            <% else %>
+              <p class="mt-1 text-amber-700 dark:text-amber-400">Not given yet. <%= link_to "Ask your parent", new_parent_consent_path, class: "underline" %></p>
+            <% end %>
+          </div>
+        <% end %>
+      <% elsif @user.teacher? %>
+        <div>
+          <p class="text-xs font-bold text-slate-400">Subjects</p>
+          <p class="mt-1 text-slate-900 dark:text-white"><%= @user.subject_names.join(", ").presence || "—" %></p>
+        </div>
+        <div class="sm:col-span-2">
+          <p class="text-xs font-bold text-slate-400">About me</p>
+          <p class="mt-1 text-slate-700 dark:text-slate-300 whitespace-pre-line"><%= @user.bio.presence || "—" %></p>
+        </div>
+      <% end %>
+    </section>
+
+    <% unless @user.staff? %>
+      <section class="<%= card %> space-y-4">
+        <div class="flex items-baseline justify-between">
+          <h2 class="font-semibold text-slate-900 dark:text-white">My schools and coachings</h2>
+          <% if @user.faculty? %><%= link_to "Manage requests and join codes →", institutions_path, class: "text-sm text-brand-700 dark:text-brand-300" %><% end %>
+        </div>
+
+        <% if @memberships.any? %>
+          <ul class="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
+            <% @memberships.each do |m| %>
+              <% label, klass = status_badge.fetch(m.status) %>
+              <li class="py-2.5 flex items-center justify-between gap-3">
+                <div class="min-w-0">
+                  <p class="font-medium text-slate-900 dark:text-white truncate"><%= m.institution.label %></p>
+                  <span class="inline-block mt-0.5 rounded-full px-2 py-0.5 text-xs font-semibold <%= klass %>"><%= label %></span>
+                </div>
+                <%= button_to (m.approved? ? "Leave" : "Cancel request"), membership_path(m), method: :delete,
+                      data: { turbo_confirm: "#{m.approved? ? "Leave" : "Cancel your request to join"} #{m.institution.name}?" },
+                      class: "shrink-0 text-xs text-slate-500 hover:text-red-700 cursor-pointer" %>
+              </li>
+            <% end %>
+          </ul>
+        <% else %>
+          <p class="text-sm text-slate-500">You haven't joined a school or coaching yet.</p>
+        <% end %>
+
+        <% if @institutions.any? %>
+          <%= form_with url: memberships_path, class: "grid grid-cols-1 sm:grid-cols-4 gap-2 pt-2 border-t border-slate-100 dark:border-slate-800" do %>
+            <%= select_tag :institution_id, options_for_select(@institutions.map { |i| [i.label, i.id] }), include_blank: "Join a school or coaching…", required: true, class: "sm:col-span-2 #{sel}" %>
+            <%= text_field_tag :join_code, nil, placeholder: "Join code (optional)", autocomplete: "off", class: "uppercase #{sel}" %>
+            <%= submit_tag "Join", name: nil, class: "rounded-xl bg-brand-800 hover:bg-brand-900 text-white text-xs font-bold px-4 py-2 cursor-pointer" %>
+          <% end %>
+          <p class="text-xs text-slate-500">With the join code from your teacher you join straight away; without it, a teacher there approves you.<% if @user.faculty? %> Not listed? <%= link_to "Add it", institutions_path, class: "text-brand-700 dark:text-brand-300" %>.<% end %></p>
+        <% end %>
+      </section>
+    <% end %>
   </div>
 </div>

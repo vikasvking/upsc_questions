@@ -1,30 +1,52 @@
-<% role_badge = { "admin" => "bg-brand-50 text-brand-800 dark:bg-brand-950/60 dark:text-brand-200", "teacher" => "bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300", "student" => "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300" } %>
+<% role_badge = { "admin" => "bg-brand-50 text-brand-800 dark:bg-brand-950/60 dark:text-brand-200", "sub_admin" => "bg-violet-50 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300", "teacher" => "bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300", "student" => "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300" } %>
+<% role_names = { "student" => "Students", "teacher" => "Teachers", "sub_admin" => "Sub-admins", "admin" => "Admins" } %>
 <div class="py-8 sm:py-10">
   <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-6">
     <%= render "admin/shared/header", title: "People",
-          subtitle: "#{@counts["teacher"].to_i} teachers · #{@counts["student"].to_i} students · #{@counts["admin"].to_i} admins",
+          subtitle: visible_roles.map { |r| "#{@counts[r].to_i} #{role_names[r].downcase}" }.join(" · "),
           action: link_to("+ New account", new_admin_user_path(role: @role), class: "rounded-lg bg-brand-700 hover:bg-brand-800 text-white text-sm font-medium px-4 py-2") %>
 
     <%= form_with url: admin_users_path, method: :get, class: "flex flex-col sm:flex-row gap-2" do %>
-      <%= search_field_tag :q, params[:q], placeholder: "Search email…", class: "flex-1 rounded-xl border-0 py-2 px-3 bg-white dark:bg-slate-950 ring-1 ring-inset ring-slate-200 dark:ring-slate-800 text-sm text-slate-900 dark:text-white" %>
-      <%= select_tag :role, options_for_select([["Teachers", "teacher"], ["Students", "student"], ["Admins", "admin"]], @role), include_blank: "Everyone",
+      <%= search_field_tag :q, params[:q], placeholder: "Search name or email…", class: "flex-1 rounded-xl border-0 py-2 px-3 bg-white dark:bg-slate-950 ring-1 ring-inset ring-slate-200 dark:ring-slate-800 text-sm text-slate-900 dark:text-white" %>
+      <%= select_tag :role, options_for_select(visible_roles.map { |r| [role_names[r], r] }, @role), include_blank: "Everyone",
             class: "rounded-xl border-0 py-2 px-3 bg-white dark:bg-slate-950 ring-1 ring-inset ring-slate-200 dark:ring-slate-800 text-sm text-slate-900 dark:text-white" %>
+      <label class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 px-2"><%= check_box_tag :pending, "1", params[:pending] == "1" %> Waiting for approval</label>
       <%= submit_tag "Search", name: nil, class: "rounded-xl bg-brand-800 hover:bg-brand-900 text-white text-xs font-bold px-4 py-2 cursor-pointer" %>
     <% end %>
 
     <div class="overflow-x-auto rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 bg-white dark:bg-slate-900">
       <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-sm">
         <thead class="text-left text-xs text-slate-500">
-          <tr><th class="px-4 py-3 font-medium">Email</th><th class="px-4 py-3 font-medium">Role</th><th class="px-4 py-3 font-medium">Preparing for</th><th class="px-4 py-3 font-medium">Joined</th><th class="px-4 py-3"></th></tr>
+          <tr><th class="px-4 py-3 font-medium">Name · email</th><th class="px-4 py-3 font-medium">Role</th><th class="px-4 py-3 font-medium">Exams / subjects</th><th class="px-4 py-3 font-medium">Joined</th><th class="px-4 py-3"></th></tr>
         </thead>
         <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
           <% @users.each do |u| %>
             <tr>
-              <td class="px-4 py-3 font-medium text-slate-900 dark:text-white"><%= link_to u.email_address, admin_user_path(u), class: "hover:underline" %><% if u == Current.user %> <span class="text-xs text-slate-400">(you)</span><% end %></td>
-              <td class="px-4 py-3"><span class="rounded-full px-2 py-0.5 text-xs font-semibold <%= role_badge[u.role] %>"><%= u.role.humanize %></span></td>
-              <td class="px-4 py-3"><%= u.target_exam ? exam_chip(u.target_exam) : tag.span("—", class: "text-slate-400") %></td>
+              <td class="px-4 py-3">
+                <%= link_to u.display_name, admin_user_path(u), class: "font-medium text-slate-900 dark:text-white hover:underline" %><% if u == Current.user %> <span class="text-xs text-slate-400">(you)</span><% end %>
+                <p class="text-xs text-slate-500"><%= u.email_address %></p>
+              </td>
+              <td class="px-4 py-3">
+                <span class="rounded-full px-2 py-0.5 text-xs font-semibold <%= role_badge[u.role] %>"><%= u.role.humanize %></span>
+                <% if u.pending_teacher? %><span class="ml-1 rounded-full px-2 py-0.5 text-xs font-semibold bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300">Waiting</span><% end %>
+                <% if u.student? && u.minor? %><span class="ml-1 text-xs text-slate-500">under 18</span><% end %>
+              </td>
+              <td class="px-4 py-3">
+                <div class="flex flex-wrap gap-1">
+                  <% if u.student? %>
+                    <% u.exam_codes.each do |c| %><%= exam_chip(c) %><% end %>
+                  <% elsif u.teacher? %>
+                    <span class="text-xs text-slate-600 dark:text-slate-300"><%= u.subject_names.join(", ") %></span>
+                  <% end %>
+                </div>
+              </td>
               <td class="px-4 py-3 text-slate-500"><%= l(u.created_at.to_date, format: :long) %></td>
-              <td class="px-4 py-3 text-right"><%= link_to "Edit", edit_admin_user_path(u), class: "text-brand-700 dark:text-brand-300 font-medium" %></td>
+              <td class="px-4 py-3 text-right whitespace-nowrap">
+                <% if u.pending_teacher? && can_manage?(:teachers) %>
+                  <%= button_to "Approve", approve_admin_user_path(u), method: :patch, form_class: "inline", class: "rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold px-3 py-1.5 mr-2 cursor-pointer" %>
+                <% end %>
+                <%= link_to "Edit", edit_admin_user_path(u), class: "text-brand-700 dark:text-brand-300 font-medium" %>
+              </td>
             </tr>
           <% end %>
           <% if @users.empty? %><tr><td colspan="5" class="px-4 py-10 text-center text-slate-400">Nobody matches.</td></tr><% end %>

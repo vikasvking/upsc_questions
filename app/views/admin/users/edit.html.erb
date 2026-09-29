@@ -3,7 +3,7 @@
     <%= render "admin/shared/header", title: "Edit #{@user.email_address}" %>
     <%= render "admin/users/form", user: @user %>
 
-    <% unless @user == Current.user %>
+    <% if Current.user.admin? && @user != Current.user %>
       <% has_results = @user.test_attempts.exists? || @user.user_responses.exists? %>
       <section class="rounded-2xl ring-1 ring-red-200 dark:ring-red-900/60 bg-red-50/40 dark:bg-red-950/20 p-6 space-y-3">
         <h2 class="font-semibold text-red-800 dark:text-red-300">Delete this account</h2>

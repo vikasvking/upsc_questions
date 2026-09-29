@@ -1,4 +1,16 @@
 class User < ApplicationRecord
+  # Areas an admin can hand to a sub-admin. Email settings, admin/sub-admin accounts, deleting accounts
+  # and parents' consent details are never delegated.
+  ADMIN_AREAS = {
+    "students"     => "Students (view and edit)",
+    "teachers"     => "Teachers (view, edit and approve)",
+    "questions"    => "Questions",
+    "tests"        => "Tests (including locked tests)",
+    "institutions" => "Schools and coachings",
+    "ratings"      => "Ratings and reports"
+  }.freeze
+  ADULT_AGE = 18
+
   has_secure_password
   has_many :sessions, dependent: :destroy
   has_many :user_responses, dependent: :destroy
@@ -7,13 +19,90 @@ class User < ApplicationRecord
   has_many :test_sessions, dependent: :nullify
   has_many :questions, dependent: :nullify
   has_many :test_pin_entries, dependent: :delete_all
+  has_many :user_exams, dependent: :delete_all
+  has_many :teacher_subjects, dependent: :delete_all
+  has_many :memberships, dependent: :delete_all
+  has_many :approved_memberships, -> { approved }, class_name: "Membership"
+  has_many :institutions, through: :approved_memberships
+  has_many :guardian_consents, dependent: :delete_all
 
   has_many :attempted_questions, -> { distinct }, through: :user_responses, source: :question
-  enum :role, { student: 0, teacher: 1, admin: 2 }, default: :student
+  enum :role, { student: 0, teacher: 1, admin: 2, sub_admin: 3 }, default: :student
+
   normalizes :email_address, with: ->(e) { e.strip.downcase }
-  validates :email_address, presence: true, uniqueness: true
+  normalizes :name, with: ->(v) { v.to_s.squish.presence }
   normalizes :target_exam, with: ->(v) { Exam.normalize(v) }
+
+  validates :email_address, presence: true, uniqueness: true
+  validates :name, length: { maximum: 80 }
+  validates :bio, length: { maximum: 1000 }
   validates :target_exam, inclusion: { in: Exam.codes }, allow_nil: true
+  validate  :password_is_strong, if: -> { password.present? }
+  validate  :email_can_receive_mail, if: :will_save_change_to_email_address?
+  validate  :birth_date_is_sensible, if: -> { date_of_birth.present? }
+
+  generates_token_for :email_confirmation, expires_in: 3.days do
+    email_address
+  end
+
+  # ---------- roles ----------
+
+  def approved? = approved_at.present?
+  def pending_teacher? = teacher? && !approved?
+  def faculty? = (teacher? && approved?) || admin? # can create tests and questions
+  def staff? = admin? || sub_admin?                 # can open the admin pages
+
+  # Admins can do everything; sub-admins only the areas they were given
+  def can_manage?(area)
+    admin? || (sub_admin? && Array(permissions).include?(area.to_s))
+  end
+
+  def display_name = name.presence || email_address.split("@").first.capitalize
+
+  # ---------- age and parent consent ----------
+
+  def age(on = Date.current)
+    return nil unless date_of_birth
+    years = on.year - date_of_birth.year
+    years -= 1 if on < date_of_birth + years.years
+    years
+  end
+
+  def minor? = age.present? && age < ADULT_AGE
+  def parent_consent? = guardian_consents.exists?
+  def needs_parent_consent? = student? && minor? && !parent_consent?
+
+  # ---------- email ----------
+
+  def email_confirmed? = email_confirmed_at.present?
+
+  # ---------- exams and subjects ----------
+
+  def exam_codes = user_exams.map(&:exam_type) & Exam.codes
+
+  # Replaces a saved student's exams; the first becomes the default for ranks unless the old default is kept
+  def replace_exams!(codes)
+    codes = Array(codes).filter_map { |c| Exam.normalize(c) }.uniq
+    transaction do
+      user_exams.where.not(exam_type: codes).delete_all
+      (codes - user_exams.reload.map(&:exam_type)).each { |c| user_exams.create!(exam_type: c) }
+      update_column(:target_exam, codes.first) unless codes.include?(target_exam)
+    end
+    user_exams.reset
+  end
+
+  def subject_names = teacher_subjects.map(&:name).sort
+
+  # Replaces a saved teacher's subjects ("Physics, Chemistry" or a list)
+  def replace_subjects!(names)
+    names = Array(names).flat_map { |n| n.to_s.split(",") }.map(&:squish).compact_blank.uniq(&:downcase).first(20)
+    transaction do
+      teacher_subjects.where.not("lower(name) IN (?)", names.map(&:downcase).presence || [""]).delete_all
+      existing = teacher_subjects.reload.map { |s| s.name.downcase }
+      names.reject { |n| existing.include?(n.downcase) }.each { |n| teacher_subjects.create!(name: n) }
+    end
+    teacher_subjects.reset
+  end
 
   # Exams this student has answered questions from, most answered first
   def practised_exam_codes
@@ -21,10 +110,44 @@ class User < ApplicationRecord
                   .group("questions.exam_type").order(Arel.sql("COUNT(*) DESC")).count.keys & Exam.codes
   end
 
-  # The exam used for ranks when none is picked: "Preparing for", else the most practised, else UPSC Prelims
+  # The exam used for ranks when none is picked: the first chosen exam, else the most practised, else UPSC Prelims
   def ranking_exam_code
-    target_exam.presence || practised_exam_codes.first || Exam::DEFAULT.code
+    target_exam.presence || exam_codes.first || practised_exam_codes.first || Exam::DEFAULT.code
   end
 
-  def faculty? = teacher? || admin?
+  # ---------- profile completeness (checked after login) ----------
+
+  # What is still missing before this account can be used (empty = complete)
+  def missing_profile_items
+    return [] if staff?
+
+    items = []
+    items << "your full name" if name.blank?
+    if student?
+      items << "your date of birth" if date_of_birth.blank?
+      items << "the exams you are preparing for" if exam_codes.empty?
+    elsif teacher?
+      items << "the subjects you teach" if subject_names.empty?
+    end
+    items
+  end
+
+  private
+
+  def password_is_strong
+    PasswordPolicy.problems(password, email: email_address).each { |p| errors.add(:password, p) }
+  end
+
+  def email_can_receive_mail
+    problem = EmailCheck.problem(email_address)
+    errors.add(:email_address, problem) if problem
+  end
+
+  def birth_date_is_sensible
+    if date_of_birth > Date.current - 5.years
+      errors.add(:date_of_birth, "does not look right")
+    elsif date_of_birth < Date.current - 100.years
+      errors.add(:date_of_birth, "does not look right")
+    end
+  end
 end

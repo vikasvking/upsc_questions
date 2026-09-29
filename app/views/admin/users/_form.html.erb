@@ -1,20 +1,71 @@
 <%# locals: user %>
 <% input = "mt-1 block w-full rounded-xl border-0 py-2.5 px-3 bg-white dark:bg-slate-950 ring-1 ring-inset ring-slate-200 dark:ring-slate-800 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-700" %>
 <% label = "block text-xs font-bold text-slate-500" %>
+<% role_names = { "student" => "Student", "teacher" => "Teacher", "sub_admin" => "Sub-admin", "admin" => "Admin" } %>
 <%= render "admin/shared/errors", record: user %>
 <%= form_with model: [:admin, user], class: "bg-white dark:bg-slate-900 rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-6 grid grid-cols-1 sm:grid-cols-2 gap-4" do |f| %>
-  <div class="sm:col-span-2">
+  <div>
+    <%= f.label :name, "Full name", class: label %>
+    <%= f.text_field :name, class: input %>
+  </div>
+  <div>
     <%= f.label :email_address, "Email", class: label %>
     <%= f.email_field :email_address, required: true, class: input %>
   </div>
   <div>
     <%= f.label :role, "Role", class: label %>
-    <%= f.select :role, [["Student", "student"], ["Teacher", "teacher"], ["Admin", "admin"]], {}, class: input %>
+    <%= f.select :role, assignable_roles.map { |r| [role_names[r], r] }, {}, class: input, disabled: user == Current.user %>
   </div>
   <div>
-    <%= f.label :target_exam, "Preparing for (students)", class: label %>
-    <%= f.select :target_exam, Exam.options, { include_blank: "—" }, class: input %>
+    <%= f.label :date_of_birth, "Date of birth (students)", class: label %>
+    <%= f.date_field :date_of_birth, class: input %>
   </div>
+
+  <% if user.new_record? || user.student? %>
+    <fieldset class="sm:col-span-2">
+      <legend class="<%= label %>">Exams (students)</legend>
+      <div class="mt-2 flex flex-wrap gap-2">
+        <% Exam.all.each do |e| %>
+          <label class="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 ring-1 ring-slate-200 dark:ring-slate-800 text-sm">
+            <%= check_box_tag "user[exam_codes][]", e.code, user.persisted? && user.exam_codes.include?(e.code), id: "admin_exam_#{e.code}" %> <%= e.name %>
+          </label>
+        <% end %>
+      </div>
+    </fieldset>
+  <% end %>
+
+  <% if user.new_record? || user.teacher? %>
+    <div class="sm:col-span-2">
+      <%= label_tag "user[subjects]", "Subjects (teachers, comma separated)", class: label %>
+      <%= text_field_tag "user[subjects]", user.persisted? ? user.subject_names.join(", ") : nil, class: input %>
+    </div>
+    <div class="sm:col-span-2">
+      <%= f.label :bio, "About (teachers)", class: label %>
+      <%= f.text_area :bio, rows: 3, class: input %>
+    </div>
+    <% if user.persisted? && user.teacher? && can_manage?(:teachers) %>
+      <label class="sm:col-span-2 flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+        <%= hidden_field_tag "user[approved]", "0", id: nil %>
+        <%= check_box_tag "user[approved]", "1", user.approved?, id: "user_approved" %> Approved teacher (can create tests and questions)
+      </label>
+    <% end %>
+  <% end %>
+
+  <% if Current.user.admin? && (user.sub_admin? || user.new_record?) %>
+    <fieldset class="sm:col-span-2 rounded-xl ring-1 ring-violet-200 dark:ring-violet-900/60 p-4">
+      <legend class="px-1 text-xs font-bold text-violet-700 dark:text-violet-300">Sub-admin can manage</legend>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
+        <%= hidden_field_tag "user[permissions][]", "", id: nil %>
+        <% User::ADMIN_AREAS.each do |key, text| %>
+          <label class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+            <%= check_box_tag "user[permissions][]", key, Array(user.permissions).include?(key), id: "perm_#{key}" %> <%= text %>
+          </label>
+        <% end %>
+      </div>
+      <p class="mt-2 text-xs text-slate-500">Never given to sub-admins: email settings, admin and sub-admin accounts, deleting accounts, parents' consent details, and the full admin log. Only used when the role is Sub-admin.</p>
+    </fieldset>
+  <% end %>
+
   <div>
     <%= f.label :password, (user.persisted? ? "New password (leave blank to keep)" : "Password"), class: label %>
     <%= f.password_field :password, required: user.new_record?, autocomplete: "new-password", class: input %>
@@ -23,7 +74,7 @@
     <%= f.label :password_confirmation, "Repeat password", class: label %>
     <%= f.password_field :password_confirmation, required: user.new_record?, autocomplete: "new-password", class: input %>
   </div>
-  <p class="sm:col-span-2 text-xs text-slate-400"><% if user.persisted? %>Resetting the password signs this person out on all devices.<% end %></p>
+  <p class="sm:col-span-2 text-xs text-slate-400">At least <%= PasswordPolicy::MIN_LENGTH %> characters with letters and numbers.<% if user.persisted? %> Resetting the password signs this person out on all devices.<% end %></p>
   <div class="sm:col-span-2 flex gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
     <%= link_to "Cancel", (user.persisted? ? admin_user_path(user) : admin_users_path), class: "flex-1 text-center rounded-xl px-4 py-2.5 text-sm ring-1 ring-slate-200 dark:ring-slate-800 text-slate-600 dark:text-slate-300" %>
     <%= f.submit (user.persisted? ? "Save" : "Create account"), class: "flex-1 rounded-xl bg-brand-700 hover:bg-brand-800 text-white text-sm font-medium px-4 py-2.5 cursor-pointer" %>
