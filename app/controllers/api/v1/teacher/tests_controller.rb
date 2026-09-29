@@ -37,13 +37,13 @@ module Api
           tests = scope.includes(:user, :institution, :audience_grants).newest_first.limit(300).to_a
           ids = tests.map(&:id)
           question_counts = TestQuestion.where(test_session_id: ids).group(:test_session_id).count
-          attempt_counts = TestAttempt.where(test_session_id: ids).group(:test_session_id).count
+          attempt_counts = TestAttempt.first_tries.where(test_session_id: ids).group(:test_session_id).count # students, not retakes
           render json: { tests: tests.map { |t| teacher_card(t, question_counts[t.id].to_i, attempt_counts[t.id].to_i) } }
         end
 
         def show
           render json: {
-            test: teacher_card(@test, @test.questions.count, @test.test_attempts.count).merge(
+            test: teacher_card(@test, @test.questions.count, @test.test_attempts.first_tries.count).merge(
               question_ids: @test.ordered_questions.pluck(:id),
               questions: @test.ordered_questions.map { |q| teacher_question_json(q) },
               audience: audience_json(@test)
@@ -77,7 +77,7 @@ module Api
           @test.assign_attributes(test_params)
           if audience_valid?(@test) && @test.save
             apply_audience!(@test)
-            render json: { test: teacher_card(@test.reload, @test.questions.count, @test.test_attempts.count), warning: warning, message: "Test updated." }
+            render json: { test: teacher_card(@test.reload, @test.questions.count, @test.test_attempts.first_tries.count), warning: warning, message: "Test updated." }
           else
             render_error("invalid", errors_of(@test))
           end
@@ -90,9 +90,9 @@ module Api
           rating = Rating.summary_for(@test)
 
           render json: {
-            test: teacher_card(@test, @test.questions.count, @test.test_attempts.count),
+            test: teacher_card(@test, @test.questions.count, @test.test_attempts.first_tries.count),
             participants: results.size,
-            in_progress: @test.test_attempts.in_progress.not_blocked.count,
+            in_progress: @test.test_attempts.first_tries.in_progress.not_blocked.count,
             average_marks: results.any? ? (results.sum(&:marks) / results.size).round(2) : 0.0,
             average_pct: results.any? ? (results.sum(&:percentage) / results.size).round(1) : 0.0,
             rating: rating.count.positive? ? { average: rating.average&.round(1), count: rating.count } : nil,
@@ -108,7 +108,7 @@ module Api
 
         def live
           now = Time.current
-          attempts = @test.test_attempts.includes(:user).to_a
+          attempts = @test.test_attempts.first_tries.includes(:user).to_a # retakes are practice, not the live test
           attempts.each { |a| a.enforce_presence!(now) }
           answered = UserResponse.where(test_session_token: attempts.map(&:token)).group(:test_session_token).distinct.count(:question_id)
 

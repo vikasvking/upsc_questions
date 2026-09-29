@@ -65,6 +65,69 @@ class ApiV1Test < ActionDispatch::IntegrationTest
     assert_equal true, reviewed["correct"]
   end
 
+  def answer_both(token, headers, one:, two:)
+    post answer_api_v1_attempt_path(token), params: { question_id: questions(:one).id, choice: one }, headers: headers, as: :json
+    post answer_api_v1_attempt_path(token), params: { question_id: questions(:two).id, choice: two }, headers: headers, as: :json
+    assert_equal true, json["finished"]
+  end
+
+  test "a student retakes a submitted test as often as they like; only the first attempt is ranked" do
+    headers = api_sign_in(users(:one))
+    test = test_sessions(:one) # no time window
+
+    post start_api_v1_test_path(test), headers: headers, as: :json
+    first = json["attempt_token"]
+    answer_both(first, headers, one: "C", two: "B") # 1 correct
+
+    post start_api_v1_test_path(test), headers: headers, as: :json
+    assert_equal "finished", json["status"]
+    assert_equal first, json["attempt_token"]
+    assert_equal true, json["can_retake"]
+
+    post start_api_v1_test_path(test), params: { retake: true }, headers: headers, as: :json
+    assert_response :created
+    assert_equal true, json["retake"]
+    retake = json["attempt_token"]
+    assert_not_equal first, retake
+    answer_both(retake, headers, one: "A", two: "B") # 2 correct
+
+    get result_api_v1_attempt_path(retake), headers: headers
+    assert_response :success
+    assert_equal true, json.dig("attempt", "retake")
+    assert_equal 2, json.dig("summary", "correct")
+    assert_equal 1, json.dig("rank", "rank")
+    assert_equal true, json.dig("rank", "from_first_attempt")
+    assert_equal true, json["can_retake"]
+
+    get api_v1_test_path(test), headers: headers
+    mine = json.dig("test", "my_attempt")
+    assert_equal retake, mine["token"]
+    assert_equal true, mine["retake"]
+    assert_equal 2, mine["attempt_count"]
+    assert_equal 1, test.rankings.size
+  end
+
+  test "a test with a closing time can be retaken only after it closes" do
+    test = test_sessions(:one)
+    test.update!(ends_at: 2.hours.from_now)
+    headers = api_sign_in(users(:one))
+    post start_api_v1_test_path(test), headers: headers, as: :json
+    answer_both(json["attempt_token"], headers, one: "A", two: "B")
+
+    post start_api_v1_test_path(test), params: { retake: true }, headers: headers, as: :json
+    assert_response :conflict
+    assert_equal "retake_not_open", json.dig("error", "code")
+
+    travel 3.hours do
+      headers = api_sign_in(users(:one))
+      post start_api_v1_test_path(test), params: { retake: true }, headers: headers, as: :json
+      assert_response :created
+      get api_v1_attempt_path(json["attempt_token"]), headers: headers
+      assert_response :success
+      assert_equal false, json.dig("attempt", "strict")
+    end
+  end
+
   test "PIN tests need the PIN first" do
     headers = api_sign_in(users(:one))
     test = test_sessions(:two)

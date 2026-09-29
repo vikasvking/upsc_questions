@@ -83,8 +83,10 @@ class DashboardsController < ApplicationController
     @locked = !TestSession.available_to(Current.user).exists?(@test_session.id)
     return render(:test_confirmation) if @locked
 
-    @existing_attempt = Current.user.test_attempts.find_by(test_session: @test_session)
+    @existing_attempt = TestAttempt.latest_for(Current.user, @test_session)
     @existing_attempt&.enforce_presence!
+    @can_retake = @existing_attempt&.retake_allowed? || false
+    @attempt_count = Current.user.test_attempts.where(test_session: @test_session).count
 
     unless can_access_test?(@test_session)
       redirect_to join_test_sessions_path, alert: "This test needs a PIN. Enter the code from your teacher."
@@ -173,11 +175,13 @@ class DashboardsController < ApplicationController
     @correct_count = @summary[:correct]
     @wrong_count   = @summary[:wrong]
 
-    # Rank among everyone who has submitted this teacher test so far
-    if @attempt.test_session
-      ranking = @attempt.test_session.rankings
-      @my_result = ranking.find { |r| r.attempt.id == @attempt.id }
+    # Rank among everyone who has submitted this teacher test so far (a retake shows the first attempt's rank)
+    if (test = @attempt.test_session)
+      ranking = test.rankings
+      ranked = @attempt.retake? ? test.first_attempt_for(Current.user) : @attempt
+      @my_result = ranked && ranking.find { |r| r.attempt.id == ranked.id }
       @ranked_count = ranking.size
+      @can_retake = TestAttempt.latest_for(Current.user, test)&.retake_allowed? || false
     end
   end
 
@@ -230,13 +234,15 @@ class DashboardsController < ApplicationController
     ids = tests.map(&:id)
     # tests shown but not included in the student's tier (Free: all but the samples; Plus: other exams)
     @locked_test_ids = ids - TestSession.available_to(Current.user).where(id: ids).pluck(:id)
-    @my_attempts_by_test = Current.user.test_attempts.where(test_session_id: ids).index_by(&:test_session_id)
+    # the latest attempt per test (a retake once the student has retaken it); ranks come from the first attempt
+    @my_attempts_by_test = Current.user.test_attempts.where(test_session_id: ids).order(:id).index_by(&:test_session_id)
+    first_tries = Current.user.test_attempts.first_tries.where(test_session_id: ids).index_by(&:test_session_id)
     @rating_summaries = Rating.summaries("TestSession", ids)
 
     # My rank on each test I have submitted: { test_id => [rank, number of students] }
     @ranks_by_test = {}
     tests.each do |t|
-      mine = @my_attempts_by_test[t.id]
+      mine = first_tries[t.id]
       next unless mine&.finished? || mine&.expired?
       next if mine.blocked? || !t.results_released? # strict tests show ranks only after they close
       ranking = t.rankings
@@ -274,7 +280,7 @@ class DashboardsController < ApplicationController
       return
     end
 
-    existing = Current.user.test_attempts.find_by(test_session: test)
+    existing = TestAttempt.latest_for(Current.user, test)
     existing&.enforce_presence!
     if existing&.blocked?
       redirect_to test_intro_dashboard_path(test), alert: BLOCKED_MESSAGE
@@ -282,6 +288,7 @@ class DashboardsController < ApplicationController
     end
     if existing&.finished? || existing&.expired?
       existing.finish!
+      return start_retake(test, existing) if params[:retake].present?
       redirect_to test_results_dashboard_path(token: existing.token), notice: "You have already submitted this test."
       return
     end
@@ -306,6 +313,22 @@ class DashboardsController < ApplicationController
 
     attempt = Current.user.test_attempts.create!(test_session: test)
     redirect_to arena_dashboard_path(attempt.token, n: 1)
+  end
+
+  # Another go at a submitted test: practice, never ranked (the first attempt keeps the rank)
+  def start_retake(test, previous)
+    unless previous.retake_allowed?
+      redirect_to test_results_dashboard_path(token: previous.token),
+                  alert: "You can retake this test after it closes at #{I18n.l(test.ends_at, format: :long)}."
+      return
+    end
+    if test.questions.none?
+      redirect_to dashboard_path, alert: "This test has no questions yet."
+      return
+    end
+
+    attempt = Current.user.test_attempts.create!(test_session: test, retake: true)
+    redirect_to arena_dashboard_path(attempt.token, n: 1), notice: "Retake started. This is practice: your rank stays from your first attempt."
   end
 
   # Open tests: anyone. PIN tests: only after the student entered the PIN (remembered in their session).

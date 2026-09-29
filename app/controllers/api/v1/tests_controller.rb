@@ -3,6 +3,8 @@
 #   GET  /api/v1/tests/:id                        -> details, whether a PIN is needed, upgrade options when locked
 #   POST /api/v1/tests/verify_pin  pin_code=...   -> unlocks a PIN test for this student
 #   POST /api/v1/tests/:id/start                  -> { attempt_token } (new or resumed)
+#   POST /api/v1/tests/:id/start  retake=true     -> a new practice attempt at a submitted test (my_attempt.can_retake);
+#                                                    only the first attempt is ranked
 module Api
   module V1
     class TestsController < BaseController
@@ -36,7 +38,7 @@ module Api
 
       def show
         test = TestSession.visible_to(current_user).find(params[:id])
-        attempt = current_user.test_attempts.find_by(test_session: test)
+        attempt = TestAttempt.latest_for(current_user, test)
         attempt&.enforce_presence!
         locked = !attempt && !TestSession.available_to(current_user).exists?(test.id)
         rating = Rating.summary_for(test)
@@ -74,14 +76,16 @@ module Api
           return render_error("pin_required", "This test needs a PIN. Enter the code from your teacher.", status: :forbidden)
         end
 
-        existing = current_user.test_attempts.find_by(test_session: test)
+        existing = TestAttempt.latest_for(current_user, test)
         existing&.enforce_presence!
         return render_error("blocked", BLOCKED_MESSAGE, status: :conflict) if existing&.blocked?
         if existing&.finished? || existing&.expired?
           existing.finish!
-          return render json: { attempt_token: existing.token, status: "finished", message: "You have already submitted this test." }
+          return start_retake(test, existing) if ActiveModel::Type::Boolean.new.cast(params[:retake])
+          return render json: { attempt_token: existing.token, status: "finished", can_retake: existing.retake_allowed?,
+                                message: "You have already submitted this test." }
         end
-        return render json: { attempt_token: existing.token, status: "in_progress", message: "Resuming your test." } if existing
+        return render json: { attempt_token: existing.token, status: "in_progress", retake: existing.retake?, message: "Resuming your test." } if existing
 
         case test.window_status
         when :upcoming
@@ -96,6 +100,19 @@ module Api
       end
 
       private
+
+      # Another go at a submitted test: practice, never ranked (the first attempt keeps the rank)
+      def start_retake(test, previous)
+        unless previous.retake_allowed?
+          return render_error("retake_not_open", "You can retake this test after it closes at #{I18n.l(test.ends_at, format: :long)}.",
+                              status: :conflict)
+        end
+        return render_error("empty", "This test has no questions yet.", status: :conflict) if test.questions.none?
+
+        attempt = current_user.test_attempts.create!(test_session: test, retake: true)
+        render json: { attempt_token: attempt.token, status: "in_progress", retake: true,
+                       message: "Retake started. This is practice: your rank stays from your first attempt." }, status: :created
+      end
 
       # Open tests: anyone. PIN tests: after the student entered the PIN (here or on the website).
       def can_access?(test)

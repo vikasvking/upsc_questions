@@ -53,7 +53,7 @@ module Api
           tier_label: Tiers.label(user.tier),
           tier_until: user.tier_until&.iso8601,
           allowed_exams: user.allowed_exam_codes.map { |c| Exam.name_for(c) },
-          sample_tests: { taken: user.test_attempts.where(test_session_id: samples.select(:id)).count, total: samples.count },
+          sample_tests: { taken: user.test_attempts.where(test_session_id: samples.select(:id)).distinct.count(:test_session_id), total: samples.count },
           sample_questions: { answered: user.user_responses.joins(:question).where(questions: { free_sample: true }).distinct.count(:question_id),
                               total: Question.where(free_sample: true).count },
           schools: user.subscribed_institutions.map { |i| { id: i.id, name: i.name, plan: i.plan&.name } },

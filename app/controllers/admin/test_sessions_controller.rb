@@ -89,7 +89,7 @@ class Admin::TestSessionsController < Admin::BaseController
 
     if saved
       log!(locked ? "update_locked_test" : "update_test", record: @test_session, label: @test_session.title,
-           reason: reason_param, details: change_details(before, before_questions).merge("students_started" => @test_session.test_attempts.count))
+           reason: reason_param, details: change_details(before, before_questions).merge("students_started" => @test_session.test_attempts.first_tries.count))
       redirect_to admin_test_sessions_path, notice: "Saved “#{@test_session.title}”."
     else
       messages = @test_session.errors.full_messages
@@ -119,7 +119,7 @@ class Admin::TestSessionsController < Admin::BaseController
   # A test with results needs its title typed; a locked test also needs a reason. Admins only.
   def destroy
     return deny("Only admins can delete tests. Sub-admins can change them.") unless Current.user.admin?
-    attempts = @test_session.test_attempts.count
+    attempts = @test_session.test_attempts.first_tries.count
     locked = @test_session.editing_locked?
     if attempts.positive? && !confirmed?(@test_session.title)
       redirect_to edit_admin_test_session_path(@test_session), alert: "Type the test's title to confirm: #{attempts} student result(s) will be deleted."

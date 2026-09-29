@@ -109,17 +109,22 @@ module Api
       # Cards for a list of tests (a few queries in total, like the website's test cards)
       def test_cards(tests)
         ids = tests.map(&:id)
-        attempts = current_user.test_attempts.where(test_session_id: ids).index_by(&:test_session_id)
+        # the latest attempt per test (a retake once the student has retaken it)
+        attempts = current_user.test_attempts.where(test_session_id: ids).order(:id).index_by(&:test_session_id)
+        attempt_counts = current_user.test_attempts.where(test_session_id: ids).group(:test_session_id).count
         open_ids = TestSession.available_to(current_user).where(id: ids).pluck(:id).to_set
         subjects = TestQuestion.joins(:question).where(test_session_id: ids).distinct.order("questions.topic")
                                .pluck(:test_session_id, "questions.topic")
                                .each_with_object(Hash.new { |h, k| h[k] = [] }) { |(id, topic), h| h[id] << topic if topic.present? }
         tests.map do |t|
-          test_card(t, attempt: attempts[t.id], locked: !attempts[t.id] && !open_ids.include?(t.id), subjects: subjects[t.id])
+          test_card(t, attempt: attempts[t.id], locked: !attempts[t.id] && !open_ids.include?(t.id), subjects: subjects[t.id],
+                       attempt_count: attempt_counts[t.id].to_i)
         end
       end
 
-      def test_card(test, attempt:, locked:, subjects:)
+      # my_attempt is the student's latest attempt. can_retake: they may start another (practice) attempt;
+      # retake: this attempt is one (only the first attempt is ranked).
+      def test_card(test, attempt:, locked:, subjects:, attempt_count: nil)
         {
           id: test.id,
           title: test.title,
@@ -136,7 +141,9 @@ module Api
           free_sample: test.free_sample?,
           locked: locked,
           subjects: subjects,
-          my_attempt: attempt && { token: attempt.token, status: attempt_status(attempt), results_released: attempt.results_released? }
+          my_attempt: attempt && { token: attempt.token, status: attempt_status(attempt), results_released: attempt.results_released?,
+                                   retake: attempt.retake?, can_retake: attempt.retake_allowed?,
+                                   attempt_count: attempt_count || current_user.test_attempts.where(test_session: test).count }
         }
       end
 

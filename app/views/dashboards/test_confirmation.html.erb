@@ -65,7 +65,10 @@
         <% elsif @existing_attempt&.blocked? %>
           <span class="flex-1 text-center font-bold text-sm bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-900/40 px-4 py-3 rounded-xl">🚫 Blocked — ask your teacher</span>
         <% elsif @existing_attempt&.finished? %>
-          <%= link_to "View My Result", test_results_dashboard_path(token: @existing_attempt.token), class: "flex-1 text-center font-bold text-sm bg-brand-800 hover:bg-brand-900 text-white px-4 py-3 rounded-xl shadow-sm" %>
+          <%= link_to (@existing_attempt.retake? ? "View Last Result" : "View My Result"), test_results_dashboard_path(token: @existing_attempt.token), class: "flex-1 text-center font-bold text-sm #{@can_retake ? "border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-950 hover:bg-slate-100" : "bg-brand-800 hover:bg-brand-900 text-white"} px-4 py-3 rounded-xl shadow-sm" %>
+          <% if @can_retake %>
+            <%= button_to "↻ Retake Test", start_test_dashboard_path(test_session_id: test.id, retake: 1), method: :post, form_class: "flex-1", class: "w-full text-center font-bold text-sm bg-brand-800 hover:bg-brand-900 text-white px-4 py-3 rounded-xl shadow-sm cursor-pointer" %>
+          <% end %>
         <% elsif @existing_attempt %>
           <%= button_to "Resume Test", start_test_dashboard_path(test_session_id: test.id), method: :post, form_class: "flex-1", class: "w-full text-center font-bold text-sm bg-brand-800 hover:bg-brand-900 text-white px-4 py-3 rounded-xl shadow-sm cursor-pointer" %>
         <% elsif test.window_status == :upcoming %>
@@ -79,5 +82,15 @@
         <%= button_to (@resume_attempt ? "Resume Practice" : "Start Practice"), start_test_dashboard_path(topic: @topic), method: :post, form_class: "flex-1", class: "w-full text-center font-bold text-sm bg-brand-800 hover:bg-brand-900 text-white px-4 py-3 rounded-xl shadow-sm cursor-pointer" %>
       <% end %>
     </div>
+
+    <% if test && !@locked && @existing_attempt&.finished? && !@existing_attempt.blocked? %>
+      <p class="text-xs text-slate-500 text-center">
+        <% if @can_retake %>
+          You can retake this test as many times as you like<%= " (taken #{pluralize(@attempt_count, "time")} so far)" if @attempt_count.to_i > 1 %>. Retakes are practice: your rank stays from your first attempt.
+        <% elsif test.ends_at %>
+          You can retake this test for practice after it closes at <%= l(test.ends_at, format: :long) %>.
+        <% end %>
+      </p>
+    <% end %>
   </div>
 </div>

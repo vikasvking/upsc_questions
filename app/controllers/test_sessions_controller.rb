@@ -32,7 +32,7 @@ class TestSessionsController < ApplicationController
     @results = @test_session.rankings
     @test_session.test_attempts.in_progress.each(&:enforce_presence!) if @test_session.strict_mode?
     @blocked_attempts = @test_session.test_attempts.blocked.includes(:user).order(:blocked_at)
-    @in_progress_count = @test_session.test_attempts.in_progress.not_blocked.count
+    @in_progress_count = @test_session.test_attempts.first_tries.in_progress.not_blocked.count
     @total_participants = @results.size
     @class_average_marks = @results.any? ? (@results.sum(&:marks) / @results.size).round(2) : 0.0
     @class_average_pct = @results.any? ? (@results.sum(&:percentage) / @results.size).round(1) : 0.0
@@ -101,7 +101,7 @@ class TestSessionsController < ApplicationController
   # GET /test_sessions/:id/live -> the live panel (a Turbo frame the Results page reloads every 15 s)
   def live
     now = Time.current
-    attempts = @test_session.test_attempts.includes(:user).to_a
+    attempts = @test_session.test_attempts.first_tries.includes(:user).to_a # retakes are practice, not the live test
     attempts.each { |a| a.enforce_presence!(now) }
 
     answered = UserResponse.where(test_session_token: attempts.map(&:token))

@@ -11,7 +11,12 @@
           <% end %>
         </p>
       </div>
-      <%= link_to "Back to Dashboard", dashboard_path, class: "shrink-0 text-xs font-bold bg-brand-800 text-white px-4 py-2.5 rounded-xl hover:bg-brand-900 shadow-sm" %>
+      <div class="shrink-0 flex flex-wrap justify-end gap-2">
+        <% if @can_retake %>
+          <%= button_to "↻ Retake Test", start_test_dashboard_path(test_session_id: @attempt.test_session_id, retake: 1), method: :post, class: "text-xs font-bold border border-brand-800 text-brand-800 dark:text-brand-300 dark:border-brand-300 px-4 py-2.5 rounded-xl hover:bg-brand-50 dark:hover:bg-brand-950/40 cursor-pointer" %>
+        <% end %>
+        <%= link_to "Back to Dashboard", dashboard_path, class: "text-xs font-bold bg-brand-800 text-white px-4 py-2.5 rounded-xl hover:bg-brand-900 shadow-sm" %>
+      </div>
     </div>
 
     <% if alert %>
@@ -21,10 +26,18 @@
       <div class="rounded-xl bg-emerald-50 dark:bg-emerald-950/40 p-3 border border-emerald-200 dark:border-emerald-900/40 text-xs text-emerald-800 dark:text-emerald-300 font-bold"><%= notice %></div>
     <% end %>
 
+    <% if @attempt.retake? %>
+      <div class="rounded-xl bg-slate-50 dark:bg-slate-900 p-4 border border-slate-200 dark:border-slate-800 text-sm text-slate-600 dark:text-slate-300">
+        <span class="font-semibold text-slate-900 dark:text-white">↻ Practice retake</span> — this attempt scored
+        <span class="font-semibold"><%= marks_text(@summary[:marks]) %> / <%= marks_text(@summary[:max_marks]) %></span> marks<%= " in #{duration_text(@summary[:time_taken])}" if @summary[:time_taken] %>.
+        It does not change your rank<%= @my_result ? ", which comes from your first attempt below" : "" %>.
+      </div>
+    <% end %>
+
     <% if @my_result %>
       <div class="rounded-2xl bg-gradient-to-br from-amber-50 to-white dark:from-amber-950/30 dark:to-slate-950 border border-amber-200 dark:border-amber-900/50 p-5 flex flex-wrap items-center gap-6">
         <div>
-          <p class="text-xs font-bold text-amber-700 dark:text-amber-400">Your rank</p>
+          <p class="text-xs font-bold text-amber-700 dark:text-amber-400"><%= @attempt.retake? ? "Your rank (first attempt)" : "Your rank" %></p>
           <p class="text-4xl font-semibold text-slate-900 dark:text-white"><%= @my_result.rank <= 3 ? %w[🥇 🥈 🥉][@my_result.rank - 1] : "" %> #<%= @my_result.rank %> <span class="text-base font-bold text-slate-500">of <%= @ranked_count %></span></p>
         </div>
         <div>

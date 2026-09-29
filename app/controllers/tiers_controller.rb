@@ -4,7 +4,7 @@ class TiersController < ApplicationController
     @user = Current.user
     @tier = @user.tier
     @sample_tests = TestSession.where(free_sample: true).order(:created_at)
-    @taken_samples = @user.test_attempts.where(test_session_id: @sample_tests.select(:id)).count
+    @taken_samples = @user.test_attempts.where(test_session_id: @sample_tests.select(:id)).distinct.count(:test_session_id)
     @answered_samples = @user.user_responses.joins(:question).where(questions: { free_sample: true }).distinct.count(:question_id)
     @schools = @user.subscribed_institutions
     @warrior = Plan.warrior

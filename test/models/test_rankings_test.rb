@@ -3,8 +3,8 @@ require "test_helper"
 class TestRankingsTest < ActiveSupport::TestCase
   setup { @test = test_sessions(:one) } # questions one (answer A) and two (answer B)
 
-  def submit(user, answers, seconds:)
-    attempt = user.test_attempts.create!(test_session: @test, started_at: 1.hour.ago)
+  def submit(user, answers, seconds:, retake: false)
+    attempt = user.test_attempts.create!(test_session: @test, started_at: 1.hour.ago, retake: retake)
     answers.each do |question, choice|
       user.user_responses.create!(question: question, chosen_option: choice,
                                   is_correct: choice == question.correct_answer,
@@ -32,5 +32,16 @@ class TestRankingsTest < ActiveSupport::TestCase
     results = @test.rankings
     assert_equal users(:two), results.first.user
     assert_equal 200, results.first.time_taken
+  end
+
+  test "only each student's first attempt is ranked; a better retake does not change the rank list" do
+    first = submit(users(:one), { questions(:one) => "C" }, seconds: 100)
+    submit(users(:one), { questions(:one) => "A", questions(:two) => "B" }, seconds: 50, retake: true)
+    submit(users(:two), { questions(:one) => "A" }, seconds: 200)
+
+    results = @test.rankings
+    assert_equal [users(:two), users(:one)], results.map(&:user)
+    assert_equal first, results.last.attempt
+    assert_equal first, @test.first_attempt_for(users(:one))
   end
 end

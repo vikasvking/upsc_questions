@@ -4,7 +4,8 @@
 #   GET  /api/v1/attempts/:token                          -> questions, my saved answers, time left
 #   POST /api/v1/attempts/:token/answer  question_id, choice=A|B|C|D|SKIPPED, duration_seconds
 #   POST /api/v1/attempts/:token/finish
-#   GET  /api/v1/attempts/:token/result                   -> marks, rank and answer review (after a strict test closes)
+#   GET  /api/v1/attempts/:token/result                   -> marks, rank and answer review (after a strict test closes);
+#                                                            for a retake: rank of the first attempt, retake: true, can_retake
 #   POST /api/v1/attempts/:token/heartbeat                -> strict tests: the app is open (every 15 s)
 #   POST /api/v1/attempts/:token/report_leave  seconds=12 -> strict tests: the app was in the background
 module Api
@@ -40,7 +41,7 @@ module Api
           attempts: attempts.map do |a|
             { token: a.token, title: a.title, kind: a.test_session ? "test" : "practice", status: attempt_status(a),
               started_at: time_json(a.started_at), finished_at: time_json(a.finished_at),
-              results_released: a.results_released?, exam: exam_json(a.exam.code) }
+              results_released: a.results_released?, exam: exam_json(a.exam.code), retake: a.retake? }
           end
         }
       end
@@ -100,10 +101,14 @@ module Api
         responses = @attempt.responses_by_question
         summary = @attempt.score_summary
         rank = nil
-        if @attempt.test_session
-          ranking = @attempt.test_session.rankings
-          mine = ranking.find { |r| r.attempt.id == @attempt.id }
-          rank = mine && { rank: mine.rank, of: ranking.size }
+        can_retake = false
+        if (test = @attempt.test_session)
+          ranking = test.rankings
+          # a retake is never ranked: show the rank the student's first attempt earned
+          ranked = @attempt.retake? ? test.first_attempt_for(current_user) : @attempt
+          mine = ranked && ranking.find { |r| r.attempt.id == ranked.id }
+          rank = mine && { rank: mine.rank, of: ranking.size, from_first_attempt: @attempt.retake?, marks: mine.marks }
+          can_retake = TestAttempt.latest_for(current_user, test)&.retake_allowed? || false
         end
 
         render json: {
@@ -111,6 +116,7 @@ module Api
           attempt: attempt_json(@attempt),
           summary: summary,
           rank: rank,
+          can_retake: can_retake,
           review: questions.each_with_index.map do |q, i|
             mine = responses[q.id]
             question_json(q, number: i + 1).merge(correct_answer: q.correct_answer, explanation: q.explanation,
@@ -166,6 +172,7 @@ module Api
           test_id: test&.id,
           exam: exam_json(attempt.exam.code),
           status: attempt_status(attempt),
+          retake: attempt.retake?,
           strict: attempt.strict?,
           started_at: time_json(attempt.started_at),
           deadline_at: time_json(attempt.deadline_at),

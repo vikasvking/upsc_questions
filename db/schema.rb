@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_29_170000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_29_180000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -414,6 +414,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_170000) do
     t.integer "leave_count", default: 0, null: false
     t.datetime "blocked_at"
     t.string "block_reason"
+    t.boolean "retake", default: false, null: false
     t.index ["test_session_id", "blocked_at"], name: "index_test_attempts_on_test_session_id_and_blocked_at"
     t.index ["test_session_id"], name: "index_test_attempts_on_test_session_id"
     t.index ["token"], name: "index_test_attempts_on_token", unique: true

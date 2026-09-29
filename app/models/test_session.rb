@@ -115,17 +115,28 @@ class TestSession < ApplicationRecord
     !strict_mode? || ends_at.nil? || now >= ends_at
   end
 
+  # Students may retake a test they have submitted as often as they like; tests with a closing time only after it
+  def retakes_open?(now = Time.current)
+    ends_at.nil? || now >= ends_at
+  end
+
+  # The attempt that counts for this student's rank (retakes never do)
+  def first_attempt_for(user)
+    test_attempts.first_tries.find_by(user: user)
+  end
+
   Result = Struct.new(:attempt, :user, :rank, :correct, :wrong, :skipped, :unattempted, :total,
                       :marks, :max_marks, :percentage, :passed, :time_taken, keyword_init: true)
 
   # Submitted attempts ranked by marks under this test's exam scheme (see Exam) high to low,
   # then less time taken, then earlier submission. Equal marks and time share a rank (1, 2, 2, 4).
+  # Only each student's first attempt is ranked: retakes are practice, taken after seeing the answers.
   # Uses 3 queries no matter how many students took the test.
   def rankings
     # blocked attempts stay open so a reinstated student can carry on
-    test_attempts.in_progress.not_blocked.select(&:expired?).each(&:finish!)
+    test_attempts.first_tries.in_progress.not_blocked.select(&:expired?).each(&:finish!)
 
-    attempts = test_attempts.finished.not_blocked.includes(:user).to_a
+    attempts = test_attempts.first_tries.finished.not_blocked.includes(:user).to_a
     qids     = ordered_questions.pluck(:id)
     total    = qids.size
     latest   = UserResponse.where(test_session_token: attempts.map(&:token), question_id: qids)
@@ -266,7 +277,7 @@ class TestSession < ApplicationRecord
   # Students already writing get the new closing time / duration
   def refresh_open_deadlines
     test_attempts.in_progress.find_each do |a|
-      limits = [a.started_at + duration_minutes.to_i.minutes, ends_at].compact
+      limits = [a.started_at + duration_minutes.to_i.minutes, (ends_at unless a.retake?)].compact
       a.update_column(:deadline_at, limits.min)
     end
   end

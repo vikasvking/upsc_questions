@@ -22,6 +22,14 @@ class TestAttempt < ApplicationRecord
   scope :in_progress, -> { where(finished_at: nil) }
   scope :blocked,     -> { where.not(blocked_at: nil) }
   scope :not_blocked, -> { where(blocked_at: nil) }
+  # A student's first attempt at a teacher test is the one that is ranked; retakes are practice
+  scope :first_tries, -> { where(retake: false) }
+  scope :retakes,     -> { where(retake: true) }
+
+  # The student's most recent attempt at a teacher test (a retake once they have retaken it)
+  def self.latest_for(user, test_session)
+    user.test_attempts.where(test_session: test_session).order(:id).last
+  end
 
   def questions
     if test_session
@@ -37,8 +45,15 @@ class TestAttempt < ApplicationRecord
 
   def finished? = finished_at.present?
   def timed?    = deadline_at.present?
-  def strict?   = test_session&.strict_mode? || false
+  # Retakes happen after a strict test has closed, so nobody watches them
+  def strict?   = !retake? && (test_session&.strict_mode? || false)
   def blocked?  = blocked_at.present?
+
+  # A submitted attempt at a teacher test can be followed by practice retakes, as many as the student likes.
+  # Tests with a closing time (every strict test has one) allow them only once they have closed.
+  def retake_allowed?(now = Time.current)
+    test_session.present? && !blocked? && (finished? || expired?(now)) && test_session.retakes_open?(now)
+  end
 
   # ---------- strict mode ----------
 
@@ -95,7 +110,7 @@ class TestAttempt < ApplicationRecord
 
   # Strict tests hide marks, rank and answers until the test closes
   def results_released?(now = Time.current)
-    !test_session || test_session.results_released?(now)
+    retake? || !test_session || test_session.results_released?(now)
   end
 
   def expired?(now = Time.current)
@@ -151,7 +166,8 @@ class TestAttempt < ApplicationRecord
     self.started_at ||= Time.current
 
     if test_session && deadline_at.nil?
-      limits = [started_at + test_session.duration_minutes.to_i.minutes, test_session.ends_at].compact
+      # a retake gets the full duration: the test's closing time has already passed
+      limits = [started_at + test_session.duration_minutes.to_i.minutes, (test_session.ends_at unless retake?)].compact
       self.deadline_at = limits.min
     end
   end

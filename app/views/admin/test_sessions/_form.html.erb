@@ -6,7 +6,7 @@
     <div class="rounded-2xl bg-red-50 dark:bg-red-950/30 ring-1 ring-red-200 dark:ring-red-900/60 p-5 space-y-2">
       <p class="text-sm font-semibold text-red-800 dark:text-red-300">🔒 This test is locked for teachers.</p>
       <p class="text-xs text-slate-600 dark:text-slate-400">
-        <%= pluralize(@test_session.test_attempts.count, "student") %> started it.
+        <%= pluralize(@test_session.test_attempts.first_tries.count, "student") %> started it.
         Changing questions affects answers already given; a new closing time or duration also applies to students still writing.
         Only change it on the teacher's request.
       </p>
