@@ -2,6 +2,52 @@
 Rails.application.routes.draw do
   root "homes#index"
 
+  # JSON API for the Rankwise mobile app. Sign in with POST /api/v1/session, then send
+  # "Authorization: Bearer <token>" with every request (see Api::V1::BaseController).
+  namespace :api, defaults: { format: :json } do
+    namespace :v1 do
+      resource :session, only: [:create, :destroy]
+      get   "me",    to: "profiles#show"
+      patch "me",    to: "profiles#update"
+      get   "exams", to: "profiles#exams"
+
+      # Students
+      get "dashboard",  to: "dashboard#show"
+      get "membership", to: "dashboard#membership"
+      get "leaderboard", to: "dashboard#leaderboard"
+      resources :tests, only: [:index, :show] do
+        post :start, on: :member
+        post :verify_pin, on: :collection
+      end
+      post "practice", to: "attempts#practice"
+      resources :attempts, only: [:index, :show], param: :token do
+        member do
+          post :answer
+          post :finish
+          get  :result
+          post :heartbeat
+          post :report_leave
+        end
+      end
+      get  "question_bank",        to: "question_bank#index"
+      get  "question_bank/topic",  to: "question_bank#topic"
+      post "question_bank/answer", to: "question_bank#answer"
+
+      # Teachers (and admins)
+      namespace :teacher do
+        get "form_options", to: "tests#form_options"
+        resources :tests, only: [:index, :show, :create, :update] do
+          member do
+            get  :results
+            get  :live
+            post :reinstate
+          end
+        end
+        resources :questions, only: [:index, :show, :create, :update]
+      end
+    end
+  end
+
   get "dashboard", to: "dashboards#show", as: :dashboard
   get "question_bank", to: "questionbanks#show", as: :question_bank
   get "question_bank/topic", to: "questionbanks#topic", as: :question_bank_topic
