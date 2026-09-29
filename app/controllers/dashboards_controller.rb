@@ -1,6 +1,9 @@
 class DashboardsController < ApplicationController
+  BLOCKED_MESSAGE = "You were blocked from this test for leaving it. Ask your teacher to reinstate you.".freeze
+
   before_action :ensure_student_access
-  before_action :set_attempt, only: [:arena, :submit_answer, :skip_question, :finish_test, :results]
+  before_action :set_attempt, only: [:arena, :submit_answer, :skip_question, :finish_test, :results, :heartbeat, :report_leave]
+  before_action :stop_if_blocked, only: [:arena, :submit_answer, :skip_question, :finish_test, :results]
   before_action :close_if_time_up, only: [:arena, :submit_answer, :skip_question]
 
   # GET /dashboard            -> hub
@@ -50,6 +53,7 @@ class DashboardsController < ApplicationController
   def test_intro
     @test_session = TestSession.find(params[:id])
     @existing_attempt = Current.user.test_attempts.find_by(test_session: @test_session)
+    @existing_attempt&.enforce_presence!
 
     unless can_access_test?(@test_session)
       redirect_to join_test_sessions_path, alert: "This test needs a PIN. Enter the code from your teacher."
@@ -81,6 +85,7 @@ class DashboardsController < ApplicationController
     @question = @questions[@position - 1]
     @responses = @attempt.responses_by_question
     @previous_attempt = @responses[@question.id]
+    @attempt.record_presence! if @attempt.strict?
     render :quiz_arena
   end
 
@@ -119,6 +124,12 @@ class DashboardsController < ApplicationController
       return
     end
 
+    # Strict tests: marks, rank and answers only after the test closes
+    unless @attempt.results_released?
+      render :results_pending
+      return
+    end
+
     @topic     = @attempt.title
     @questions = @attempt.questions.to_a
     @responses = @attempt.responses_by_question
@@ -134,7 +145,39 @@ class DashboardsController < ApplicationController
     end
   end
 
+  # ---------- strict mode (JSON, called by strict_mode_controller.js) ----------
+
+  # POST /dashboard/heartbeat  token=...
+  def heartbeat
+    @attempt.enforce_presence!
+    render json: strict_state(present: true)
+  end
+
+  # POST /dashboard/report_leave  token=... seconds=12 kind=hidden|navigated|reloaded
+  # Sent by the test page after the student comes back (or, for in-app navigation, while they are away).
+  def report_leave
+    @attempt.enforce_presence!
+    seconds = params[:seconds].to_i
+    if seconds >= TestAttempt::AWAY_GRACE.to_i
+      where = { "navigated" => "opened another page", "reloaded" => "closed or left the page" }
+                .fetch(params[:kind].to_s, "switched to another tab or app")
+      @attempt.record_violation!("Left the test (#{where}) for #{seconds}s")
+    end
+    render json: strict_state(present: params[:kind] != "navigated")
+  end
+
   private
+
+  def strict_state(present:)
+    if @attempt.blocked?
+      { status: "blocked", message: BLOCKED_MESSAGE, redirect_to: test_intro_dashboard_path(@attempt.test_session) }
+    elsif @attempt.finished? || @attempt.expired?
+      { status: "finished", redirect_to: test_results_dashboard_path(token: @attempt.token) }
+    else
+      @attempt.record_presence! if present && @attempt.strict?
+      { status: "ok", leave_count: @attempt.leave_count, warnings_left: @attempt.warnings_left }
+    end
+  end
 
   # Attempts and subject names for a list of test cards (2 queries in total)
   def load_card_data(tests)
@@ -146,6 +189,7 @@ class DashboardsController < ApplicationController
     tests.each do |t|
       mine = @my_attempts_by_test[t.id]
       next unless mine&.finished? || mine&.expired?
+      next if mine.blocked? || !t.results_released? # strict tests show ranks only after they close
       ranking = t.rankings
       me = ranking.find { |r| r.attempt.id == mine.id }
       @ranks_by_test[t.id] = [me.rank, ranking.size] if me
@@ -178,6 +222,11 @@ class DashboardsController < ApplicationController
     end
 
     existing = Current.user.test_attempts.find_by(test_session: test)
+    existing&.enforce_presence!
+    if existing&.blocked?
+      redirect_to test_intro_dashboard_path(test), alert: BLOCKED_MESSAGE
+      return
+    end
     if existing&.finished? || existing&.expired?
       existing.finish!
       redirect_to test_results_dashboard_path(token: existing.token), notice: "You have already submitted this test."
@@ -221,7 +270,19 @@ class DashboardsController < ApplicationController
   def set_attempt
     token = params[:token].presence
     @attempt = token && Current.user.test_attempts.find_by(token: token)
-    redirect_to dashboard_path, alert: "Test not found." unless @attempt
+    return if @attempt
+
+    if request.format.json?
+      head :not_found
+    else
+      redirect_to dashboard_path, alert: "Test not found."
+    end
+  end
+
+  # Strict tests: a blocked student cannot see, answer or submit anything until reinstated
+  def stop_if_blocked
+    @attempt.enforce_presence!
+    redirect_to test_intro_dashboard_path(@attempt.test_session), alert: BLOCKED_MESSAGE if @attempt.blocked?
   end
 
   def close_if_time_up

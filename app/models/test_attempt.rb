@@ -3,6 +3,12 @@
 class TestAttempt < ApplicationRecord
   GRACE_PERIOD = 30.seconds # allows for slow networks on the final auto-submit
 
+  # Strict mode (see TestSession#strict_mode)
+  HEARTBEAT_EVERY  = 15.seconds # how often the test page pings the server while visible
+  LEAVE_TIMEOUT    = 90.seconds # no ping for this long = the student left (closed the tab, locked the phone...)
+  AWAY_GRACE       = 5.seconds  # being away for less than this is ignored (page refresh, a quick glance)
+  WARNINGS_ALLOWED = 1          # leaves that only warn; the next one blocks
+
   belongs_to :user
   belongs_to :test_session, optional: true
   has_many :user_responses, primary_key: :token, foreign_key: :test_session_token, inverse_of: false
@@ -14,6 +20,8 @@ class TestAttempt < ApplicationRecord
 
   scope :finished,    -> { where.not(finished_at: nil) }
   scope :in_progress, -> { where(finished_at: nil) }
+  scope :blocked,     -> { where.not(blocked_at: nil) }
+  scope :not_blocked, -> { where(blocked_at: nil) }
 
   def questions
     if test_session
@@ -29,6 +37,66 @@ class TestAttempt < ApplicationRecord
 
   def finished? = finished_at.present?
   def timed?    = deadline_at.present?
+  def strict?   = test_session&.strict_mode? || false
+  def blocked?  = blocked_at.present?
+
+  # ---------- strict mode ----------
+
+  # True while the student can still get into trouble for leaving
+  def watched?(now = Time.current)
+    strict? && !finished? && !blocked? && !expired?(now)
+  end
+
+  # Called on every heartbeat and test page load
+  def record_presence!(now = Time.current)
+    update_column(:last_seen_at, now)
+  end
+
+  # Blocks the student if the test page has been silent for too long.
+  # Runs whenever the attempt is touched, so no background job is needed.
+  def enforce_presence!(now = Time.current)
+    return unless watched?(now) && last_seen_at
+    block!("No connection from the test page for over #{LEAVE_TIMEOUT.in_minutes.round(1)} minutes", now) if now - last_seen_at > LEAVE_TIMEOUT
+  end
+
+  # The test page reported that the student left. Returns :warned, :blocked or :ignored.
+  def record_violation!(reason, now = Time.current)
+    with_lock do
+      if !watched?(now)
+        :ignored
+      elsif leave_count + 1 > WARNINGS_ALLOWED
+        self.leave_count += 1
+        block!(reason, now)
+        :blocked
+      else
+        self.leave_count += 1
+        save!
+        :warned
+      end
+    end
+  end
+
+  def warnings_left
+    [WARNINGS_ALLOWED - leave_count, 0].max
+  end
+
+  def block!(reason, now = Time.current)
+    update!(blocked_at: now, block_reason: reason.to_s.truncate(250))
+  end
+
+  # Teacher lets the student continue. The time spent blocked is given back,
+  # but never beyond the test's closing time.
+  def reinstate!(now = Time.current)
+    return false unless blocked?
+
+    new_deadline = deadline_at && [deadline_at + (now - blocked_at), test_session&.ends_at].compact.min
+    update!(blocked_at: nil, block_reason: nil, leave_count: 0, last_seen_at: nil, deadline_at: new_deadline)
+  end
+
+  # Strict tests hide marks, rank and answers until the test closes
+  def results_released?(now = Time.current)
+    !test_session || test_session.results_released?(now)
+  end
 
   def expired?(now = Time.current)
     timed? && now > deadline_at + GRACE_PERIOD

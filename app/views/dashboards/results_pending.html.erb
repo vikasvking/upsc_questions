@@ -1,0 +1,27 @@
+<%# Strict tests: shown after submitting, until the test closes %>
+<% test = @attempt.test_session %>
+<div class="py-16 min-h-screen flex items-center justify-center transition-colors duration-200 w-full">
+  <div class="mx-auto max-w-xl px-6 text-center space-y-6">
+    <div class="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/40 text-3xl shadow-sm">📥</div>
+
+    <% if notice %>
+      <div class="rounded-xl bg-emerald-50 dark:bg-emerald-950/40 p-3 border border-emerald-200 dark:border-emerald-900/40 text-xs text-emerald-800 dark:text-emerald-300 font-bold"><%= notice %></div>
+    <% end %>
+    <% if alert %>
+      <div class="rounded-xl bg-red-50 dark:bg-red-950/40 p-3 border border-red-200 dark:border-red-900/40 text-xs text-red-800 dark:text-red-300 font-bold"><%= alert %></div>
+    <% end %>
+
+    <div class="space-y-2">
+      <h1 class="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white"><%= test.title %></h1>
+      <p class="text-sm text-slate-500 dark:text-slate-400">Your test was submitted <%= l(@attempt.finished_at, format: :long) %>.</p>
+    </div>
+
+    <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">
+      <p class="text-xs font-bold text-slate-400">Results will be available</p>
+      <p class="text-lg font-semibold text-slate-900 dark:text-white"><%= l(test.ends_at, format: :long) %></p>
+      <p class="text-xs text-slate-500">Marks, your rank and the answer review appear here after the test closes for everyone.</p>
+    </div>
+
+    <%= link_to "Back to Dashboard", dashboard_path, class: "inline-block text-xs font-bold bg-brand-800 text-white px-4 py-2.5 rounded-xl hover:bg-brand-900 shadow-sm" %>
+  </div>
+</div>

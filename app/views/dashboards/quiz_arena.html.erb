@@ -1,15 +1,37 @@
-<div class="py-10 min-h-screen w-full transition-colors duration-200">
+<% strict = @attempt.strict? %>
+<div class="py-10 min-h-screen w-full transition-colors duration-200"
+     <% if strict %>
+       data-controller="strict-mode"
+       data-strict-mode-token-value="<%= @attempt.token %>"
+       data-strict-mode-heartbeat-url-value="<%= heartbeat_dashboard_path %>"
+       data-strict-mode-leave-url-value="<%= report_leave_dashboard_path %>"
+       data-strict-mode-heartbeat-ms-value="<%= TestAttempt::HEARTBEAT_EVERY.in_milliseconds %>"
+       data-strict-mode-grace-ms-value="<%= TestAttempt::AWAY_GRACE.in_milliseconds %>"
+     <% end %>>
   <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-6">
 
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-x-3">
+        <% unless strict %>
         <%= link_to "← Exit (progress is saved)", dashboard_path, class: "text-xs font-bold bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 text-slate-600 dark:text-slate-400 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800" %>
+        <% end %>
         <h2 class="text-sm font-semibold text-brand-800 dark:text-brand-400"><%= @attempt.title %></h2>
       </div>
       <span class="text-xs bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 font-mono px-3 py-1.5 rounded-lg">
         <%= [@question.exam_type, @question.year].compact_blank.join(" · ").presence || "—" %>
       </span>
     </div>
+
+    <% if strict %>
+      <div class="rounded-xl p-3 border text-xs font-bold <%= @attempt.leave_count.zero? ? "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/40 text-amber-800 dark:text-amber-300" : "bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-900/40 text-red-800 dark:text-red-300" %>"
+           data-strict-mode-target="banner">
+        <% if @attempt.leave_count.zero? %>
+          🛡️ Strict test: stay on this page until you submit. Switching tabs or apps, or opening another page, counts as leaving. The first time is a warning; the second time you are blocked.
+        <% else %>
+          ⚠️ You left the test once. This was your only warning — if you leave again you will be blocked.
+        <% end %>
+      </div>
+    <% end %>
 
     <% if alert %>
       <div class="rounded-xl bg-red-50 dark:bg-red-950/40 p-3 border border-red-200 dark:border-red-900/40 text-xs text-red-800 dark:text-red-300 font-bold"><%= alert %></div>

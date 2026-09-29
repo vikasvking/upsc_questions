@@ -28,6 +28,10 @@
           <div class="flex gap-x-2"><span>•</span> <span>Closes: <strong><%= l(test.ends_at, format: :long) %></strong>. If you start late, you only get the time left until then.</span></div>
         <% end %>
         <div class="flex gap-x-2"><span>•</span> <span>Pass mark: <strong><%= test.pass_mark_percentage %>%</strong>. You can take this test once.</span></div>
+        <% if test.strict_mode? %>
+          <div class="flex gap-x-2 text-red-700 dark:text-red-400"><span>•</span> <span><strong>🛡️ Strict test.</strong> Stay on the test page until you submit. Switching to another tab or app, opening another page, or closing the page counts as leaving. The first time is a warning; the second time you are <strong>blocked</strong> and only your teacher can let you continue.</span></div>
+          <div class="flex gap-x-2"><span>•</span> <span>Marks, rank and answers are shown after the test closes<%= " at #{l(test.ends_at, format: :long)}" if test.ends_at %>.</span></div>
+        <% end %>
       <% else %>
         <div class="flex gap-x-2"><span>•</span> <span>No time limit. A stopwatch shows how long you have been practising.</span></div>
       <% end %>
@@ -38,7 +42,9 @@
       <%= link_to "Cancel & Go Back", dashboard_path, class: "flex-1 text-center font-bold text-sm border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-950 px-4 py-3 rounded-xl hover:bg-slate-100 transition-colors shadow-sm" %>
 
       <% if test %>
-        <% if @existing_attempt&.finished? %>
+        <% if @existing_attempt&.blocked? %>
+          <span class="flex-1 text-center font-bold text-sm bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-900/40 px-4 py-3 rounded-xl">🚫 Blocked — ask your teacher</span>
+        <% elsif @existing_attempt&.finished? %>
           <%= link_to "View My Result", test_results_dashboard_path(token: @existing_attempt.token), class: "flex-1 text-center font-bold text-sm bg-brand-800 hover:bg-brand-900 text-white px-4 py-3 rounded-xl shadow-sm" %>
         <% elsif @existing_attempt %>
           <%= button_to "Resume Test", start_test_dashboard_path(test_session_id: test.id), method: :post, form_class: "flex-1", class: "w-full text-center font-bold text-sm bg-brand-800 hover:bg-brand-900 text-white px-4 py-3 rounded-xl shadow-sm cursor-pointer" %>

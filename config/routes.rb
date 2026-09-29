@@ -16,6 +16,8 @@ Rails.application.routes.draw do
       post :import
       get  :download_template
     end
+    # Strict mode: teacher lets a blocked student continue
+    post :reinstate, on: :member
   end
 
   # Quiz lifecycle
@@ -27,6 +29,9 @@ Rails.application.routes.draw do
   post "dashboard/skip_question",  to: "dashboards#skip_question", as: :skip_question_dashboard
   post "dashboard/finish_test",    to: "dashboards#finish_test",   as: :finish_test_dashboard
   get  "dashboard/results",        to: "dashboards#results",       as: :test_results_dashboard
+  # Strict mode: the test page reports presence and leaving (JSON)
+  post "dashboard/heartbeat",      to: "dashboards#heartbeat",     as: :heartbeat_dashboard,    defaults: { format: :json }
+  post "dashboard/report_leave",   to: "dashboards#report_leave",  as: :report_leave_dashboard, defaults: { format: :json }
 
   resources :questions, only: [:index, :new, :create, :edit, :update] do
     collection do

@@ -13,6 +13,7 @@ class TestSession < ApplicationRecord
   validates :duration_minutes, numericality: { only_integer: true, greater_than: 0 }
   validates :pass_mark_percentage, numericality: { only_integer: true, in: 0..100 }
   validate  :window_is_valid
+  validate  :strict_mode_is_valid
 
   before_validation :generate_secure_pin, on: :create
 
@@ -31,6 +32,11 @@ class TestSession < ApplicationRecord
 
   def available_now? = window_status == :live
 
+  # Students see marks, rank and answers only after a strict test closes. Teachers always see them.
+  def results_released?(now = Time.current)
+    !strict_mode? || ends_at.nil? || now >= ends_at
+  end
+
   Result = Struct.new(:attempt, :user, :rank, :correct, :wrong, :skipped, :unattempted, :total,
                       :marks, :max_marks, :percentage, :passed, :time_taken, keyword_init: true)
 
@@ -38,9 +44,10 @@ class TestSession < ApplicationRecord
   # then less time taken, then earlier submission. Equal marks and time share a rank (1, 2, 2, 4).
   # Uses 3 queries no matter how many students took the test.
   def rankings
-    test_attempts.in_progress.select(&:expired?).each(&:finish!)
+    # blocked attempts stay open so a reinstated student can carry on
+    test_attempts.in_progress.not_blocked.select(&:expired?).each(&:finish!)
 
-    attempts = test_attempts.finished.includes(:user).to_a
+    attempts = test_attempts.finished.not_blocked.includes(:user).to_a
     qids     = ordered_questions.pluck(:id)
     total    = qids.size
     latest   = UserResponse.where(test_session_token: attempts.map(&:token), question_id: qids)
@@ -162,6 +169,12 @@ class TestSession < ApplicationRecord
       pin = SecureRandom.alphanumeric(6).upcase
       break pin unless TestSession.exists?(pin_code: pin)
     end
+  end
+
+  def strict_mode_is_valid
+    return unless strict_mode?
+    errors.add(:strict_mode, "needs PIN access") unless pin_required?
+    errors.add(:strict_mode, "needs a closing time (results are shown after it)") if ends_at.blank?
   end
 
   def window_is_valid

@@ -11,6 +11,7 @@
           Open test (no PIN)
         <% end %>
         · Pass mark <%= @test_session.pass_mark_percentage %>%
+        <% if @test_session.strict_mode? %> · <span class="font-semibold text-red-700 dark:text-red-400">🛡️ Strict mode</span><% end %>
         <% if @in_progress_count.positive? %> · <%= @in_progress_count %> student(s) still writing<% end %>
       </p>
     </div>
@@ -30,6 +31,48 @@
         <p class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-2 truncate max-w-xs mx-auto" title="<%= @topper_email %>"><%= @topper_email %></p>
       </div>
     </div>
+
+    <% if notice %>
+      <div class="rounded-xl bg-emerald-50 dark:bg-emerald-950/40 p-3 border border-emerald-200 dark:border-emerald-900/40 text-xs text-emerald-800 dark:text-emerald-300 font-bold"><%= notice %></div>
+    <% end %>
+    <% if alert %>
+      <div class="rounded-xl bg-red-50 dark:bg-red-950/40 p-3 border border-red-200 dark:border-red-900/40 text-xs text-red-800 dark:text-red-300 font-bold"><%= alert %></div>
+    <% end %>
+
+    <% if @blocked_attempts.any? %>
+      <div class="space-y-4">
+        <div>
+          <h3 class="text-base font-semibold text-red-700 dark:text-red-400">🚫 Blocked students (<%= @blocked_attempts.size %>)</h3>
+          <p class="text-xs text-slate-500">They left the test. Reinstate a student to let them continue with their saved answers; the time they lost while blocked is given back, up to the closing time. Blocked students are not ranked.</p>
+        </div>
+        <div class="overflow-x-auto rounded-xl border border-red-200 dark:border-red-900/50 shadow-sm bg-white dark:bg-slate-900">
+          <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-left text-xs">
+            <thead class="bg-red-50/60 dark:bg-red-950/20 font-bold text-slate-900 dark:text-slate-300">
+              <tr>
+                <th class="px-4 py-3.5">Student</th>
+                <th class="px-4 py-3.5">Reason</th>
+                <th class="px-3 py-3.5 text-center">Blocked at</th>
+                <th class="px-4 py-3.5 text-right"></th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-700 dark:text-slate-400">
+              <% @blocked_attempts.each do |a| %>
+                <tr>
+                  <td class="px-4 py-3.5 font-semibold text-slate-800 dark:text-slate-200"><%= a.user.email_address %></td>
+                  <td class="px-4 py-3.5"><%= a.block_reason %></td>
+                  <td class="px-3 py-3.5 text-center"><%= l(a.blocked_at, format: :short) %></td>
+                  <td class="px-4 py-3.5 text-right">
+                    <%= button_to "Reinstate", reinstate_test_session_path(@test_session, attempt_id: a.id), method: :post,
+                                  data: { turbo_confirm: "Let #{a.user.email_address} continue this test?" },
+                                  class: "rounded-lg bg-brand-800 hover:bg-brand-900 text-white font-bold text-xs px-3 py-1.5 cursor-pointer" %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    <% end %>
 
     <div class="space-y-4">
       <div>

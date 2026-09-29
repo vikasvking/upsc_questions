@@ -7,6 +7,9 @@
       <% if test.pin_required? %>
         <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">PIN</span>
       <% end %>
+      <% if test.strict_mode? %>
+        <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400">Strict</span>
+      <% end %>
     </div>
     <h3 class="mt-2 font-semibold text-slate-900 dark:text-white truncate" title="<%= test.title %>"><%= test.title %></h3>
     <p class="mt-1 text-sm text-slate-500 truncate"><%= [test.exam_type, subjects.presence&.join(", "), "#{test.duration_minutes} min"].compact.join(" · ") %></p>
@@ -15,10 +18,12 @@
 
   <% primary = "self-start rounded-lg px-3.5 py-2 text-sm font-medium bg-brand-700 text-white hover:bg-brand-800" %>
   <% secondary = "self-start rounded-lg px-3.5 py-2 text-sm font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200" %>
-  <% if mine&.finished? || (mine && mine.expired?) %>
+  <% if mine&.blocked? %>
+    <span class="text-sm font-medium text-red-700 dark:text-red-400">🚫 Blocked — ask your teacher</span>
+  <% elsif mine&.finished? || (mine && mine.expired?) %>
     <% rank, of = @ranks_by_test && @ranks_by_test[test.id] %>
     <div class="flex items-center gap-3">
-      <%= link_to "See result", test_results_dashboard_path(token: mine.token), class: secondary %>
+      <%= link_to (test.results_released? ? "See result" : "Submitted"), test_results_dashboard_path(token: mine.token), class: secondary %>
       <% if rank %><span class="text-sm text-slate-500">Rank <span class="font-semibold text-slate-900 dark:text-white">#<%= rank %></span> of <%= of %></span><% end %>
     </div>
   <% elsif mine %>

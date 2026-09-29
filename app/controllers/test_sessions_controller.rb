@@ -1,9 +1,9 @@
 class TestSessionsController < ApplicationController
-  FACULTY_ACTIONS = [:index, :new, :create, :show, :edit, :update, :upload_form, :import, :download_template].freeze
+  FACULTY_ACTIONS = [:index, :new, :create, :show, :edit, :update, :reinstate, :upload_form, :import, :download_template].freeze
 
   before_action :ensure_faculty_access, only: FACULTY_ACTIONS - [:index]
-  before_action :set_test_session, only: [:show, :edit, :update]
-  before_action :ensure_test_ownership, only: [:show, :edit, :update]
+  before_action :set_test_session, only: [:show, :edit, :update, :reinstate]
+  before_action :ensure_test_ownership, only: [:show, :edit, :update, :reinstate]
   before_action :load_question_library, only: [:new, :edit]
 
   rate_limit to: 10, within: 5.minutes, only: :verify_pin,
@@ -25,7 +25,9 @@ class TestSessionsController < ApplicationController
   # Results for one test, ranked by marks then time
   def show
     @results = @test_session.rankings
-    @in_progress_count = @test_session.test_attempts.in_progress.count
+    @test_session.test_attempts.in_progress.each(&:enforce_presence!) if @test_session.strict_mode?
+    @blocked_attempts = @test_session.test_attempts.blocked.includes(:user).order(:blocked_at)
+    @in_progress_count = @test_session.test_attempts.in_progress.not_blocked.count
     @total_participants = @results.size
     @class_average_marks = @results.any? ? (@results.sum(&:marks) / @results.size).round(2) : 0.0
     @class_average_pct = @results.any? ? (@results.sum(&:percentage) / @results.size).round(1) : 0.0
@@ -73,6 +75,16 @@ class TestSessionsController < ApplicationController
     else
       load_question_library
       render :edit, status: :unprocessable_entity
+    end
+  end
+
+  # POST /test_sessions/:id/reinstate  attempt_id=...
+  def reinstate
+    attempt = @test_session.test_attempts.find(params[:attempt_id])
+    if attempt.reinstate!
+      redirect_to test_session_path(@test_session), notice: "#{attempt.user.email_address} can continue the test."
+    else
+      redirect_to test_session_path(@test_session), alert: "That student is not blocked."
     end
   end
 
@@ -144,6 +156,6 @@ class TestSessionsController < ApplicationController
 
   def test_session_params
     params.require(:test_session).permit(:title, :exam_type, :duration_minutes, :pass_mark_percentage,
-                                         :access_type, :starts_at, :ends_at, question_ids: [])
+                                         :access_type, :starts_at, :ends_at, :strict_mode, question_ids: [])
   end
 end

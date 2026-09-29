@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_28_150100) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_29_100100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -219,6 +219,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_150100) do
     t.datetime "finished_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "last_seen_at"
+    t.integer "leave_count", default: 0, null: false
+    t.datetime "blocked_at"
+    t.string "block_reason"
+    t.index ["test_session_id", "blocked_at"], name: "index_test_attempts_on_test_session_id_and_blocked_at"
     t.index ["test_session_id"], name: "index_test_attempts_on_test_session_id"
     t.index ["token"], name: "index_test_attempts_on_token", unique: true
     t.index ["user_id", "test_session_id"], name: "index_test_attempts_on_user_id_and_test_session_id"
@@ -246,6 +251,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_150100) do
     t.string "access_type", default: "pin", null: false
     t.datetime "starts_at"
     t.datetime "ends_at"
+    t.boolean "strict_mode", default: false, null: false
     t.index ["pin_code"], name: "index_test_sessions_on_pin_code", unique: true
     t.index ["user_id"], name: "index_test_sessions_on_user_id"
   end
