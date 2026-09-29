@@ -67,6 +67,9 @@ Rails.application.routes.draw do
     post :regenerate_code, on: :member
   end
   resources :batches, except: [:show] # a teacher's saved groups of students
+  resources :teachers, only: :show     # public teacher profile
+  resources :ratings, only: [:create, :destroy]
+  resources :question_reports, only: [:index, :create, :update] # "Report a problem" on a question
   resources :memberships, only: [:create, :destroy] do
     patch :approve, on: :member
   end
@@ -87,6 +90,10 @@ Rails.application.routes.draw do
     resources :questions, except: [:show]
     resources :test_sessions, path: "tests", except: [:show]
     resources :logs, only: [:index]
+    resources :moderation, only: [:index] do
+      patch :hide_comment, on: :member
+      patch :unhide_comment, on: :member
+    end
   end
 
   get "up" => "rails/health#show", as: :rails_health_check

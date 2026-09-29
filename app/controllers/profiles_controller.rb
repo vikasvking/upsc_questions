@@ -6,6 +6,7 @@ class ProfilesController < ApplicationController
     @memberships = @user.memberships.includes(:institution).order(:created_at)
     @institutions = Institution.ordered.where.not(id: @memberships.map(&:institution_id))
     @consent = @user.guardian_consents.order(:consented_at).last if @user.minor?
+    @my_reports = @user.question_reports.includes(:question).order(created_at: :desc).limit(10)
   end
 
   def edit

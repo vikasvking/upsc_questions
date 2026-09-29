@@ -1,0 +1,10 @@
+<%# locals: summary (Rating::Summary), label (optional) %>
+<% if summary.shown? %>
+  <span class="inline-flex items-center gap-1 text-sm">
+    <span class="text-amber-500">★</span>
+    <span class="font-semibold text-slate-900 dark:text-white"><%= summary.stars_text %></span>
+    <span class="text-slate-500">(<%= pluralize(summary.count, "rating") %>)</span>
+  </span>
+<% elsif local_assigns[:show_empty] %>
+  <span class="text-xs text-slate-500"><%= summary.count.zero? ? "No ratings yet" : "Fewer than #{Rating::MIN_SHOWN} ratings so far" %></span>
+<% end %>

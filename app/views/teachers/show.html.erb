@@ -1,0 +1,63 @@
+<% card = "bg-white dark:bg-slate-900 rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-6" %>
+<div class="py-10 min-h-screen w-full">
+  <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 space-y-6">
+    <% if notice %><div class="rounded-xl bg-emerald-50 dark:bg-emerald-950/40 px-4 py-3 text-sm text-emerald-800 dark:text-emerald-300"><%= notice %></div><% end %>
+    <% if alert %><div class="rounded-xl bg-red-50 dark:bg-red-950/40 px-4 py-3 text-sm text-red-800 dark:text-red-300"><%= alert %></div><% end %>
+
+    <section class="<%= card %> flex flex-col sm:flex-row gap-5">
+      <div class="h-16 w-16 shrink-0 rounded-full bg-sky-100 dark:bg-sky-900 text-sky-800 dark:text-sky-100 grid place-items-center text-2xl font-semibold"><%= @teacher.display_name.first.upcase %></div>
+      <div class="space-y-2 min-w-0">
+        <h1 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white"><%= @teacher.display_name %></h1>
+        <p class="text-sm text-slate-500"><%= @teacher.subject_names.join(" · ").presence || "Teacher" %></p>
+        <% if @teacher.institutions.any? %>
+          <p class="text-sm text-slate-600 dark:text-slate-300">🏫 <%= @teacher.institutions.ordered.map(&:label).join(" · ") %></p>
+        <% end %>
+        <div class="flex flex-wrap gap-x-6 gap-y-1 pt-1">
+          <span class="text-sm"><span class="text-slate-500">Teacher rating:</span> <%= render "ratings/summary", summary: @summary, show_empty: true %></span>
+          <span class="text-sm"><span class="text-slate-500">Their tests:</span> <%= render "ratings/summary", summary: @tests_summary, show_empty: true %></span>
+        </div>
+        <% if @teacher.bio.present? %><p class="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-line pt-2"><%= @teacher.bio %></p><% end %>
+      </div>
+    </section>
+
+    <% if @can_rate %>
+      <%= render "ratings/form", kind: "teacher", id: @teacher.id, rating: @my_rating, title: "Rate #{@teacher.display_name}" %>
+    <% end %>
+
+    <section class="<%= card %> space-y-3">
+      <h2 class="font-semibold text-slate-900 dark:text-white">Tests you can take</h2>
+      <% if @tests.any? %>
+        <ul class="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
+          <% @tests.each do |t| %>
+            <li class="py-2.5 flex flex-wrap items-center justify-between gap-2">
+              <span class="flex flex-wrap items-center gap-1.5 min-w-0">
+                <%= kind_badge_for(t) %> <%= exam_chip(t.exam_type) %>
+                <%= link_to t.title, test_intro_dashboard_path(t), class: "font-medium text-slate-900 dark:text-white hover:underline" %>
+              </span>
+              <% if (s = @test_ratings[t.id]) %><%= render "ratings/summary", summary: s %><% end %>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p class="text-sm text-slate-500">No tests available to you from this teacher right now.</p>
+      <% end %>
+    </section>
+
+    <section class="<%= card %> space-y-3">
+      <h2 class="font-semibold text-slate-900 dark:text-white">What students say</h2>
+      <% if @comments.any? %>
+        <ul class="space-y-3">
+          <% @comments.each do |r| %>
+            <li class="text-sm">
+              <p class="text-amber-500"><%= "★" * r.stars %><span class="text-slate-300 dark:text-slate-700"><%= "★" * (5 - r.stars) %></span></p>
+              <p class="text-slate-700 dark:text-slate-300 whitespace-pre-line"><%= r.comment %></p>
+              <p class="text-xs text-slate-400">— <%= r.user.display_name.split.first %>, <%= time_ago_in_words(r.updated_at) %> ago</p>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p class="text-sm text-slate-500">No comments yet.</p>
+      <% end %>
+    </section>
+  </div>
+</div>

@@ -13,7 +13,10 @@
       <%= exam_chip(test.exam_type) %>
       <span class="truncate"><%= [subjects.presence&.join(", "), "#{test.duration_minutes} min"].compact.join(" · ") %></span>
     </div>
-    <p class="text-xs text-slate-400 mt-1">by <%= test.author_name %></p>
+    <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+      <p class="text-xs text-slate-400">by <%= test.user&.teacher? && test.user.approved? ? link_to(test.author_name, teacher_path(test.user), class: "hover:underline text-slate-500") : test.author_name %></p>
+      <% if @rating_summaries && (rs = @rating_summaries[test.id]) %><%= render "ratings/summary", summary: rs %><% end %>
+    </div>
   </div>
 
   <% primary = "self-start rounded-lg px-3.5 py-2 text-sm font-medium #{style[:button]}" %>

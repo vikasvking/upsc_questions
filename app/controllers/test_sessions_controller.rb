@@ -37,7 +37,9 @@ class TestSessionsController < ApplicationController
     @class_average_marks = @results.any? ? (@results.sum(&:marks) / @results.size).round(2) : 0.0
     @class_average_pct = @results.any? ? (@results.sum(&:percentage) / @results.size).round(1) : 0.0
     toppers = @results.select { |r| r.rank == 1 && r.marks.positive? }
-    @topper_email = toppers.any? ? toppers.map { |r| "#{r.user.email_address} (#{r.marks} marks)" }.join(", ") : "No submissions yet"
+    @topper_email = toppers.any? ? toppers.map { |r| "#{r.user.display_name} (#{r.marks} marks)" }.join(", ") : "No submissions yet"
+    @rating_summary = Rating.summary_for(@test_session)
+    @rating_comments = @test_session.ratings.with_visible_comment.includes(:user).newest_first.limit(20)
   end
 
   def new
@@ -90,7 +92,7 @@ class TestSessionsController < ApplicationController
   def reinstate
     attempt = @test_session.test_attempts.find(params[:attempt_id])
     if attempt.reinstate!
-      redirect_to test_session_path(@test_session), notice: "#{attempt.user.email_address} can continue the test."
+      redirect_to test_session_path(@test_session), notice: "#{attempt.user.display_name} can continue the test."
     else
       redirect_to test_session_path(@test_session), alert: "That student is not blocked."
     end
@@ -118,7 +120,7 @@ class TestSessionsController < ApplicationController
                   seconds_silent: a.last_seen_at && (now - a.last_seen_at).to_i)
     end
     order = { no_signal: 0, blocked: 1, opening: 2, writing: 3, submitted: 4 }
-    @live_rows.sort_by! { |r| [order[r.status], r.user.email_address] }
+    @live_rows.sort_by! { |r| [order[r.status], r.user.display_name.downcase] }
 
     @not_started = @test_session.test_pin_entries.includes(:user)
                                 .where.not(user_id: attempts.map(&:user_id)).order(:created_at).to_a

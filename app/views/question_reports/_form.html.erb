@@ -1,0 +1,11 @@
+<%# locals: question %>
+<details class="text-xs">
+  <summary class="cursor-pointer text-slate-500 hover:text-red-700 dark:hover:text-red-400 list-none">⚑ Report a problem</summary>
+  <%= form_with url: question_reports_path(question_id: question.id), class: "mt-2 space-y-2 rounded-xl ring-1 ring-slate-200 dark:ring-slate-800 p-3 bg-white dark:bg-slate-950" do %>
+    <%= select_tag "question_report[kind]", options_for_select(QuestionReport::KINDS.invert.to_a),
+          class: "block w-full rounded-lg border-0 py-1.5 px-2 ring-1 ring-inset ring-slate-200 dark:ring-slate-800 bg-white dark:bg-slate-950 text-xs text-slate-900 dark:text-white" %>
+    <%= text_area_tag "question_report[message]", nil, rows: 2, maxlength: 1000, placeholder: "What is wrong? (e.g. the answer should be C because…)",
+          class: "block w-full rounded-lg border-0 py-1.5 px-2 ring-1 ring-inset ring-slate-200 dark:ring-slate-800 bg-white dark:bg-slate-950 text-xs text-slate-900 dark:text-white" %>
+    <%= submit_tag "Send report", name: nil, class: "rounded-lg bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 text-white text-xs font-semibold px-3 py-1.5 cursor-pointer" %>
+  <% end %>
+</details>

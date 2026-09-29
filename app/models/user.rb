@@ -28,6 +28,9 @@ class User < ApplicationRecord
   has_many :batches, dependent: :destroy                 # a teacher's saved groups
   has_many :batch_members, dependent: :delete_all        # a student's places in batches
   has_many :audience_grants, as: :grantee, dependent: :delete_all
+  has_many :ratings, dependent: :delete_all                                   # ratings this student gave
+  has_many :received_ratings, as: :rateable, class_name: "Rating", dependent: :delete_all # a teacher's ratings
+  has_many :question_reports, dependent: :delete_all
 
   has_many :attempted_questions, -> { distinct }, through: :user_responses, source: :question
   enum :role, { student: 0, teacher: 1, admin: 2, sub_admin: 3 }, default: :student
@@ -84,6 +87,9 @@ class User < ApplicationRecord
   # ---------- email ----------
 
   def email_confirmed? = email_confirmed_at.present?
+
+  # Rating needs a confirmed email once email sending is switched on
+  def can_rate? = email_confirmed? || !Mailing.enabled?
 
   # ---------- exams and subjects ----------
 

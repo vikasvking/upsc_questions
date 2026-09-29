@@ -1,0 +1,47 @@
+<div class="py-8 sm:py-10">
+  <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 space-y-6">
+    <%= render "admin/shared/header", title: "Ratings & reports",
+          subtitle: "#{pluralize(@open_reports, "open report")}. Hide abusive rating comments (the stars still count) and answer reported problems on any question." %>
+
+    <div class="flex gap-2 text-sm">
+      <%= link_to "Reported problems", admin_moderation_index_path(tab: "reports"), class: "rounded-full px-3 py-1 font-medium #{@tab == "reports" ? "bg-brand-700 text-white" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"}" %>
+      <%= link_to "Rating comments", admin_moderation_index_path(tab: "ratings"), class: "rounded-full px-3 py-1 font-medium #{@tab == "ratings" ? "bg-brand-700 text-white" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"}" %>
+    </div>
+
+    <% if @tab == "reports" %>
+      <div class="flex gap-2 text-xs">
+        <% [[nil, "All"], ["open", "Open"], ["fixed", "Fixed"], ["dismissed", "No change needed"]].each do |value, label| %>
+          <%= link_to label, admin_moderation_index_path(tab: "reports", status: value), class: "rounded-full px-2.5 py-0.5 #{@status == value ? "bg-slate-800 text-white" : "ring-1 ring-slate-200 dark:ring-slate-800 text-slate-600 dark:text-slate-300"}" %>
+        <% end %>
+      </div>
+      <%= render "question_reports/list", reports: @reports, show_teacher: true %>
+    <% else %>
+      <label class="text-sm text-slate-600 dark:text-slate-300">
+        <%= link_to (params[:hidden] == "1" ? "Hide hidden comments" : "Show hidden comments too"), admin_moderation_index_path(tab: "ratings", hidden: (params[:hidden] == "1" ? nil : "1")), class: "underline" %>
+      </label>
+      <ul class="space-y-3">
+        <% @ratings.each do |r| %>
+          <li class="bg-white dark:bg-slate-900 rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-4 space-y-1">
+            <p class="text-xs text-slate-500">
+              <span class="text-amber-500"><%= "★" * r.stars %></span> ·
+              <%= r.rateable.is_a?(TestSession) ? "Test: #{r.rateable.title}" : "Teacher: #{r.rateable.display_name}" %> ·
+              by <%= r.user.display_name %> (<%= r.user.email_address %>) · <%= time_ago_in_words(r.updated_at) %> ago
+              <% if r.comment_hidden_at %> · <span class="text-red-700 dark:text-red-400 font-semibold">hidden</span><% end %>
+            </p>
+            <p class="text-sm text-slate-800 dark:text-slate-200 whitespace-pre-line"><%= r.comment %></p>
+            <% if r.comment_hidden_at %>
+              <%= button_to "Show again", unhide_comment_admin_moderation_path(r), method: :patch, class: "text-xs text-brand-700 dark:text-brand-300 cursor-pointer" %>
+            <% else %>
+              <%= form_with url: hide_comment_admin_moderation_path(r), method: :patch, class: "flex gap-2" do %>
+                <%= text_field_tag :reason, nil, placeholder: "Reason (optional)", class: "flex-1 rounded-lg border-0 py-1 px-2 ring-1 ring-inset ring-slate-200 dark:ring-slate-800 bg-white dark:bg-slate-950 text-xs" %>
+                <%= submit_tag "Hide comment", name: nil, class: "rounded-lg bg-red-700 hover:bg-red-800 text-white text-xs font-semibold px-3 py-1 cursor-pointer" %>
+              <% end %>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+      <% if @ratings.empty? %><p class="text-sm text-slate-500">No comments.</p><% end %>
+    <% end %>
+    <%= render "admin/shared/pager" %>
+  </div>
+</div>

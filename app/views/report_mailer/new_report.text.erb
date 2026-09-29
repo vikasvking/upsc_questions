@@ -1,0 +1,8 @@
+<%= @report.user.display_name %> reported a problem with your question in <%= @report.question.topic %>:
+
+"<%= @report.question.content.truncate(200) %>"
+
+Problem: <%= @report.kind_label %>
+<% if @report.message %>Details: <%= @report.message %>
+<% end %>
+Answer it on your reports page: <%= @url %>

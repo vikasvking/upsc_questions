@@ -13,7 +13,8 @@ class AdminLog < ApplicationRecord
     "delete_test" => "Deleted test", "approve_teacher" => "Approved teacher",
     "create_institution" => "Added institution", "update_institution" => "Changed institution",
     "delete_institution" => "Deleted institution", "merge_institution" => "Merged institutions",
-    "update_mail_settings" => "Changed email settings"
+    "update_mail_settings" => "Changed email settings",
+    "hide_rating_comment" => "Hid a rating comment", "unhide_rating_comment" => "Showed a rating comment again"
   }.freeze
 
   def self.record!(admin:, action:, record: nil, label: nil, reason: nil, details: {})

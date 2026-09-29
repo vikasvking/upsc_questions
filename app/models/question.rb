@@ -8,6 +8,7 @@ class Question < ApplicationRecord
   has_many :user_responses, dependent: :destroy
   has_many :test_questions, dependent: :destroy
   has_many :test_sessions, through: :test_questions
+  has_many :question_reports, dependent: :delete_all
 
   after_update :remark_saved_answers, if: :saved_change_to_correct_answer?
 

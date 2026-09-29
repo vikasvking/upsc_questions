@@ -15,6 +15,7 @@ class TestSession < ApplicationRecord
   has_many :questions, through: :test_questions
   has_many :test_attempts, dependent: :destroy
   has_many :test_pin_entries, dependent: :delete_all
+  has_many :ratings, as: :rateable, dependent: :delete_all
 
   normalizes :exam_type, with: ->(v) { Exam.normalize(v) || v.to_s.strip.upcase.presence }
 
@@ -69,7 +70,7 @@ class TestSession < ApplicationRecord
 
   # Shown instead of the teacher once their account is deleted
   def author_name
-    user ? user.email_address.split("@").first.capitalize : exam.name
+    user ? user.display_name : exam.name
   end
 
   # When editing stops for a test that has not locked yet (nil if there is no opening time)

@@ -1,0 +1,5 @@
+<p><strong><%= @report.user.display_name %></strong> reported a problem with your question in <%= @report.question.topic %>:</p>
+<blockquote><%= @report.question.content.truncate(200) %></blockquote>
+<p><strong>Problem:</strong> <%= @report.kind_label %></p>
+<% if @report.message %><p><strong>Details:</strong> <%= @report.message %></p><% end %>
+<p><%= link_to "Open your reports page", @url %></p>

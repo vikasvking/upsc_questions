@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_29_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_29_150000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -136,6 +136,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_140000) do
     t.index ["user_id"], name: "index_pending_signups_on_user_id"
   end
 
+  create_table "question_reports", force: :cascade do |t|
+    t.bigint "question_id", null: false
+    t.bigint "user_id", null: false
+    t.string "kind", null: false
+    t.text "message"
+    t.string "status", default: "open", null: false
+    t.text "response"
+    t.bigint "resolved_by_id"
+    t.datetime "resolved_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["question_id"], name: "index_question_reports_on_question_id"
+    t.index ["resolved_by_id"], name: "index_question_reports_on_resolved_by_id"
+    t.index ["status", "created_at"], name: "index_question_reports_on_status_and_created_at"
+    t.index ["user_id"], name: "index_question_reports_on_user_id"
+  end
+
   create_table "questions", force: :cascade do |t|
     t.integer "year"
     t.string "q_no"
@@ -156,6 +173,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_140000) do
     t.index ["institution_id"], name: "index_questions_on_institution_id"
     t.index ["user_id"], name: "index_questions_on_user_id"
     t.index ["visibility"], name: "index_questions_on_visibility"
+  end
+
+  create_table "ratings", force: :cascade do |t|
+    t.string "rateable_type", null: false
+    t.bigint "rateable_id", null: false
+    t.bigint "user_id", null: false
+    t.integer "stars", null: false
+    t.text "comment"
+    t.datetime "comment_hidden_at"
+    t.bigint "comment_hidden_by_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["comment_hidden_by_id"], name: "index_ratings_on_comment_hidden_by_id"
+    t.index ["rateable_type", "rateable_id", "user_id"], name: "index_ratings_one_per_student", unique: true
+    t.index ["rateable_type", "rateable_id"], name: "index_ratings_on_rateable_type_and_rateable_id"
+    t.index ["user_id"], name: "index_ratings_on_user_id"
   end
 
   create_table "sessions", force: :cascade do |t|
@@ -449,8 +482,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_140000) do
   add_foreign_key "memberships", "users", column: "approved_by_id", on_delete: :nullify
   add_foreign_key "memberships", "users", on_delete: :cascade
   add_foreign_key "pending_signups", "users", on_delete: :cascade
+  add_foreign_key "question_reports", "questions", on_delete: :cascade
+  add_foreign_key "question_reports", "users", column: "resolved_by_id", on_delete: :nullify
+  add_foreign_key "question_reports", "users", on_delete: :cascade
   add_foreign_key "questions", "institutions", on_delete: :nullify
   add_foreign_key "questions", "users", on_delete: :nullify
+  add_foreign_key "ratings", "users", column: "comment_hidden_by_id", on_delete: :nullify
+  add_foreign_key "ratings", "users", on_delete: :cascade
   add_foreign_key "sessions", "users"
   add_foreign_key "solid_queue_batch_executions", "solid_queue_batches", column: "batch_id", on_delete: :cascade
   add_foreign_key "solid_queue_batch_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade

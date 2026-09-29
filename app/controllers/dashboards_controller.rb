@@ -210,6 +210,7 @@ class DashboardsController < ApplicationController
   def load_card_data(tests)
     ids = tests.map(&:id)
     @my_attempts_by_test = Current.user.test_attempts.where(test_session_id: ids).index_by(&:test_session_id)
+    @rating_summaries = Rating.summaries("TestSession", ids)
 
     # My rank on each test I have submitted: { test_id => [rank, number of students] }
     @ranks_by_test = {}

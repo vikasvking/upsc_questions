@@ -22,6 +22,10 @@
       <p class="text-xs text-slate-500">Marks, your rank and the answer review appear here after the test closes for everyone.</p>
     </div>
 
+    <% if Rating.can_rate_test?(Current.user, test) %>
+      <div class="text-left"><%= render "ratings/form", kind: "test", id: test.id, rating: test.ratings.find_by(user: Current.user), title: "How was this test?" %></div>
+    <% end %>
+
     <%= link_to "Back to Dashboard", dashboard_path, class: "inline-block text-xs font-bold bg-brand-800 text-white px-4 py-2.5 rounded-xl hover:bg-brand-900 shadow-sm" %>
   </div>
 </div>

@@ -47,7 +47,7 @@
           <% @live_rows.each do |r| %>
             <% label, klass = badge.fetch(r.status) %>
             <tr>
-              <td class="px-4 py-3 font-semibold text-slate-800 dark:text-slate-200"><%= r.user.email_address %></td>
+              <td class="px-4 py-3 font-semibold text-slate-800 dark:text-slate-200" title="<%= r.user.email_address %>"><%= r.user.display_name %></td>
               <td class="px-3 py-3">
                 <span class="inline-block px-2 py-0.5 rounded-full font-semibold <%= klass %>"><%= label %></span>
                 <% if r.status == :no_signal %>
@@ -66,7 +66,7 @@
               <td class="px-4 py-3 text-right">
                 <% if r.status == :blocked %>
                   <%= button_to "Reinstate", reinstate_test_session_path(@test_session, attempt_id: r.attempt.id), method: :post,
-                                form: { data: { turbo_frame: "_top", turbo_confirm: "Let #{r.user.email_address} continue this test?" } },
+                                form: { data: { turbo_frame: "_top", turbo_confirm: "Let #{r.user.display_name} continue this test?" } },
                                 class: "rounded-lg bg-brand-800 hover:bg-brand-900 text-white font-bold text-xs px-3 py-1.5 cursor-pointer" %>
                 <% end %>
               </td>
@@ -74,7 +74,7 @@
           <% end %>
           <% @not_started.each do |entry| %>
             <tr>
-              <td class="px-4 py-3 font-semibold text-slate-800 dark:text-slate-200"><%= entry.user.email_address %></td>
+              <td class="px-4 py-3 font-semibold text-slate-800 dark:text-slate-200" title="<%= entry.user.email_address %>"><%= entry.user.display_name %></td>
               <td class="px-3 py-3" colspan="5">
                 <span class="inline-block px-2 py-0.5 rounded-full font-semibold bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">⏳ Not started</span>
                 <span class="text-slate-400">entered the PIN at <%= l(entry.created_at, format: "%H:%M") %></span>

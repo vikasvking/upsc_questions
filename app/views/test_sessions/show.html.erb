@@ -65,12 +65,12 @@
             <tbody class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-700 dark:text-slate-400">
               <% @blocked_attempts.each do |a| %>
                 <tr>
-                  <td class="px-4 py-3.5 font-semibold text-slate-800 dark:text-slate-200"><%= a.user.email_address %></td>
+                  <td class="px-4 py-3.5 font-semibold text-slate-800 dark:text-slate-200" title="<%= a.user.email_address %>"><%= a.user.display_name %></td>
                   <td class="px-4 py-3.5"><%= a.block_reason %></td>
                   <td class="px-3 py-3.5 text-center"><%= l(a.blocked_at, format: :short) %></td>
                   <td class="px-4 py-3.5 text-right">
                     <%= button_to "Reinstate", reinstate_test_session_path(@test_session, attempt_id: a.id), method: :post,
-                                  data: { turbo_confirm: "Let #{a.user.email_address} continue this test?" },
+                                  data: { turbo_confirm: "Let #{a.user.display_name} continue this test?" },
                                   class: "rounded-lg bg-brand-800 hover:bg-brand-900 text-white font-bold text-xs px-3 py-1.5 cursor-pointer" %>
                   </td>
                 </tr>
@@ -80,6 +80,21 @@
         </div>
       </div>
     <% end %>
+
+    <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+      <div class="flex flex-wrap items-baseline justify-between gap-2">
+        <h3 class="text-base font-semibold text-slate-900 dark:text-white">Students' ratings</h3>
+        <span class="text-sm"><%= @rating_summary.count.positive? ? "★ #{@rating_summary.stars_text} from #{pluralize(@rating_summary.count, "student")}" : "No ratings yet" %></span>
+      </div>
+      <% if @rating_comments.any? %>
+        <ul class="space-y-2 text-sm">
+          <% @rating_comments.each do |r| %>
+            <li><span class="text-amber-500"><%= "★" * r.stars %></span> <span class="text-slate-700 dark:text-slate-300"><%= r.comment %></span> <span class="text-xs text-slate-400">— <%= r.user.display_name %></span></li>
+          <% end %>
+        </ul>
+      <% end %>
+      <p class="text-xs text-slate-400">Students see the average on the test card once <%= Rating::MIN_SHOWN %> have rated.</p>
+    </div>
 
     <div class="space-y-4">
       <div>
@@ -105,7 +120,7 @@
               <% @results.each do |r| %>
                 <tr>
                   <td class="px-4 py-3.5 font-bold font-mono text-slate-900 dark:text-white"><%= r.rank <= 3 ? %w[🥇 🥈 🥉][r.rank - 1] : "##{r.rank}" %></td>
-                  <td class="px-4 py-3.5 font-semibold text-slate-800 dark:text-slate-200"><%= r.user.email_address %></td>
+                  <td class="px-4 py-3.5 font-semibold text-slate-800 dark:text-slate-200" title="<%= r.user.email_address %>"><%= r.user.display_name %></td>
                   <td class="px-3 py-3.5 text-center font-mono"><%= r.correct %> / <%= r.wrong %> / <%= r.skipped + r.unattempted %></td>
                   <td class="px-3 py-3.5 text-center font-semibold text-slate-900 dark:text-white font-mono"><%= marks_text(r.marks) %> / <%= marks_text(r.max_marks) %></td>
                   <td class="px-3 py-3.5 text-center font-mono"><%= duration_text(r.time_taken) %></td>

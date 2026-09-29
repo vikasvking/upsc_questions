@@ -76,6 +76,21 @@
       <% end %>
     </section>
 
+    <% if @my_reports.any? %>
+      <section class="<%= card %> space-y-3">
+        <h2 class="font-semibold text-slate-900 dark:text-white">Problems I reported</h2>
+        <ul class="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
+          <% @my_reports.each do |r| %>
+            <li class="py-2.5 space-y-0.5">
+              <p class="text-slate-900 dark:text-white"><%= r.question.content.truncate(120) %></p>
+              <p class="text-xs text-slate-500"><%= r.kind_label %> · <%= time_ago_in_words(r.created_at) %> ago · <span class="font-semibold <%= r.open? ? "text-amber-700 dark:text-amber-400" : "text-emerald-700 dark:text-emerald-400" %>"><%= r.status_label %></span></p>
+              <% if r.response %><p class="text-xs text-slate-600 dark:text-slate-300">Teacher's reply: <%= r.response %></p><% end %>
+            </li>
+          <% end %>
+        </ul>
+      </section>
+    <% end %>
+
     <% unless @user.staff? %>
       <section class="<%= card %> space-y-4">
         <div class="flex items-baseline justify-between">
