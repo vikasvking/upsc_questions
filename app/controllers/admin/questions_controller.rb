@@ -12,6 +12,8 @@ class Admin::QuestionsController < Admin::BaseController
     scope = scope.where(topic: @topic) if @topic
     scope = @teacher == "none" ? scope.where(user_id: nil) : scope.where(user_id: @teacher) if @teacher
     scope = scope.where("content ILIKE ?", "%#{Question.sanitize_sql_like(params[:q].strip)}%") if params[:q].present?
+    scope = scope.where(free_sample: true) if params[:free] == "1"
+    @free_count = Question.where(free_sample: true).count
 
     @topics   = Question.where.not(topic: [nil, ""]).distinct.order(:topic).pluck(:topic)
     @teachers = User.where(id: Question.select(:user_id)).order(:email_address)
@@ -89,7 +91,9 @@ class Admin::QuestionsController < Admin::BaseController
   end
 
   def question_params
-    params.require(:question).permit(:exam_type, :year, :topic, :content, :option_a, :option_b, :option_c, :option_d, :correct_answer, :explanation,
-                                     :visibility, :institution_id)
+    keys = [:exam_type, :year, :topic, :content, :option_a, :option_b, :option_c, :option_d, :correct_answer, :explanation,
+            :visibility, :institution_id]
+    keys << :free_sample if Current.user.admin? # only admins pick the free sample questions
+    params.require(:question).permit(*keys)
   end
 end

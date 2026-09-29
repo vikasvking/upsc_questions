@@ -140,7 +140,8 @@ class Admin::UsersController < Admin::BaseController
   end
 
   def user_params
-    keys = [:name, :email_address, :role, :password, :password_confirmation, :date_of_birth, :bio, :approved, { permissions: [] }]
+    keys = [:name, :email_address, :role, :password, :password_confirmation, :date_of_birth, :bio, :approved,
+            :membership_tier, :tier_until, { permissions: [] }]
     permitted = params.require(:user).permit(*keys)
 
     permitted.delete(:role) unless assignable_roles.include?(permitted[:role].to_s)
@@ -148,6 +149,10 @@ class Admin::UsersController < Admin::BaseController
       permitted[:approved_at] = permitted.delete(:approved) == "1" ? (@user&.approved_at || Time.current) : nil
     end
     permitted[:permissions] = Array(permitted[:permissions]) & User::ADMIN_AREAS.keys if permitted.key?(:permissions)
+    if permitted.key?(:membership_tier) # a tier set here counts as set by the admin (until payments do it)
+      permitted[:tier_source] = permitted[:membership_tier] == "free" ? nil : "admin"
+      permitted[:tier_until] = permitted[:tier_until].presence
+    end
     # Only teachers can be sub-admins
     permitted[:permissions] = [] if permitted.key?(:permissions) && (permitted[:role] || @user&.role || "student") != "teacher"
     permitted

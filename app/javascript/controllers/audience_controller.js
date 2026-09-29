@@ -9,7 +9,8 @@ export default class extends Controller {
   toggle() {
     const checked = this.element.querySelector("input[type=radio]:checked")
     const value = checked ? checked.value : "public"
-    this.show(this.institutionTarget, value === "institution")
+    const showFor = (this.institutionTarget.dataset.showFor || "institution").split(" ")
+    this.show(this.institutionTarget, showFor.includes(value))
     this.show(this.selectedTarget, value === "selected")
   }
 

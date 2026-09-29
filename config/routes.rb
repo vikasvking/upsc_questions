@@ -68,6 +68,7 @@ Rails.application.routes.draw do
   end
   resources :batches, except: [:show] # a teacher's saved groups of students
   resources :teachers, only: :show     # public teacher profile
+  get "membership", to: "tiers#show", as: :membership # a student's tier: Free, Plus or Warrior
   resources :ratings, only: [:create, :destroy]
   resources :question_reports, only: [:index, :create, :update] # "Report a problem" on a question
   resources :memberships, only: [:create, :destroy] do
@@ -86,7 +87,9 @@ Rails.application.routes.draw do
     resources :institutions, except: [:show] do
       post :merge, on: :member
       post :regenerate_code, on: :member
+      patch :subscription, on: :member
     end
+    resources :plans, except: [:show, :destroy]
     resource :mail_settings, only: [:edit, :update] do
       post :send_test, on: :member
     end

@@ -1,0 +1,36 @@
+<div class="py-8 sm:py-10">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-6">
+    <%= render "admin/shared/header", title: "Plans",
+          subtitle: "Prices and limits. School plans give their students Plus; student plans (Warrior) are bought by students. Changing a plan applies to every school on it.",
+          action: capture { link_to("+ School plan", new_admin_plan_path(kind: "school"), class: "rounded-lg bg-brand-700 hover:bg-brand-800 text-white text-sm font-medium px-4 py-2") + " ".html_safe + link_to("+ Student plan", new_admin_plan_path(kind: "student"), class: "rounded-lg ring-1 ring-slate-200 dark:ring-slate-800 text-sm font-medium px-4 py-2 text-slate-700 dark:text-slate-300") } %>
+
+    <% Plan::KINDS.each do |kind, kind_label| %>
+      <% plans = @plans.select { |p| p.kind == kind } %>
+      <section class="space-y-3">
+        <h2 class="font-semibold text-slate-900 dark:text-white"><%= kind_label.pluralize %></h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <% plans.each do |p| %>
+            <% in_use = @school_counts.select { |(pid, _), _| pid == p.id } %>
+            <div class="bg-white dark:bg-slate-900 rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-5 space-y-2 <%= "opacity-60" unless p.active? %>">
+              <div class="flex items-baseline justify-between gap-2">
+                <h3 class="font-semibold text-slate-900 dark:text-white"><%= p.name %></h3>
+                <% unless p.active? %><span class="text-xs text-slate-500">not offered</span><% end %>
+              </div>
+              <p class="text-2xl font-semibold text-slate-900 dark:text-white">₹<%= number_with_delimiter(p.price_month_inr) %><span class="text-sm font-normal text-slate-500">/month</span></p>
+              <p class="text-xs text-slate-500">₹<%= number_with_delimiter(p.price_year_inr) %>/year<%= " · ₹#{p.price_month_upgrade_inr}/month for Plus students" if p.price_month_upgrade_inr %></p>
+              <p class="text-sm text-slate-700 dark:text-slate-300"><%= p.limits_text %></p>
+              <% if p.school? %>
+                <p class="text-xs text-slate-500">Students get <%= Tiers.label(p.member_tier) %> · <%= p.member_max_exams || Tiers::DEFAULT_PLUS_EXAMS %> exams each</p>
+                <p class="text-xs text-slate-500"><%= in_use.map { |(_, status), n| "#{n} #{Institution::SUBSCRIPTION_STATUSES[status].downcase}" }.join(" · ").presence || "No schools yet" %></p>
+              <% else %>
+                <p class="text-xs text-slate-500">Gives <%= Tiers.label(p.member_tier) %></p>
+              <% end %>
+              <%= link_to "Edit", edit_admin_plan_path(p), class: "text-sm font-medium text-brand-700 dark:text-brand-300" %>
+            </div>
+          <% end %>
+        </div>
+        <% if plans.empty? %><p class="text-sm text-slate-500">None yet.</p><% end %>
+      </section>
+    <% end %>
+  </div>
+</div>

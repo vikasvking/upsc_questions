@@ -18,8 +18,12 @@ class MembershipsController < ApplicationController
     if m.approved?
       redirect_to profile_path, notice: "You are already a member of #{institution.name}."
     elsif code.present?
-      m.approve!
-      redirect_to profile_path, notice: "You joined #{institution.name}."
+      begin
+        m.approve!
+        redirect_to profile_path, notice: "You joined #{institution.name}."
+      rescue Membership::LimitReached => e
+        redirect_to profile_path, alert: "#{e.message} Your request is saved and can be approved when there is room."
+      end
     else
       redirect_to profile_path, notice: "Request sent. A teacher at #{institution.name} will approve it."
     end
@@ -30,7 +34,11 @@ class MembershipsController < ApplicationController
     unless can_manage_institution?(@membership.institution)
       return redirect_back(fallback_location: root_path, alert: "Only a sub-admin of #{@membership.institution.name} (or an admin) can approve requests.")
     end
-    @membership.approve!(by: Current.user)
+    begin
+      @membership.approve!(by: Current.user)
+    rescue Membership::LimitReached => e
+      return redirect_back(fallback_location: root_path, alert: e.message)
+    end
     # approving a new teacher's request also approves the teacher account
     if @membership.user.pending_teacher?
       @membership.user.update_column(:approved_at, Time.current)

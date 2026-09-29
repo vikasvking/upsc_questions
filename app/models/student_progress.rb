@@ -24,7 +24,7 @@ class StudentProgress
   # Only questions this student may see; optionally only some exams (their own by default on the pages)
   def initialize(user, exams: nil)
     @user = user
-    @questions = Question.visible_to(user)
+    @questions = Question.available_to(user)
     @questions = @questions.where(exam_type: exams) if exams.present?
   end
 

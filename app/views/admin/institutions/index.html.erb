@@ -13,7 +13,7 @@
     <div class="overflow-x-auto rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 bg-white dark:bg-slate-900">
       <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-sm">
         <thead class="text-left text-xs text-slate-500">
-          <tr><th class="px-4 py-3 font-medium">Name</th><th class="px-4 py-3 font-medium text-center">Teachers</th><th class="px-4 py-3 font-medium text-center">Students</th><th class="px-4 py-3 font-medium text-center">Requests</th><th class="px-4 py-3 font-medium">Join code</th><th class="px-4 py-3"></th></tr>
+          <tr><th class="px-4 py-3 font-medium">Name</th><th class="px-4 py-3 font-medium text-center">Teachers</th><th class="px-4 py-3 font-medium text-center">Students</th><th class="px-4 py-3 font-medium text-center">Requests</th><th class="px-4 py-3 font-medium">Plan</th><th class="px-4 py-3 font-medium">Join code</th><th class="px-4 py-3"></th></tr>
         </thead>
         <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
           <% @institutions.each do |i| %>
@@ -22,11 +22,12 @@
               <td class="px-4 py-3 text-center"><%= @member_counts[[i.id, User.roles["teacher"]]].to_i + @member_counts[[i.id, "teacher"]].to_i %></td>
               <td class="px-4 py-3 text-center"><%= @member_counts[[i.id, User.roles["student"]]].to_i + @member_counts[[i.id, "student"]].to_i %></td>
               <td class="px-4 py-3 text-center"><%= @pending_counts[i.id].to_i %></td>
+              <td class="px-4 py-3 text-xs"><%= i.plan&.name || "—" %> <span class="<%= i.subscribed? ? "text-emerald-700 dark:text-emerald-400" : "text-slate-500" %>">· <%= i.subscription_label %></span></td>
               <td class="px-4 py-3 font-mono"><%= i.join_code %></td>
               <td class="px-4 py-3 text-right"><%= link_to "Edit", edit_admin_institution_path(i), class: "text-brand-700 dark:text-brand-300 font-medium" %></td>
             </tr>
           <% end %>
-          <% if @institutions.empty? %><tr><td colspan="6" class="px-4 py-10 text-center text-slate-400">None yet.</td></tr><% end %>
+          <% if @institutions.empty? %><tr><td colspan="7" class="px-4 py-10 text-center text-slate-400">None yet.</td></tr><% end %>
         </tbody>
       </table>
     </div>

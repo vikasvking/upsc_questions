@@ -69,7 +69,11 @@ class SignupForm
       inst = Institution.find(data[:id])
       approved = data[:join_code].present? && data[:join_code].to_s.strip.upcase == inst.join_code
       m = user.memberships.find_or_create_by!(institution: inst)
-      m.approve! if approved && m.pending?
+      begin
+        m.approve! if approved && m.pending?
+      rescue Membership::LimitReached
+        nil # the school is full: the request stays pending for a sub-admin or admin
+      end
     elsif data[:new_name].present?
       inst = Institution.create!(name: data[:new_name], kind: data[:new_kind], city: data[:new_city], created_by: user)
       user.memberships.create!(institution: inst).approve!

@@ -42,6 +42,7 @@ class User < ApplicationRecord
   validates :name, length: { maximum: 80 }
   validates :bio, length: { maximum: 1000 }
   validates :target_exam, inclusion: { in: Exam.codes }, allow_nil: true
+  validates :membership_tier, inclusion: { in: Tiers::NAMES.keys }
   validate  :only_teachers_have_admin_areas
   validate  :password_is_strong, if: -> { password.present? }
   validate  :email_can_receive_mail, if: :will_save_change_to_email_address?
@@ -76,6 +77,44 @@ class User < ApplicationRecord
   end
 
   def display_name = name.presence || email_address.split("@").first.capitalize
+
+  # ---------- membership tier (students) ----------
+
+  # The student's own tier (paid or set by an admin), until its end date
+  def own_tier
+    tier_until.nil? || tier_until >= Date.current ? membership_tier : "free"
+  end
+
+  def subscribed_institutions = institutions.includes(:plan).select(&:subscribed?)
+
+  # What the student's schools give them while their plans are active
+  def school_tier
+    subscribed_institutions.map(&:member_tier).compact.max_by { |t| Tiers::RANK[t].to_i }
+  end
+
+  # Teachers and admins are never limited
+  def tier
+    return "warrior" unless student?
+    @tier ||= Tiers.higher(own_tier, school_tier || "free")
+  end
+
+  def free_tier? = tier == "free"
+
+  # Exams whose public tests and practice this student can use (school tests are always open to them)
+  def allowed_exam_codes
+    case tier
+    when "warrior" then Exam.codes
+    when "plus"
+      limit = subscribed_institutions.filter_map { |i| i.plan.member_max_exams }.max || Tiers::DEFAULT_PLUS_EXAMS
+      exam_codes.first(limit)
+    else []
+    end
+  end
+
+  def reload(*)
+    @tier = nil
+    super
+  end
 
   # Students a teacher can pick for "selected" tests and batches: those at the teacher's institutions
   def reachable_students

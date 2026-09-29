@@ -5,12 +5,14 @@ one:
   role: student
   name: Student One
   date_of_birth: 2000-01-01
+  membership_tier: warrior # most tests use a fully unlocked student; tiers are tested separately
 two:
   email_address: two@example.com
   password_digest: <%= password_digest %>
   role: student
   name: Student Two
   date_of_birth: 2001-02-02
+  membership_tier: warrior
 teacher:
   email_address: teacher@example.com
   password_digest: <%= password_digest %>

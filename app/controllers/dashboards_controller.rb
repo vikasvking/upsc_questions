@@ -11,7 +11,7 @@ class DashboardsController < ApplicationController
   def show
     if params[:topic].present?
       @topic = params[:topic]
-      @total_q_count = Question.visible_to(Current.user).where(topic: @topic).count
+      @total_q_count = Question.available_to(Current.user).where(topic: @topic).count
       @resume_attempt = Current.user.test_attempts.in_progress.find_by(topic: @topic, test_session_id: nil)
       render :test_confirmation
       return
@@ -28,7 +28,7 @@ class DashboardsController < ApplicationController
 
     # Only the 3 newest tests that are live or opening soon; the rest are on "All Tests"
     # (only tests this student may see, for their exams)
-    latest = TestSession.visible_to(Current.user).includes(:user, :institution, :audience_grants)
+    latest = TestSession.available_to(Current.user).includes(:user, :institution, :audience_grants)
                         .where("test_sessions.ends_at IS NULL OR test_sessions.ends_at > ?", Time.current)
     latest = latest.where(exam_type: Current.user.exam_codes) if Current.user.exam_codes.any?
     @latest_tests = latest.newest_first.limit(3).to_a
@@ -37,7 +37,7 @@ class DashboardsController < ApplicationController
 
   # GET /dashboard/all_tests?exam=mine|all|UPSC_PRELIMS&subject=Physics&institution=3&teacher=7
   def all_tests
-    visible = TestSession.visible_to(Current.user)
+    visible = TestSession.available_to(Current.user)
     my_exams = Current.user.exam_codes
     @exam_choice = params[:exam].presence || (my_exams.any? ? "mine" : "all")
     @exam    = Exam.normalize(@exam_choice)
@@ -75,8 +75,8 @@ class DashboardsController < ApplicationController
 
   # GET /dashboard/tests/:id -> rules page for a teacher test
   def test_intro
-    @test_session = TestSession.visible_to(Current.user).find_by(id: params[:id])
-    return redirect_to(all_tests_dashboard_path, alert: "That test is not available to you.") unless @test_session
+    @test_session = TestSession.available_to(Current.user).find_by(id: params[:id])
+    return redirect_to(all_tests_dashboard_path, alert: not_available_message) unless @test_session
     @existing_attempt = Current.user.test_attempts.find_by(test_session: @test_session)
     @existing_attempt&.enforce_presence!
 
@@ -92,8 +92,8 @@ class DashboardsController < ApplicationController
   # POST /dashboard/start_test (topic=... OR test_session_id=...)
   def start_test
     if params[:test_session_id].present?
-      test = TestSession.visible_to(Current.user).find_by(id: params[:test_session_id])
-      return redirect_to(all_tests_dashboard_path, alert: "That test is not available to you.") unless test
+      test = TestSession.available_to(Current.user).find_by(id: params[:test_session_id])
+      return redirect_to(all_tests_dashboard_path, alert: not_available_message) unless test
       start_teacher_test(test)
     else
       start_practice(params[:topic].to_s)
@@ -206,6 +206,12 @@ class DashboardsController < ApplicationController
     end
   end
 
+  def upgrade_hint = "Join your school's plan (Plus) or become a Warrior to unlock more."
+
+  def not_available_message
+    Current.user.free_tier? ? "Free members can take the #{Tiers::FREE_SAMPLE_TESTS} sample tests. #{upgrade_hint}" : "That test is not available to you."
+  end
+
   # Attempts and subject names for a list of test cards (2 queries in total)
   def load_card_data(tests)
     ids = tests.map(&:id)
@@ -233,7 +239,11 @@ class DashboardsController < ApplicationController
   # ---------- starting ----------
 
   def start_practice(topic)
-    if topic.blank? || !Question.visible_to(Current.user).exists?(topic: topic)
+    if Current.user.free_tier?
+      redirect_to question_bank_path, alert: "Free members practise the #{Tiers::FREE_SAMPLE_QUESTIONS} sample questions in the Question Bank. #{upgrade_hint}"
+      return
+    end
+    if topic.blank? || !Question.available_to(Current.user).exists?(topic: topic)
       redirect_to dashboard_path, alert: "That topic has no questions."
       return
     end
@@ -394,7 +404,7 @@ class DashboardsController < ApplicationController
   def set_global_dashboard_metrics
     @current_streak_count = calculate_active_streak
     responses = Current.user.user_responses
-    total_platform_questions = Question.visible_to(Current.user).count
+    total_platform_questions = Question.available_to(Current.user).count
     @bank_total = total_platform_questions
 
     @lifetime_correct_count = responses.where(is_correct: true).distinct.count(:question_id)

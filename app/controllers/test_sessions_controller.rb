@@ -163,7 +163,7 @@ class TestSessionsController < ApplicationController
   end
 
   def verify_pin
-    match = TestSession.visible_to(Current.user).find_by(pin_code: params[:pin_code].to_s.strip.upcase)
+    match = TestSession.available_to(Current.user).find_by(pin_code: params[:pin_code].to_s.strip.upcase)
 
     if match && match.questions.exists?
       session[:unlocked_test_ids] = (Array(session[:unlocked_test_ids]) | [match.id]).last(50)

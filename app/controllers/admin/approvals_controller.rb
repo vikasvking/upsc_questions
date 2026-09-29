@@ -28,8 +28,13 @@ class Admin::ApprovalsController < Admin::BaseController
     # their requests at the approver's institutions are approved too
     scope = teacher.memberships.pending
     scope = scope.where(institution_id: ids) unless ids.nil?
-    scope.each { |m| m.approve!(by: Current.user) }
+    full = []
+    scope.each do |m|
+      m.approve!(by: Current.user)
+    rescue Membership::LimitReached => e
+      full << e.message
+    end
     log!("approve_teacher", record: teacher, label: teacher.email_address)
-    redirect_to admin_approvals_path, notice: "#{teacher.display_name} can now create tests and questions."
+    redirect_to admin_approvals_path, notice: "#{teacher.display_name} can now create tests and questions.", alert: full.presence&.join(" ")
   end
 end

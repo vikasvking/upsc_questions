@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_29_160000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_29_170000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -80,9 +80,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_160000) do
     t.bigint "created_by_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "plan_id"
+    t.string "subscription_status", default: "none", null: false
+    t.date "subscription_started_on"
+    t.date "subscription_renews_on"
+    t.integer "override_max_students"
+    t.integer "override_max_teachers"
+    t.integer "override_max_tests_per_month"
+    t.text "billing_notes"
+    t.string "payment_reference"
     t.index "lower((name)::text), lower((COALESCE(city, ''::character varying))::text)", name: "index_institutions_on_name_and_city", unique: true
     t.index ["created_by_id"], name: "index_institutions_on_created_by_id"
     t.index ["join_code"], name: "index_institutions_on_join_code", unique: true
+    t.index ["plan_id"], name: "index_institutions_on_plan_id"
   end
 
   create_table "leaderboard_snapshots", force: :cascade do |t|
@@ -136,6 +146,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_160000) do
     t.index ["user_id"], name: "index_pending_signups_on_user_id"
   end
 
+  create_table "plans", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "kind", default: "school", null: false
+    t.integer "price_month_inr", default: 0, null: false
+    t.integer "price_year_inr", default: 0, null: false
+    t.integer "price_month_upgrade_inr"
+    t.integer "max_students"
+    t.integer "max_teachers"
+    t.integer "max_tests_per_month"
+    t.string "member_tier", default: "plus"
+    t.integer "member_max_exams", default: 2
+    t.boolean "active", default: true, null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_plans_on_name", unique: true
+  end
+
   create_table "question_reports", force: :cascade do |t|
     t.bigint "question_id", null: false
     t.bigint "user_id", null: false
@@ -170,6 +198,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_160000) do
     t.bigint "user_id"
     t.string "visibility", default: "public", null: false
     t.bigint "institution_id"
+    t.boolean "free_sample", default: false, null: false
+    t.index ["free_sample"], name: "index_questions_on_free_sample"
     t.index ["institution_id"], name: "index_questions_on_institution_id"
     t.index ["user_id"], name: "index_questions_on_user_id"
     t.index ["visibility"], name: "index_questions_on_visibility"
@@ -425,6 +455,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_160000) do
     t.boolean "strict_mode", default: false, null: false
     t.string "visibility", default: "public", null: false
     t.bigint "institution_id"
+    t.boolean "free_sample", default: false, null: false
+    t.index ["free_sample"], name: "index_test_sessions_on_free_sample"
     t.index ["institution_id"], name: "index_test_sessions_on_institution_id"
     t.index ["pin_code"], name: "index_test_sessions_on_pin_code", unique: true
     t.index ["user_id"], name: "index_test_sessions_on_user_id"
@@ -468,6 +500,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_160000) do
     t.datetime "approved_at"
     t.datetime "email_confirmed_at"
     t.jsonb "permissions", default: [], null: false
+    t.string "membership_tier", default: "free", null: false
+    t.date "tier_until"
+    t.string "tier_source"
+    t.string "payment_reference"
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
   end
 
@@ -477,6 +513,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_160000) do
   add_foreign_key "batches", "institutions", on_delete: :nullify
   add_foreign_key "batches", "users", on_delete: :cascade
   add_foreign_key "guardian_consents", "users", on_delete: :cascade
+  add_foreign_key "institutions", "plans", on_delete: :nullify
   add_foreign_key "institutions", "users", column: "created_by_id", on_delete: :nullify
   add_foreign_key "memberships", "institutions", on_delete: :cascade
   add_foreign_key "memberships", "users", column: "approved_by_id", on_delete: :nullify

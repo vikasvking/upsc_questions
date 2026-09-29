@@ -5,6 +5,30 @@
           action: capture { tag.span("Join code ", class: "text-sm text-slate-500") + tag.span(@institution.join_code, class: "font-mono font-bold text-lg text-brand-800 dark:text-brand-300 bg-brand-50 dark:bg-brand-950/40 px-3 py-1 rounded-lg select-all") + button_to("New code", regenerate_code_admin_institution_path(@institution), method: :post, form_class: "inline ml-2", data: { turbo_confirm: "The old code will stop working." }, class: "text-xs text-slate-500 hover:text-brand-700 cursor-pointer") } %>
     <%= render "admin/institutions/form" %>
 
+    <section class="bg-white dark:bg-slate-900 rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-6 space-y-4">
+      <h2 class="font-semibold text-slate-900 dark:text-white">Plan and usage</h2>
+      <%= render "shared/usage_bars", institution: @institution %>
+      <% if Current.user.admin? %>
+        <% input = "mt-1 block w-full rounded-xl border-0 py-2 px-3 bg-white dark:bg-slate-950 ring-1 ring-inset ring-slate-200 dark:ring-slate-800 text-sm text-slate-900 dark:text-white" %>
+        <% label = "block text-xs font-bold text-slate-500" %>
+        <%= form_with model: @institution, url: subscription_admin_institution_path(@institution), method: :patch, class: "grid grid-cols-1 sm:grid-cols-4 gap-3 pt-3 border-t border-slate-100 dark:border-slate-800" do |f| %>
+          <div class="sm:col-span-2"><%= f.label :plan_id, "Plan", class: label %><%= f.select :plan_id, Plan.for_schools.ordered.map { |p| ["#{p.name} · ₹#{p.price_month_inr}/month#{" (not offered)" unless p.active?}", p.id] }, { include_blank: "No plan" }, class: input %></div>
+          <div><%= f.label :subscription_status, "Status", class: label %><%= f.select :subscription_status, Institution::SUBSCRIPTION_STATUSES.invert.to_a, {}, class: input %></div>
+          <div><%= f.label :payment_reference, "Payment reference", class: label %><%= f.text_field :payment_reference, placeholder: "later: Razorpay id", class: input %></div>
+          <div><%= f.label :subscription_started_on, "Started", class: label %><%= f.date_field :subscription_started_on, class: input %></div>
+          <div><%= f.label :subscription_renews_on, "Renews / ends", class: label %><%= f.date_field :subscription_renews_on, class: input %></div>
+          <div class="sm:col-span-2 grid grid-cols-3 gap-2">
+            <div><%= f.label :override_max_students, "Students (deal)", class: label %><%= f.number_field :override_max_students, min: 0, placeholder: @institution.plan&.max_students, class: input %></div>
+            <div><%= f.label :override_max_teachers, "Teachers (deal)", class: label %><%= f.number_field :override_max_teachers, min: 0, placeholder: @institution.plan&.max_teachers, class: input %></div>
+            <div><%= f.label :override_max_tests_per_month, "Tests/month (deal)", class: label %><%= f.number_field :override_max_tests_per_month, min: 0, placeholder: @institution.plan&.max_tests_per_month, class: input %></div>
+          </div>
+          <div class="sm:col-span-4"><%= f.label :billing_notes, "Notes (payments, contact person…)", class: label %><%= f.text_area :billing_notes, rows: 2, class: input %></div>
+          <p class="sm:col-span-4 text-xs text-slate-500">Only Free trial and Active give students Plus and let teachers publish tests for this school. Empty "deal" boxes use the plan's numbers.</p>
+          <%= f.submit "Save plan and status", class: "sm:col-span-4 rounded-xl bg-brand-700 hover:bg-brand-800 text-white text-sm font-medium px-4 py-2.5 cursor-pointer" %>
+        <% end %>
+      <% end %>
+    </section>
+
     <section class="bg-white dark:bg-slate-900 rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-6 space-y-2">
       <h2 class="font-semibold text-slate-900 dark:text-white">Members (<%= @members.size %>)</h2>
       <ul class="divide-y divide-slate-100 dark:divide-slate-800 text-sm">

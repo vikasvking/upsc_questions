@@ -21,7 +21,22 @@ class Question < ApplicationRecord
   validates :correct_answer, inclusion: { in: ANSWER_KEYS, message: "must be A, B, C or D" }
   validates :exam_type, inclusion: { in: Exam.codes, message: "must be one of: #{Exam.all.map(&:name).join(", ")}" }, allow_blank: true
 
+  validate :free_sample_rules
+
   def exam = Exam.find(exam_type)
+
+  # Free -> sample questions only; Plus -> their exams plus their school's private questions; Warrior -> all visible
+  def self.available_to(user)
+    scope = visible_to(user)
+    return scope unless user&.student?
+
+    case user.tier
+    when "warrior" then scope
+    when "plus"
+      scope.where.not(visibility: "public").or(scope.where(exam_type: user.allowed_exam_codes)).or(scope.where(free_sample: true))
+    else scope.where(free_sample: true)
+    end
+  end
 
   # Tests using this question that are locked (see TestSession#editing_locked?)
   def locked_tests
@@ -76,6 +91,13 @@ class Question < ApplicationRecord
   end
 
   private
+
+  def free_sample_rules
+    return unless free_sample?
+    errors.add(:free_sample, "questions must be visible to everyone") unless visibility == "public"
+    others = Question.where(free_sample: true).where.not(id: id).count
+    errors.add(:free_sample, "can be set on at most #{Tiers::FREE_SAMPLE_QUESTIONS} questions; untick another first") if others >= Tiers::FREE_SAMPLE_QUESTIONS
+  end
 
   # A corrected answer key re-marks every saved answer, so marks and ranks follow the fix
   def remark_saved_answers

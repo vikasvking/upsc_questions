@@ -23,6 +23,13 @@
             class: "shrink-0 self-start sm:self-auto rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-brand-800" %>
     </header>
 
+    <% if Current.user.free_tier? %>
+      <div class="rounded-xl bg-pink-50 dark:bg-pink-950/30 px-4 py-3 ring-1 ring-pink-200 dark:ring-pink-900/50 text-sm text-pink-900 dark:text-pink-200 flex flex-wrap items-center justify-between gap-2">
+        <span>🌱 You're on the free trial: <%= Tiers::FREE_SAMPLE_TESTS %> sample tests and <%= Tiers::FREE_SAMPLE_QUESTIONS %> sample questions, each once.</span>
+        <%= link_to "See what Plus and Warrior include →", membership_path, class: "font-medium underline" %>
+      </div>
+    <% end %>
+
     <% if alert %>
       <div class="rounded-xl bg-red-50 dark:bg-red-950/40 px-4 py-3 ring-1 ring-red-200 dark:ring-red-900/40 text-sm text-red-800 dark:text-red-300"><%= alert %></div>
     <% end %>

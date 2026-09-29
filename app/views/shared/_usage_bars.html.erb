@@ -1,0 +1,16 @@
+<%# locals: institution. Plan usage for a school: students, teachers, tests this month %>
+<% if institution.subscribed? %>
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+    <% [["Students", :students], ["Teachers", :teachers], ["Tests this month", :tests]].each do |label, key| %>
+      <% used, limit = institution.usage[key] %>
+      <% pct = limit.to_i.positive? ? [(used * 100.0 / limit).round, 100].min : 0 %>
+      <div>
+        <div class="flex justify-between text-xs"><span class="text-slate-500"><%= label %></span><span class="font-semibold <%= limit && used >= limit ? "text-red-700 dark:text-red-400" : "text-slate-900 dark:text-white" %>"><%= used %> / <%= limit || "∞" %></span></div>
+        <div class="mt-1 h-1.5 rounded-full bg-slate-100 dark:bg-slate-800"><div class="h-1.5 rounded-full <%= pct >= 100 ? "bg-red-600" : (pct >= 80 ? "bg-amber-500" : "bg-emerald-600") %>" style="width: <%= limit ? pct : 5 %>%"></div></div>
+      </div>
+    <% end %>
+  </div>
+  <p class="text-xs text-slate-500"><%= institution.plan.name %> · <%= institution.subscription_label %><%= " · renews #{l(institution.subscription_renews_on, format: :long)}" if institution.subscription_renews_on %></p>
+<% else %>
+  <p class="text-xs text-slate-500">No active plan (<%= institution.subscription_label.downcase %>): students here are not Plus and tests cannot be published for this school yet.</p>
+<% end %>

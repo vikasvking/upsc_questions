@@ -26,6 +26,8 @@
           </div>
         </div>
 
+        <div class="space-y-2"><%= render "shared/usage_bars", institution: inst %></div>
+
         <div>
           <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Requests waiting (<%= pending.size %>)</h3>
           <% if pending.any? %>

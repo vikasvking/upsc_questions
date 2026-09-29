@@ -14,6 +14,8 @@ class AdminLog < ApplicationRecord
     "create_institution" => "Added institution", "update_institution" => "Changed institution",
     "delete_institution" => "Deleted institution", "merge_institution" => "Merged institutions",
     "update_mail_settings" => "Changed email settings",
+    "create_plan" => "Added plan", "update_plan" => "Changed plan", "update_subscription" => "Changed a school's plan",
+    "update_tier" => "Changed a student's tier",
     "hide_rating_comment" => "Hid a rating comment", "unhide_rating_comment" => "Showed a rating comment again"
   }.freeze
 

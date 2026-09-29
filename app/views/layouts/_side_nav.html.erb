@@ -17,7 +17,8 @@
       [["Dashboard", dashboard_path, :home, current_page?(dashboard_path)],
        ["All Tests", all_tests_dashboard_path, :list, current_page?(all_tests_dashboard_path)],
        ["Question Bank", question_bank_path, :book, controller_name == "questionbanks"],
-       ["Enter PIN", join_test_sessions_path, :key, current_page?(join_test_sessions_path)]]
+       ["Enter PIN", join_test_sessions_path, :key, current_page?(join_test_sessions_path)],
+       ["Membership · #{Tiers.label(Current.user.tier)}", membership_path, :user, controller_name == "tiers"]]
     else
       [["Tests", test_sessions_path, :lock, controller_name == "test_sessions"],
        ["Upload Questions", upload_form_questions_path, :upload, current_page?(upload_form_questions_path)],

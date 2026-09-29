@@ -1,0 +1,40 @@
+<% card = "bg-white dark:bg-slate-900 rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-6 space-y-3" %>
+<div class="py-10 min-h-screen w-full">
+  <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 space-y-6">
+    <div>
+      <h1 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">Your membership: <%= Tiers.label(@tier) %></h1>
+      <% if @user.student? && @user.tier_until && @user.own_tier != "free" %><p class="text-sm text-slate-500 mt-1">Your <%= Tiers.name(@user.own_tier) %> tier is valid until <%= l(@user.tier_until, format: :long) %>.</p><% end %>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <% [["free", "Free", "₹0", ["#{Tiers::FREE_SAMPLE_TESTS} sample tests", "#{Tiers::FREE_SAMPLE_QUESTIONS} sample practice questions", "Each only once"]],
+          ["plus", "Plus", "Through your school", ["All tests from your school or coaching", "Public tests and practice in your exams", "Ranks and teacher reports"]],
+          ["warrior", "Warrior", (@warrior ? "₹#{@warrior.price_month_inr}/month or ₹#{@warrior.price_year_inr}/year" : "Coming soon"), ["Every exam: UPSC, JEE, NEET, SSC, IBPS, CBSE", "All public tests and practice", "Everything in Plus"]]].each do |key, name, price, points| %>
+        <div class="<%= card %> <%= "ring-2 ring-brand-600" if key == @tier %>">
+          <p class="text-lg font-semibold text-slate-900 dark:text-white"><%= Tiers::ICONS[key] %> <%= name %><%= " · you" if key == @tier %></p>
+          <p class="text-sm font-medium text-brand-700 dark:text-brand-300"><%= price %></p>
+          <% if key == "warrior" && @warrior&.price_month_upgrade_inr && @tier == "plus" %><p class="text-xs text-slate-500">For you as a Plus student: ₹<%= @warrior.price_month_upgrade_inr %>/month</p><% end %>
+          <ul class="text-sm text-slate-600 dark:text-slate-300 space-y-1"><% points.each do |p| %><li>✓ <%= p %></li><% end %></ul>
+        </div>
+      <% end %>
+    </div>
+
+    <% if @tier == "free" %>
+      <section class="<%= card %>">
+        <h2 class="font-semibold text-slate-900 dark:text-white">Your free trial</h2>
+        <p class="text-sm text-slate-700 dark:text-slate-300">Sample tests taken: <strong><%= @taken_samples %> of <%= @sample_tests.size %></strong> · Sample questions answered: <strong><%= @answered_samples %> of <%= Question.where(free_sample: true).count %></strong></p>
+        <p class="text-sm text-slate-500">If your school or coaching uses Rankwise, join it from <%= link_to "your profile", profile_path, class: "text-brand-700 dark:text-brand-300" %> to become Plus.</p>
+      </section>
+    <% elsif @tier == "plus" %>
+      <section class="<%= card %>">
+        <h2 class="font-semibold text-slate-900 dark:text-white">Plus through</h2>
+        <p class="text-sm text-slate-700 dark:text-slate-300"><%= @schools.map(&:name).to_sentence %></p>
+        <p class="text-sm text-slate-500">Exams included for you: <%= @user.allowed_exam_codes.map { |c| exam_name(c) }.to_sentence.presence || "pick your exams in your profile" %>. Become a Warrior to use every exam.</p>
+      </section>
+    <% end %>
+
+    <% unless @tier == "warrior" %>
+      <p class="rounded-xl bg-slate-50 dark:bg-slate-900 ring-1 ring-slate-200 dark:ring-slate-800 px-4 py-3 text-sm text-slate-600 dark:text-slate-300">Online payment is coming soon. To become a Warrior now, contact the Rankwise admin.</p>
+    <% end %>
+  </div>
+</div>

@@ -23,11 +23,14 @@
     </div>
   </div>
 
-  <div data-audience-target="institution" class="<%= "hidden" unless current == "institution" %>">
+  <% test_record = record.is_a?(TestSession) %>
+  <% show_for = test_record ? "institution selected" : "institution" %>
+  <div data-audience-target="institution" data-show-for="<%= show_for %>" class="<%= "hidden" unless show_for.split.include?(current) %>">
     <% if choices.own_institutions.any? %>
-      <%= label_tag name.(:institution_id), "Which school or coaching", class: "text-xs font-bold text-slate-400" %>
-      <%= select_tag name.(:institution_id), options_for_select(choices.own_institutions.map { |i| [i.label, i.id] }, chosen_inst), class: sel %>
-      <p class="mt-1 text-xs text-slate-500">Only its approved students (and its teachers) will see this.</p>
+      <%= label_tag name.(:institution_id), (test_record ? "For which school or coaching" : "Which school or coaching"), class: "text-xs font-bold text-slate-400" %>
+      <%= select_tag name.(:institution_id), options_for_select(choices.own_institutions.map { |i| ["#{i.label}#{" · #{i.usage[:tests][0]}/#{i.usage[:tests][1] || "∞"} tests this month" if i.subscribed?}", i.id] }, chosen_inst),
+            include_blank: (test_record && current == "selected" ? "Not for a school" : false), class: sel %>
+      <p class="mt-1 text-xs text-slate-500">With "my school or coaching", only its approved students (and its teachers) see this.<% if test_record %> A school test counts toward that school's monthly tests.<% end %></p>
     <% else %>
       <p class="text-sm text-amber-800 dark:text-amber-300">You're not a teacher at any school or coaching yet. <%= link_to "Join or add one", institutions_path, class: "underline" %>.</p>
     <% end %>

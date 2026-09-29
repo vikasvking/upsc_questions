@@ -1,0 +1,24 @@
+<% input = "mt-1 block w-full rounded-xl border-0 py-2.5 px-3 bg-white dark:bg-slate-950 ring-1 ring-inset ring-slate-200 dark:ring-slate-800 text-sm text-slate-900 dark:text-white" %>
+<% label = "block text-xs font-bold text-slate-500" %>
+<%= render "admin/shared/errors", record: @plan %>
+<%= form_with model: [:admin, @plan], class: "bg-white dark:bg-slate-900 rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-6 grid grid-cols-1 sm:grid-cols-3 gap-4" do |f| %>
+  <div class="sm:col-span-2"><%= f.label :name, "Name", class: label %><%= f.text_field :name, required: true, class: input %></div>
+  <div><%= f.label :kind, "For", class: label %><%= f.select :kind, Plan::KINDS.invert.to_a, {}, class: input %></div>
+  <div><%= f.label :price_month_inr, "Price per month (₹)", class: label %><%= f.number_field :price_month_inr, min: 0, class: input %></div>
+  <div><%= f.label :price_year_inr, "Price per year (₹)", class: label %><%= f.number_field :price_year_inr, min: 0, class: input %></div>
+  <div><%= f.label :member_tier, "Tier it gives", class: label %><%= f.select :member_tier, Tiers::NAMES.invert.to_a.reject { |_, t| t == "free" }, {}, class: input %></div>
+  <fieldset class="sm:col-span-3 grid grid-cols-1 sm:grid-cols-4 gap-4 rounded-xl ring-1 ring-slate-200 dark:ring-slate-800 p-4">
+    <legend class="px-1 text-xs font-bold text-slate-500">School plans (leave empty for no limit)</legend>
+    <div><%= f.label :max_students, "Students", class: label %><%= f.number_field :max_students, min: 0, class: input %></div>
+    <div><%= f.label :max_teachers, "Teachers", class: label %><%= f.number_field :max_teachers, min: 0, class: input %></div>
+    <div><%= f.label :max_tests_per_month, "Tests per month", class: label %><%= f.number_field :max_tests_per_month, min: 0, class: input %></div>
+    <div><%= f.label :member_max_exams, "Exams per Plus student", class: label %><%= f.number_field :member_max_exams, min: 0, placeholder: Tiers::DEFAULT_PLUS_EXAMS, class: input %></div>
+  </fieldset>
+  <div><%= f.label :price_month_upgrade_inr, "Student plans: price for Plus students (₹/month)", class: label %><%= f.number_field :price_month_upgrade_inr, min: 0, class: input %></div>
+  <div><%= f.label :position, "Order", class: label %><%= f.number_field :position, class: input %></div>
+  <label class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300 self-end pb-2"><%= f.check_box :active %> Offered (untick to retire it; schools on it keep it)</label>
+  <div class="sm:col-span-3 flex gap-3">
+    <%= link_to "Cancel", admin_plans_path, class: "flex-1 text-center rounded-xl px-4 py-2.5 text-sm ring-1 ring-slate-200 dark:ring-slate-800 text-slate-600 dark:text-slate-300" %>
+    <%= f.submit "Save plan", class: "flex-1 rounded-xl bg-brand-700 hover:bg-brand-800 text-white text-sm font-medium px-4 py-2.5 cursor-pointer" %>
+  </div>
+<% end %>

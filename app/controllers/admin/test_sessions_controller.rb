@@ -3,7 +3,7 @@
 class Admin::TestSessionsController < Admin::BaseController
   include AudienceAssignment
   self.admin_area = :tests
-  KINDS = %w[open pin strict scheduled].freeze
+  KINDS = %w[open pin strict scheduled free].freeze
 
   before_action :set_test_session, only: [:edit, :update, :destroy]
   before_action :load_form_data, only: [:new, :edit]
@@ -22,6 +22,7 @@ class Admin::TestSessionsController < Admin::BaseController
       when "pin"       then scope.where(access_type: "pin", strict_mode: false)
       when "open"      then scope.where(access_type: "open")
       when "scheduled" then scope.where("starts_at IS NOT NULL OR ends_at IS NOT NULL")
+      when "free"      then scope.where(free_sample: true)
       else scope
       end
 
@@ -121,7 +122,7 @@ class Admin::TestSessionsController < Admin::BaseController
 
   private
 
-  TRACKED = %w[title exam_type user_id duration_minutes pass_mark_percentage access_type starts_at ends_at strict_mode visibility institution_id].freeze
+  TRACKED = %w[title exam_type user_id duration_minutes pass_mark_percentage access_type starts_at ends_at strict_mode visibility institution_id free_sample].freeze
 
   def set_test_session
     @test_session = TestSession.find(params[:id])
@@ -137,8 +138,10 @@ class Admin::TestSessionsController < Admin::BaseController
   end
 
   def test_params
-    params.require(:test_session).permit(:title, :exam_type, :user_id, :duration_minutes, :pass_mark_percentage,
-                                         :access_type, :starts_at, :ends_at, :strict_mode, :visibility, :institution_id, question_ids: [])
+    keys = [:title, :exam_type, :user_id, :duration_minutes, :pass_mark_percentage,
+            :access_type, :starts_at, :ends_at, :strict_mode, :visibility, :institution_id, { question_ids: [] }]
+    keys.unshift(:free_sample) if Current.user.admin? # only admins pick the free sample tests
+    params.require(:test_session).permit(*keys)
   end
 
   def change_details(before, before_questions)

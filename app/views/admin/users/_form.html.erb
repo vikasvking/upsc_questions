@@ -22,6 +22,15 @@
   </div>
 
   <% if user.new_record? || user.student? %>
+    <div>
+      <%= f.label :membership_tier, "Student's own tier", class: label %>
+      <%= f.select :membership_tier, Tiers::NAMES.invert.to_a, {}, class: input %>
+      <p class="mt-1 text-xs text-slate-500">Plus also comes automatically from a school with an active plan<%= " (now: #{Tiers.label(user.tier)})" if user.persisted? && user.student? %>.</p>
+    </div>
+    <div>
+      <%= f.label :tier_until, "Tier valid until (empty = no end)", class: label %>
+      <%= f.date_field :tier_until, class: input %>
+    </div>
     <fieldset class="sm:col-span-2">
       <legend class="<%= label %>">Exams (students)</legend>
       <div class="mt-2 flex flex-wrap gap-2">

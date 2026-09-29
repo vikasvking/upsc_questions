@@ -29,6 +29,7 @@ class TestSession < ApplicationRecord
   validate  :window_is_valid
   validate  :strict_mode_is_valid
   validate  :not_locked, on: :update
+  validate  :free_sample_rules
 
   after_update :refresh_open_deadlines, if: -> { saved_change_to_ends_at? || saved_change_to_duration_minutes? }
 
@@ -40,6 +41,23 @@ class TestSession < ApplicationRecord
   def self.visible_to(user)
     scope = super
     user && !user.admin? ? scope.or(where(id: user.test_attempts.select(:test_session_id))) : scope
+  end
+
+  # What a student may open, by their tier (see Tiers): Free -> sample tests only; Plus -> school tests plus
+  # public tests in their exams; Warrior -> everything visible. Tests already started always stay open.
+  def self.available_to(user)
+    scope = visible_to(user)
+    return scope unless user&.student?
+
+    started = where(id: user.test_attempts.select(:test_session_id))
+    case user.tier
+    when "warrior" then scope
+    when "plus"
+      scope.where(visibility: %w[institution selected])
+           .or(scope.where(exam_type: user.allowed_exam_codes))
+           .or(scope.where(free_sample: true)).or(started)
+    else scope.where(free_sample: true).or(started)
+    end
   end
 
   def open_access? = access_type == "open"
@@ -229,6 +247,13 @@ class TestSession < ApplicationRecord
       pin = SecureRandom.alphanumeric(6).upcase
       break pin unless TestSession.exists?(pin_code: pin)
     end
+  end
+
+  def free_sample_rules
+    return unless free_sample?
+    errors.add(:free_sample, "tests must be visible to everyone") unless visibility == "public"
+    others = TestSession.where(free_sample: true).where.not(id: id).count
+    errors.add(:free_sample, "can be set on at most #{Tiers::FREE_SAMPLE_TESTS} tests; untick another first") if others >= Tiers::FREE_SAMPLE_TESTS
   end
 
   def not_locked

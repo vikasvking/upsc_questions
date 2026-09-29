@@ -8,6 +8,7 @@
           ["Questions", admin_questions_path, controller_name == "questions", me.can_manage?(:questions)],
           ["Tests", admin_test_sessions_path, controller_name == "test_sessions", me.can_manage?(:tests)],
           ["Ratings & reports", admin_moderation_index_path, controller_name == "moderation", me.can_manage?(:ratings)],
+          ["Plans", admin_plans_path, controller_name == "plans", me.admin?],
           ["Email", edit_admin_mail_settings_path, controller_name == "mail_settings", me.admin?],
           ["Admin log", admin_logs_path, controller_name == "logs", me.admin?]].select(&:last)
 %>

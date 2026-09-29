@@ -15,9 +15,32 @@ module AudienceAssignment
       if sel.values_at(:user_ids, :institution_ids, :batch_ids).all?(&:empty?)
         record.errors.add(:base, "Pick at least one student, school/coaching or batch (or add students by email)")
       end
+      school_for_selected_test(record) if record.is_a?(TestSession)
     end
-    record.institution_id = nil unless record.visibility == "institution"
+    keep_school = record.visibility == "institution" || (record.visibility == "selected" && record.is_a?(TestSession))
+    record.institution_id = nil unless keep_school
+    check_test_quota(record) if record.is_a?(TestSession) && record.errors.none?
     record.errors.none?
+  end
+
+  # A "selected" test by a teacher of a paying school says which school it is for (it counts toward that school's tests)
+  def school_for_selected_test(record)
+    user = Current.user
+    if record.institution_id.present?
+      unless user.admin? || user.approved_memberships.exists?(institution_id: record.institution_id)
+        record.errors.add(:base, "Pick one of your own schools or coachings as the school this test is for")
+      end
+    elsif !user.admin? && user.subscribed_institutions.any?
+      record.errors.add(:base, "Pick which of your schools this test is for; it counts toward that school's monthly tests")
+    end
+  end
+
+  # School tests count toward the school's monthly limit (admins are not limited)
+  def check_test_quota(record)
+    return if Current.user.admin? || record.visibility == "public" || record.institution_id.blank?
+    return unless record.new_record? || record.institution_id_changed?
+    problem = Institution.find(record.institution_id).test_quota_problem
+    record.errors.add(:base, problem) if problem
   end
 
   # Saves the selected audience (or clears it when the test/question is no longer "selected")
