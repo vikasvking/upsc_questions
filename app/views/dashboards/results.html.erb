@@ -35,7 +35,7 @@
           <p class="text-xs font-bold text-slate-400">Time taken</p>
           <p class="text-2xl font-semibold text-slate-900 dark:text-white"><%= duration_text(@my_result.time_taken) %></p>
         </div>
-        <p class="basis-full text-xs text-slate-500">Marks: +2 correct, −0.66 wrong, 0 skipped. Equal marks → less time ranks higher. Your rank can change as more students submit.</p>
+        <p class="basis-full text-xs text-slate-500"><%= exam_name(@attempt.test_session.exam_type) %> marking: <%= @attempt.exam.marking_text %>. Equal marks → less time ranks higher. Your rank can change as more students submit.</p>
       </div>
     <% end %>
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_29_100100) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_29_110100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -19,6 +19,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_100100) do
     t.datetime "computed_at", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "exam_type"
+    t.index ["exam_type", "computed_at"], name: "index_leaderboard_snapshots_on_exam_type_and_computed_at"
   end
 
   create_table "questions", force: :cascade do |t|
@@ -230,6 +232,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_100100) do
     t.index ["user_id"], name: "index_test_attempts_on_user_id"
   end
 
+  create_table "test_pin_entries", force: :cascade do |t|
+    t.bigint "test_session_id", null: false
+    t.bigint "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["test_session_id", "user_id"], name: "index_test_pin_entries_on_test_session_id_and_user_id", unique: true
+    t.index ["test_session_id"], name: "index_test_pin_entries_on_test_session_id"
+    t.index ["user_id"], name: "index_test_pin_entries_on_user_id"
+  end
+
   create_table "test_questions", force: :cascade do |t|
     t.bigint "test_session_id", null: false
     t.bigint "question_id", null: false
@@ -277,6 +289,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_100100) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "role", default: 0, null: false
+    t.string "target_exam"
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
   end
 
@@ -292,6 +305,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_100100) do
   add_foreign_key "solid_queue_scheduled_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "test_attempts", "test_sessions"
   add_foreign_key "test_attempts", "users"
+  add_foreign_key "test_pin_entries", "test_sessions"
+  add_foreign_key "test_pin_entries", "users"
   add_foreign_key "test_questions", "questions"
   add_foreign_key "test_questions", "test_sessions"
   add_foreign_key "test_sessions", "users"

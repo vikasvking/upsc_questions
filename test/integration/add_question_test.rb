@@ -24,7 +24,7 @@ class AddQuestionTest < ActionDispatch::IntegrationTest
 
   test "save and add another keeps exam, year and topic" do
     post questions_path, params: params(add_another: "1")
-    assert_redirected_to new_question_path(exam_type: "UPSC", year: 2024, topic: "Physics")
+    assert_redirected_to new_question_path(exam_type: "UPSC_PRELIMS", year: 2024, topic: "Physics") # old label saved as the new code
   end
 
   test "invalid answer key shows errors" do

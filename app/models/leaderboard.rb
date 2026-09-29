@@ -1,5 +1,6 @@
 # app/models/leaderboard.rb
-# Ranks students across the whole platform. Only student accounts are counted.
+# Ranks students within one exam (UPSC Prelims students are never ranked against NEET students).
+# Only student accounts and only answers to that exam's questions are counted.
 #
 # Rank score (higher is better) — rewards solving questions, in few tries, quickly:
 #   for every question a student has solved:
@@ -50,35 +51,45 @@ class Leaderboard
     base + bonus
   end
 
-  # All students with at least one answer, best first.
-  # Read from the latest snapshot saved by RefreshLeaderboardJob; if the scheduler isn't
-  # running (or the snapshot is old), compute now and save a fresh snapshot.
-  def self.rows
-    snapshot = LeaderboardSnapshot.latest
-    return snapshot.to_rows if snapshot && snapshot.computed_at > STALE_AFTER.ago
-    refresh!
+  # Exams that have questions, in the order of the Exam list
+  def self.exam_codes_with_questions
+    Exam.codes & Question.distinct.pluck(:exam_type)
   end
 
-  def self.refresh!
-    fresh = build_rows
+  # All students with at least one answer in this exam, best first.
+  # Read from the latest snapshot saved by RefreshLeaderboardJob; if the scheduler isn't
+  # running (or the snapshot is old), compute now and save a fresh snapshot.
+  def self.rows(exam = Exam::DEFAULT.code)
+    snapshot = LeaderboardSnapshot.latest(exam)
+    return snapshot.to_rows if snapshot && snapshot.computed_at > STALE_AFTER.ago
+    refresh!(exam)
+  end
+
+  def self.refresh!(exam = Exam::DEFAULT.code)
+    fresh = build_rows(exam)
     LeaderboardSnapshot.transaction do
-      LeaderboardSnapshot.delete_all
-      LeaderboardSnapshot.create!(rows: fresh.map(&:to_h), computed_at: Time.current)
+      LeaderboardSnapshot.where(exam_type: exam).delete_all
+      LeaderboardSnapshot.create!(exam_type: exam, rows: fresh.map(&:to_h), computed_at: Time.current)
     end
     fresh
   end
 
-  def self.computed_at
-    LeaderboardSnapshot.latest&.computed_at
+  def self.refresh_all!
+    exam_codes_with_questions.each { |exam| refresh!(exam) }
   end
 
-  def self.build_rows
+  def self.computed_at(exam = Exam::DEFAULT.code)
+    LeaderboardSnapshot.latest(exam)&.computed_at
+  end
+
+  def self.build_rows(exam = Exam::DEFAULT.code)
     conn = ActiveRecord::Base.connection
     week_start = conn.quote(6.days.ago.beginning_of_day)
     tz = conn.quote(Time.zone.tzinfo.name)
+    exam_sql = conn.quote(exam)
     student = User.roles[:student].to_i
 
-    base = UserResponse.joins(:user).where(users: { role: student })
+    base = UserResponse.joins(:user, :question).where(users: { role: student }, questions: { exam_type: exam })
 
     stats = base.group(:user_id).pluck(
       :user_id,
@@ -97,7 +108,8 @@ class Leaderboard
                ROW_NUMBER() OVER (PARTITION BY ur.user_id, ur.question_id, ur.is_correct ORDER BY ur.created_at, ur.id) AS nth_of_kind
         FROM user_responses ur
         JOIN users u ON u.id = ur.user_id
-        WHERE u.role = #{student} AND ur.chosen_option <> 'SKIPPED'
+        JOIN questions q ON q.id = ur.question_id
+        WHERE u.role = #{student} AND q.exam_type = #{exam_sql} AND ur.chosen_option <> 'SKIPPED'
       ) tries
       WHERE is_correct AND nth_of_kind = 1
     SQL
@@ -111,9 +123,9 @@ class Leaderboard
     end
 
     # topics completed: solved-per-topic for every student vs. questions-per-topic
-    totals = Question.where.not(topic: [nil, ""]).group(:topic).count
+    totals = Question.where(exam_type: exam).where.not(topic: [nil, ""]).group(:topic).count
     completed = Hash.new(0)
-    base.joins(:question).where(is_correct: true)
+    base.where(is_correct: true)
         .group(:user_id, "questions.topic")
         .distinct.count(:question_id)
         .each { |(uid, topic), solved| completed[uid] += 1 if totals[topic].to_i.positive? && solved >= totals[topic] }
@@ -128,7 +140,7 @@ class Leaderboard
     end.sort_by { |r| [-r.score, -(r.accuracy || 0), -r.solved, r.user_id] }
   end
 
-  def self.toppers = rows.first(TOP_N)
+  def self.toppers(exam = Exam::DEFAULT.code) = rows(exam).first(TOP_N)
 
   # Average of each metric over a group of rows (nil when nobody has a value)
   def self.average(group)
@@ -138,9 +150,9 @@ class Leaderboard
     end
   end
 
-  # Everything the "You vs Toppers" card needs for one student
-  def self.comparison_for(user)
-    all  = rows
+  # Everything the "You vs Toppers" card needs for one student, within one exam
+  def self.comparison_for(user, exam = Exam::DEFAULT.code)
+    all  = rows(exam)
     me   = all.find { |r| r.user_id == user.id } ||
            Row.new(user_id: user.id, score: 0.0, solved: 0, accuracy: nil, avg_tries: nil, avg_seconds: nil, topics_completed: 0, active_days: 0)
     rank = all.index { |r| r.user_id == user.id }
@@ -151,7 +163,8 @@ class Leaderboard
       platform: average(all),
       top_count: [all.size, TOP_N].min,
       students: all.size,
-      rank: rank && rank + 1
+      rank: rank && rank + 1,
+      exam: Exam.find(exam)
     }
   end
 end

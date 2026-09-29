@@ -116,12 +116,9 @@ class TestAttempt < ApplicationRecord
     user_responses.order(:updated_at).index_by(&:question_id)
   end
 
-  # UPSC-style marking used for ranking inside a teacher test
-  MARKS_CORRECT = 2.0
-  MARKS_WRONG   = -2.0 / 3 # one third of the marks for a correct answer
-
-  def self.marks_for(correct, wrong)
-    (correct * MARKS_CORRECT + wrong * MARKS_WRONG).round(2)
+  # Marking scheme: the teacher test's exam; topic practice uses UPSC Prelims marking
+  def exam
+    test_session ? test_session.exam : Exam::DEFAULT
   end
 
   # Seconds from Start to Submit
@@ -143,7 +140,7 @@ class TestAttempt < ApplicationRecord
 
     { total: total, correct: correct, wrong: wrong, skipped: skipped,
       unattempted: total - responses.size, percentage: pct, passed: passed,
-      marks: self.class.marks_for(correct, wrong), max_marks: (total * MARKS_CORRECT).round(2),
+      marks: exam.marks_for(correct, wrong), max_marks: (total * exam.correct).round(2),
       time_taken: time_taken }
   end
 

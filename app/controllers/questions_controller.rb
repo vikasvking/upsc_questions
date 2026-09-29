@@ -31,7 +31,7 @@ class QuestionsController < ApplicationController
       # 🚀 PASSING EXACTLY 4 PARAMETERS: file, exam, year, creator_id
       Question.import_from_excel(file.path, exam, year, Current.user.id)
 
-      redirect_to upload_form_questions_path, notice: "Questions for #{exam} successfully imported into your Question Bank!"
+      redirect_to upload_form_questions_path, notice: "Questions for #{Exam.name_for(exam)} successfully imported into your Question Bank!"
     rescue StandardError => e
       redirect_to upload_form_questions_path, alert: "Error parsing spreadsheet file: #{e.message}"
     end
@@ -47,7 +47,7 @@ class QuestionsController < ApplicationController
   # Add one question by hand (goes straight into the question bank)
   def new
     @question = Question.new(
-      exam_type: params[:exam_type].presence || "UPSC",
+      exam_type: Exam.normalize(params[:exam_type]) || Exam::DEFAULT.code,
       year: params[:year].presence,
       topic: params[:topic].presence,
       correct_answer: "A"

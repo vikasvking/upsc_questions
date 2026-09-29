@@ -16,8 +16,9 @@ Rails.application.routes.draw do
       post :import
       get  :download_template
     end
-    # Strict mode: teacher lets a blocked student continue
+    # Strict mode: teacher lets a blocked student continue; live panel while the test is open
     post :reinstate, on: :member
+    get  :live, on: :member
   end
 
   # Quiz lifecycle
@@ -43,6 +44,7 @@ Rails.application.routes.draw do
   end
 
   resource :profile, only: [:show, :edit, :update]
+  patch "profile/exam", to: "profiles#update_exam", as: :profile_exam # "Preparing for" (no password needed)
   resource :session
   resources :passwords, param: :token
   get  "sign_up", to: "registrations#new", as: :new_registration

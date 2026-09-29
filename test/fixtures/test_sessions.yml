@@ -1,7 +1,7 @@
 one:
   user: teacher
   title: Open Physics Test
-  exam_type: UPSC
+  exam_type: UPSC_PRELIMS
   duration_minutes: 30
   pass_mark_percentage: 50
   pin_code: OPEN01
@@ -9,7 +9,7 @@ one:
 two:
   user: teacher
   title: PIN Physics Test
-  exam_type: UPSC
+  exam_type: UPSC_PRELIMS
   duration_minutes: 30
   pass_mark_percentage: 50
   pin_code: PINT02

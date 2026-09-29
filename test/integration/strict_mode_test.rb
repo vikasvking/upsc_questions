@@ -53,8 +53,9 @@ class StrictModeFlowTest < ActionDispatch::IntegrationTest
     @attempt.block!("left")
 
     sign_in_as users(:teacher)
-    get test_session_path(@test)
+    get live_test_session_path(@test) # while the test is open, blocked students show in the live panel
     assert_select "td", text: users(:one).email_address
+    assert_match "Blocked", response.body
 
     post reinstate_test_session_path(@test, attempt_id: @attempt.id)
     assert_redirected_to test_session_path(@test)

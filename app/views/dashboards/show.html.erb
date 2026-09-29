@@ -35,7 +35,7 @@
            ["Questions solved", number_with_delimiter(@lifetime_correct_count), "of #{number_with_delimiter(@bank_total)} in the bank"],
            ["Accuracy", "#{@global_accuracy_pct}%", "#{@lifetime_wrong_count} answered wrong"],
            ["Streak", pluralize(@current_streak_count, "day"), "25+ questions a day"],
-           ["Rank", (cmp[:rank] ? "##{cmp[:rank]}" : "—"), (cmp[:rank] ? "of #{cmp[:students]} students" : "answer a question to get ranked")]
+           ["Rank · #{cmp[:exam].name}", (cmp[:rank] ? "##{cmp[:rank]}" : "—"), (cmp[:rank] ? "of #{cmp[:students]} #{cmp[:exam].name} students" : "answer a #{cmp[:exam].name} question to get ranked")]
          ].each do |label, value, sub| %>
         <div class="<%= card %> p-5">
           <p class="text-sm text-slate-500"><%= label %></p>

@@ -39,7 +39,14 @@
       <div class="rounded-xl bg-red-50 dark:bg-red-950/40 p-3 border border-red-200 dark:border-red-900/40 text-xs text-red-800 dark:text-red-300 font-bold"><%= alert %></div>
     <% end %>
 
-    <% if @blocked_attempts.any? %>
+    <% if @test_session.live_view? %>
+      <%= turbo_frame_tag "live_panel", src: live_test_session_path(@test_session),
+            data: { controller: "auto-refresh", auto_refresh_interval_value: 15_000 } do %>
+        <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 text-xs text-slate-400">Loading live view…</div>
+      <% end %>
+    <% end %>
+
+    <% if @blocked_attempts.any? && !@test_session.live_view? %>
       <div class="space-y-4">
         <div>
           <h3 class="text-base font-semibold text-red-700 dark:text-red-400">🚫 Blocked students (<%= @blocked_attempts.size %>)</h3>
@@ -77,7 +84,7 @@
     <div class="space-y-4">
       <div>
         <h3 class="text-base font-semibold text-slate-900 dark:text-white">Rankings</h3>
-        <p class="text-xs text-slate-500">UPSC marking: +2 correct, −0.66 wrong, 0 skipped. Equal marks → less time taken ranks higher.</p>
+        <p class="text-xs text-slate-500"><%= exam_name(@test_session.exam_type) %> marking: <%= @test_session.exam.marking_text %>. Equal marks → less time taken ranks higher.</p>
       </div>
       <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900">
         <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-left text-xs">

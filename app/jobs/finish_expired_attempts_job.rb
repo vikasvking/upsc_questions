@@ -5,7 +5,7 @@ class FinishExpiredAttemptsJob < ApplicationJob
   queue_as :default
 
   def perform
-    TestAttempt.in_progress
+    TestAttempt.in_progress.not_blocked # blocked students wait for the teacher
                .where("deadline_at < ?", TestAttempt::GRACE_PERIOD.ago)
                .find_each(&:finish!)
   end

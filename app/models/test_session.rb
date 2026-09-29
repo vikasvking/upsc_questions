@@ -6,10 +6,14 @@ class TestSession < ApplicationRecord
   has_many :test_questions, dependent: :destroy
   has_many :questions, through: :test_questions
   has_many :test_attempts, dependent: :destroy
+  has_many :test_pin_entries, dependent: :delete_all
+
+  normalizes :exam_type, with: ->(v) { Exam.normalize(v) || v.to_s.strip.upcase.presence }
 
   validates :title, :exam_type, :pin_code, presence: true
   validates :pin_code, uniqueness: true
   validates :access_type, inclusion: { in: ACCESS_TYPES }
+  validates :exam_type, inclusion: { in: Exam.codes, message: "must be one of: #{Exam.all.map(&:name).join(", ")}" }
   validates :duration_minutes, numericality: { only_integer: true, greater_than: 0 }
   validates :pass_mark_percentage, numericality: { only_integer: true, in: 0..100 }
   validate  :window_is_valid
@@ -22,6 +26,26 @@ class TestSession < ApplicationRecord
   def open_access? = access_type == "open"
   def pin_required? = access_type == "pin"
   def time_bound? = starts_at.present? || ends_at.present?
+  def exam = Exam.find(exam_type)
+
+  EDIT_LOCK_BEFORE = 10.minutes
+
+  # Strict and time-bound tests cannot be changed from 10 minutes before they open (or once anyone
+  # has started, or after they close), so every student sits the same paper under the same rules.
+  def editing_locked?(now = Time.current)
+    return false unless strict_mode? || time_bound?
+    (starts_at && now >= starts_at - EDIT_LOCK_BEFORE) || (ends_at && now >= ends_at) || test_attempts.exists?
+  end
+
+  # When editing stops for a test that has not locked yet (nil if there is no opening time)
+  def edit_lock_at
+    starts_at && starts_at - EDIT_LOCK_BEFORE
+  end
+
+  # Strict tests only, while the test has not closed: the teacher's live panel
+  def live_view?(now = Time.current)
+    strict_mode? && window_status(now) != :closed
+  end
 
   # :upcoming, :live or :closed
   def window_status(now = Time.current)
@@ -40,7 +64,7 @@ class TestSession < ApplicationRecord
   Result = Struct.new(:attempt, :user, :rank, :correct, :wrong, :skipped, :unattempted, :total,
                       :marks, :max_marks, :percentage, :passed, :time_taken, keyword_init: true)
 
-  # Submitted attempts ranked UPSC-style: marks (+2 correct, -0.66 wrong, 0 skipped) high to low,
+  # Submitted attempts ranked by marks under this test's exam scheme (see Exam) high to low,
   # then less time taken, then earlier submission. Equal marks and time share a rank (1, 2, 2, 4).
   # Uses 3 queries no matter how many students took the test.
   def rankings
@@ -62,7 +86,7 @@ class TestSession < ApplicationRecord
       pct     = total.positive? ? (correct * 100.0 / total).round(1) : 0.0
       Result.new(attempt: a, user: a.user, correct: correct, wrong: wrong, skipped: skipped,
                  unattempted: total - answers.size, total: total,
-                 marks: TestAttempt.marks_for(correct, wrong), max_marks: (total * TestAttempt::MARKS_CORRECT).round(2),
+                 marks: exam.marks_for(correct, wrong), max_marks: (total * exam.correct).round(2),
                  percentage: pct, passed: pct >= pass_mark_percentage, time_taken: a.time_taken)
     end
 

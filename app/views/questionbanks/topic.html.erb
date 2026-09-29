@@ -46,7 +46,7 @@
           <% end %>
           <div class="flex flex-wrap items-center gap-2 mb-3">
             <span class="text-xs font-semibold bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 px-2.5 py-1 rounded-lg text-slate-700 dark:text-slate-300">#<%= @numbers[q.id] %></span>
-            <span class="text-xs font-mono text-slate-400"><%= [q.exam_type, q.year].compact_blank.join(" · ") %></span>
+            <span class="text-xs font-mono text-slate-400"><%= [(exam_name(q.exam_type) if q.exam_type.present?), q.year].compact_blank.join(" · ") %></span>
             <span class="ml-auto text-xs font-bold px-2.5 py-0.5 rounded-full
               <%= if s.solved? then "bg-emerald-50 text-emerald-700 border border-emerald-200"
                   elsif s.attempted? then "bg-red-50 text-red-700 border border-red-200"

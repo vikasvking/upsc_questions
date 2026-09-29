@@ -1,12 +1,20 @@
-<% rows = Leaderboard.rows %>
-<% if rows.size >= 3 %>
+<% if @topper_exam %>
+  <% exam, rows = @topper_exam %>
   <% top = Leaderboard.average(rows.first(Leaderboard::TOP_N)) %>
   <% all = Leaderboard.average(rows) %>
-  <section class="mx-auto max-w-6xl px-6 py-20">
+  <section id="toppers" class="mx-auto max-w-6xl px-6 py-20">
     <div class="max-w-2xl">
       <h2 class="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">How the toppers practise</h2>
-      <p class="mt-3 text-slate-600 dark:text-slate-400">Live numbers from students on Rankwise. Sign in to see where you stand.</p>
+      <p class="mt-3 text-slate-600 dark:text-slate-400">Live numbers from <%= exam.name %> students on Rankwise. Every exam is ranked separately. Sign in to see where you stand.</p>
     </div>
+    <% if @topper_tables.size > 1 %>
+      <div class="mt-6 flex flex-wrap gap-2">
+        <% @topper_tables.each do |e, _| %>
+          <%= link_to e.name, root_path(exam: e.code, anchor: "toppers"),
+                class: "rounded-full px-3 py-1 text-sm font-medium #{e.code == exam.code ? "bg-brand-700 text-white" : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-800"}" %>
+        <% end %>
+      </div>
+    <% end %>
     <div class="mt-8 max-w-3xl overflow-x-auto rounded-2xl bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800">
       <table class="min-w-full text-sm">
         <thead class="text-left text-xs text-slate-500">

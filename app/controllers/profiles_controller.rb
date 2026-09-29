@@ -7,6 +7,16 @@ class ProfilesController < ApplicationController
   def edit
   end
 
+  # PATCH /profile/exam -> the exam this student is preparing for (their default rank)
+  def update_exam
+    code = Exam.normalize(params[:target_exam])
+    if code && @user.update(target_exam: code)
+      redirect_to profile_path, notice: "Now preparing for #{Exam.name_for(code)}. Your dashboard rank uses this exam."
+    else
+      redirect_to profile_path, alert: "Please pick an exam from the list."
+    end
+  end
+
   # Email or password changes must be confirmed with the current password
   def update
     unless @user.authenticate(params.dig(:user, :current_password).to_s)

@@ -1,6 +1,6 @@
 one:
   user: teacher
-  exam_type: UPSC
+  exam_type: UPSC_PRELIMS
   year: 2024
   topic: Physics
   content: What is the unit of force?
@@ -12,7 +12,7 @@ one:
   explanation: Force is measured in newtons.
 two:
   user: teacher
-  exam_type: UPSC
+  exam_type: UPSC_PRELIMS
   year: 2024
   topic: Physics
   content: What is the unit of energy?

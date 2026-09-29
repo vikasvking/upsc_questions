@@ -12,7 +12,7 @@
       <% end %>
     </div>
     <h3 class="mt-2 font-semibold text-slate-900 dark:text-white truncate" title="<%= test.title %>"><%= test.title %></h3>
-    <p class="mt-1 text-sm text-slate-500 truncate"><%= [test.exam_type, subjects.presence&.join(", "), "#{test.duration_minutes} min"].compact.join(" · ") %></p>
+    <p class="mt-1 text-sm text-slate-500 truncate"><%= [exam_name(test.exam_type), subjects.presence&.join(", "), "#{test.duration_minutes} min"].compact.join(" · ") %></p>
     <p class="text-xs text-slate-400 mt-0.5">by <%= test.user.email_address.split("@").first.capitalize %></p>
   </div>
 

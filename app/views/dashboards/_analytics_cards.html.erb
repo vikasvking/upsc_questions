@@ -61,9 +61,17 @@
   <!-- You vs top 10 -->
   <div class="<%= card %> space-y-3">
     <div class="flex items-baseline justify-between">
-      <h2 class="font-semibold text-slate-900 dark:text-white">You vs top <%= cmp[:top_count].positive? ? cmp[:top_count] : Leaderboard::TOP_N %></h2>
+      <h2 class="font-semibold text-slate-900 dark:text-white">You vs top <%= cmp[:top_count].positive? ? cmp[:top_count] : Leaderboard::TOP_N %> · <%= cmp[:exam].name %></h2>
       <span class="text-sm text-slate-500">rank score</span>
     </div>
+    <% if @rank_exams.size > 1 %>
+      <div class="flex flex-wrap gap-1.5">
+        <% @rank_exams.each do |e| %>
+          <%= link_to e.name, dashboard_path(exam: e.code),
+                class: "rounded-full px-2.5 py-0.5 text-xs font-medium #{e.code == cmp[:exam].code ? "bg-brand-700 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300"}" %>
+        <% end %>
+      </div>
+    <% end %>
     <div class="flex items-end gap-3">
       <p class="text-3xl font-semibold text-slate-900 dark:text-white tabular-nums"><%= number_with_delimiter(my_score.round) %></p>
       <p class="pb-1 text-sm text-slate-500">top avg <%= top_score ? number_with_delimiter(top_score.round) : "—" %></p>
@@ -96,8 +104,9 @@
         </tbody>
       </table>
       <p class="mt-2 text-xs text-slate-400 leading-relaxed">
-        Each solved question earns 10 points on the 1st try, 6 on the 2nd, 3 after that, plus up to 2 for speed (full at 30 s, none at 2 min).
-        <% if (at = Leaderboard.computed_at) %>Updated <%= time_ago_in_words(at) %> ago.<% end %>
+        Ranked only against <%= cmp[:exam].name %> students, on <%= cmp[:exam].name %> questions. Each solved question earns 10 points on the 1st try, 6 on the 2nd, 3 after that, plus up to 2 for speed (full at 30 s, none at 2 min).
+        <% if (at = Leaderboard.computed_at(cmp[:exam].code)) %>Updated <%= time_ago_in_words(at) %> ago.<% end %>
+        <%= link_to "Change the exam you're preparing for", profile_path, class: "text-brand-700 dark:text-brand-300" %>
       </p>
     </details>
   </div>

@@ -3,6 +3,6 @@ class RefreshLeaderboardJob < ApplicationJob
   queue_as :default
 
   def perform
-    Leaderboard.refresh!
+    Leaderboard.refresh_all! # one topper table per exam
   end
 end

@@ -20,7 +20,11 @@ class DashboardsController < ApplicationController
     set_global_dashboard_metrics
     @streak_days = generate_streak_calendar_data
     @progress    = StudentProgress.new(Current.user)
-    @comparison  = Leaderboard.comparison_for(Current.user)
+
+    # Ranks are per exam: "Preparing for" (profile) unless the student picks another exam here
+    @rank_exams  = (Exam.codes & ([Current.user.target_exam] + Current.user.practised_exam_codes)).map { |c| Exam::BY_CODE[c] }
+    @rank_exam   = Exam.normalize(params[:exam]) || Current.user.ranking_exam_code
+    @comparison  = Leaderboard.comparison_for(Current.user, @rank_exam)
 
     # Only the 3 newest tests that are live or opening soon; the rest are on "All Tests"
     @latest_tests = TestSession.includes(:user)
@@ -31,10 +35,11 @@ class DashboardsController < ApplicationController
 
   # GET /dashboard/all_tests?exam=UPSC&subject=Physics
   def all_tests
-    @exam    = params[:exam].presence
+    @exam    = Exam.normalize(params[:exam])
     @subject = params[:subject].presence
 
-    @exam_options    = TestSession.distinct.order(:exam_type).pluck(:exam_type)
+    used = TestSession.distinct.pluck(:exam_type)
+    @exam_options    = Exam.options.select { |_, code| used.include?(code) }
     @subject_options = Question.joins(:test_questions).where.not(topic: [nil, ""]).distinct.order(:topic).pluck(:topic)
 
     scope = TestSession.includes(:user)

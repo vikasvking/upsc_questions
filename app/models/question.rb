@@ -7,10 +7,15 @@ class Question < ApplicationRecord
   has_many :test_questions, dependent: :destroy
 
   normalizes :correct_answer, with: ->(v) { v.to_s.strip.upcase }
+  # "UPSC", "JEE Main", "jee_main" -> exam code (see Exam)
+  normalizes :exam_type, with: ->(v) { Exam.normalize(v) || v.to_s.strip.upcase.presence }
 
   # q_no is no longer used (numbers clashed between uploads); old values stay in the database unused
   validates :topic, :content, :correct_answer, presence: true
   validates :correct_answer, inclusion: { in: ANSWER_KEYS, message: "must be A, B, C or D" }
+  validates :exam_type, inclusion: { in: Exam.codes, message: "must be one of: #{Exam.all.map(&:name).join(", ")}" }, allow_blank: true
+
+  def exam = Exam.find(exam_type)
 
   # Grouped by exam and year, then in the order the questions were added
   scope :in_order, -> { order(:exam_type, :year, :id) }

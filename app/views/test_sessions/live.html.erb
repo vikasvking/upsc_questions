@@ -1,0 +1,91 @@
+<%# Live panel for a strict test. Loaded into the Results page and reloaded every 15 seconds. %>
+<%
+  badge = {
+    writing:   ["🟢 Writing",       "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"],
+    opening:   ["🟢 Opening test",  "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"],
+    no_signal: ["🟡 No signal",     "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400"],
+    blocked:   ["🚫 Blocked",       "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400"],
+    submitted: ["✅ Submitted",     "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"]
+  }
+  writing_count = @counts[:writing].to_i + @counts[:opening].to_i
+%>
+<%= turbo_frame_tag "live_panel" do %>
+  <div class="space-y-4">
+    <div class="flex flex-wrap items-end justify-between gap-2">
+      <div>
+        <h3 class="text-base font-semibold text-slate-900 dark:text-white">🔴 Live view</h3>
+        <p class="text-xs text-slate-500">Refreshes every 15 seconds · last updated <%= l(@refreshed_at, format: "%H:%M:%S") %>. Marks are not shown here; they appear in Rankings as students submit.</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 text-center">
+      <% [["Writing", writing_count, "text-emerald-600"],
+          ["No signal", @counts[:no_signal].to_i, "text-amber-600"],
+          ["Blocked", @counts[:blocked].to_i, "text-red-700"],
+          ["Submitted", @counts[:submitted].to_i, "text-slate-900 dark:text-white"],
+          ["Not started", @not_started.size, "text-slate-500"]].each do |label, value, color| %>
+        <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+          <p class="text-xs font-bold text-slate-400"><%= label %></p>
+          <p class="text-2xl font-semibold mt-1 <%= color %>"><%= value %></p>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900">
+      <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-left text-xs">
+        <thead class="bg-slate-50 dark:bg-slate-950 font-bold text-slate-900 dark:text-slate-300">
+          <tr>
+            <th class="px-4 py-3">Student</th>
+            <th class="px-3 py-3">Status</th>
+            <th class="px-3 py-3 text-center">Answered</th>
+            <th class="px-3 py-3 text-center">Warnings</th>
+            <th class="px-3 py-3 text-center">Time left</th>
+            <th class="px-4 py-3 text-right"></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-700 dark:text-slate-400">
+          <% @live_rows.each do |r| %>
+            <% label, klass = badge.fetch(r.status) %>
+            <tr>
+              <td class="px-4 py-3 font-semibold text-slate-800 dark:text-slate-200"><%= r.user.email_address %></td>
+              <td class="px-3 py-3">
+                <span class="inline-block px-2 py-0.5 rounded-full font-semibold <%= klass %>"><%= label %></span>
+                <% if r.status == :no_signal %>
+                  <span class="text-slate-400">for <%= duration_text(r.seconds_silent) %></span>
+                <% elsif r.status == :blocked %>
+                  <span class="block text-slate-400 mt-0.5"><%= r.attempt.block_reason %></span>
+                <% elsif r.status == :submitted && r.attempt.finished_at %>
+                  <span class="text-slate-400">at <%= l(r.attempt.finished_at, format: "%H:%M") %></span>
+                <% end %>
+              </td>
+              <td class="px-3 py-3 text-center font-mono"><%= r.answered %> / <%= @total_questions %></td>
+              <td class="px-3 py-3 text-center font-mono"><%= r.attempt.leave_count %></td>
+              <td class="px-3 py-3 text-center font-mono">
+                <%= [:writing, :opening, :no_signal].include?(r.status) && r.attempt.timed? ? duration_text(r.attempt.seconds_left) : "—" %>
+              </td>
+              <td class="px-4 py-3 text-right">
+                <% if r.status == :blocked %>
+                  <%= button_to "Reinstate", reinstate_test_session_path(@test_session, attempt_id: r.attempt.id), method: :post,
+                                form: { data: { turbo_frame: "_top", turbo_confirm: "Let #{r.user.email_address} continue this test?" } },
+                                class: "rounded-lg bg-brand-800 hover:bg-brand-900 text-white font-bold text-xs px-3 py-1.5 cursor-pointer" %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+          <% @not_started.each do |entry| %>
+            <tr>
+              <td class="px-4 py-3 font-semibold text-slate-800 dark:text-slate-200"><%= entry.user.email_address %></td>
+              <td class="px-3 py-3" colspan="5">
+                <span class="inline-block px-2 py-0.5 rounded-full font-semibold bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">⏳ Not started</span>
+                <span class="text-slate-400">entered the PIN at <%= l(entry.created_at, format: "%H:%M") %></span>
+              </td>
+            </tr>
+          <% end %>
+          <% if @live_rows.empty? && @not_started.empty? %>
+            <tr><td colspan="6" class="text-center py-10 text-slate-400 font-medium">Nobody has entered the PIN yet.</td></tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<% end %>

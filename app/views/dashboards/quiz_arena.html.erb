@@ -18,7 +18,7 @@
         <h2 class="text-sm font-semibold text-brand-800 dark:text-brand-400"><%= @attempt.title %></h2>
       </div>
       <span class="text-xs bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 font-mono px-3 py-1.5 rounded-lg">
-        <%= [@question.exam_type, @question.year].compact_blank.join(" · ").presence || "—" %>
+        <%= [(exam_name(@question.exam_type) if @question.exam_type.present?), @question.year].compact_blank.join(" · ").presence || "—" %>
       </span>
     </div>
 

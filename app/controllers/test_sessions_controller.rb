@@ -1,9 +1,13 @@
 class TestSessionsController < ApplicationController
-  FACULTY_ACTIONS = [:index, :new, :create, :show, :edit, :update, :reinstate, :upload_form, :import, :download_template].freeze
+  FACULTY_ACTIONS = [:index, :new, :create, :show, :edit, :update, :reinstate, :live, :upload_form, :import, :download_template].freeze
+  ONLINE_WITHIN = 35.seconds # two missed heartbeats = "no signal"
+
+  LiveRow = Struct.new(:attempt, :user, :status, :answered, :seconds_silent, keyword_init: true)
 
   before_action :ensure_faculty_access, only: FACULTY_ACTIONS - [:index]
-  before_action :set_test_session, only: [:show, :edit, :update, :reinstate]
-  before_action :ensure_test_ownership, only: [:show, :edit, :update, :reinstate]
+  before_action :set_test_session, only: [:show, :edit, :update, :reinstate, :live]
+  before_action :ensure_test_ownership, only: [:show, :edit, :update, :reinstate, :live]
+  before_action :ensure_editable, only: [:edit, :update]
   before_action :load_question_library, only: [:new, :edit]
 
   rate_limit to: 10, within: 5.minutes, only: :verify_pin,
@@ -88,6 +92,37 @@ class TestSessionsController < ApplicationController
     end
   end
 
+  # GET /test_sessions/:id/live -> the live panel (a Turbo frame the Results page reloads every 15 s)
+  def live
+    now = Time.current
+    attempts = @test_session.test_attempts.includes(:user).to_a
+    attempts.each { |a| a.enforce_presence!(now) }
+
+    answered = UserResponse.where(test_session_token: attempts.map(&:token))
+                           .group(:test_session_token).distinct.count(:question_id)
+    @total_questions = @test_session.questions.count
+
+    @live_rows = attempts.map do |a|
+      status =
+        if a.blocked? then :blocked
+        elsif a.finished? || a.expired?(now) then :submitted
+        elsif a.last_seen_at.nil? then :opening
+        elsif now - a.last_seen_at <= ONLINE_WITHIN then :writing
+        else :no_signal
+        end
+      LiveRow.new(attempt: a, user: a.user, status: status, answered: answered[a.token].to_i,
+                  seconds_silent: a.last_seen_at && (now - a.last_seen_at).to_i)
+    end
+    order = { no_signal: 0, blocked: 1, opening: 2, writing: 3, submitted: 4 }
+    @live_rows.sort_by! { |r| [order[r.status], r.user.email_address] }
+
+    @not_started = @test_session.test_pin_entries.includes(:user)
+                                .where.not(user_id: attempts.map(&:user_id)).order(:created_at).to_a
+    @counts = @live_rows.map(&:status).tally
+    @refreshed_at = now
+    render layout: false
+  end
+
   def upload_form
   end
 
@@ -109,7 +144,7 @@ class TestSessionsController < ApplicationController
   def download_template
     xls_content = [
       ["Test Title", "Exam Portfolio", "Duration Minutes", "Passing Percentage", "Exam Year", "Access (Open/PIN)", "Starts At", "Ends At"],
-      ["Surprise Physics Quiz", "CBSE", "45", "40", "2026", "PIN", "2026-10-05 10:00", "2026-10-05 18:00"],
+      ["Surprise Physics Quiz", "CBSE X", "45", "40", "2026", "PIN", "2026-10-05 10:00", "2026-10-05 18:00"],
       [],
       ["Topic", "Question", "Option A", "Option B", "Option C", "Option D", "Correct Answer", "Explanation"],
       ["Physics", "What is the formula of Acceleration?", "MA", "MV", "v/t", "MV2", "C", "Acceleration = Velocity / Time."]
@@ -126,6 +161,8 @@ class TestSessionsController < ApplicationController
 
     if match && match.questions.exists?
       session[:unlocked_test_ids] = (Array(session[:unlocked_test_ids]) | [match.id]).last(50)
+      # so the teacher's live panel can list students who entered the PIN but have not started
+      TestPinEntry.create_or_find_by!(test_session: match, user: Current.user) if Current.user.student?
       redirect_to test_intro_dashboard_path(match), notice: "PIN accepted: #{match.title}"
     else
       redirect_to join_test_sessions_path, alert: "Invalid PIN. Please check it with your teacher."
@@ -146,6 +183,15 @@ class TestSessionsController < ApplicationController
     unless @test_session.user_id == Current.user.id || Current.user.admin?
       redirect_to test_sessions_path, alert: "You can only open tests you created."
     end
+  end
+
+  # Strict and time-bound tests lock 10 minutes before they open (see TestSession#editing_locked?)
+  def ensure_editable
+    return unless @test_session.editing_locked?
+
+    redirect_to test_sessions_path,
+                alert: "“#{@test_session.title}” can no longer be edited: tests with a time window or strict mode lock " \
+                       "#{TestSession::EDIT_LOCK_BEFORE.in_minutes.to_i} minutes before they open, once a student has started, and after they close."
   end
 
   def ensure_faculty_access

@@ -19,7 +19,8 @@
 
   <div>
     <%= f.label :exam_type, "Exam", class: label_class %>
-    <%= f.select :exam_type, [["UPSC Civil Services", "UPSC"], ["SSC CGL", "SSC"], ["CBSE Class X", "CBSE"], ["IIT JEE Main", "JEE"]], {}, class: input_class %>
+    <%= f.select :exam_type, Exam.options, {}, class: input_class %>
+    <p class="mt-1 text-xs text-slate-400">Marks and ranks follow this exam's marking.</p>
   </div>
 
   <div class="grid grid-cols-2 gap-3">

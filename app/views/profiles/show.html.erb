@@ -10,6 +10,13 @@
       <%= link_to "Edit Profile Data 📝", edit_profile_path, class: "rounded-xl bg-brand-800 hover:bg-brand-900 dark:bg-brand-700 dark:hover:bg-brand-600 text-white font-bold text-xs px-4 py-2.5 shadow-sm text-center transition-all cursor-pointer" %>
     </div>
 
+    <% if notice %>
+      <div class="rounded-xl bg-emerald-50 dark:bg-emerald-950/40 p-3 border border-emerald-200 dark:border-emerald-900/40 text-xs text-emerald-800 dark:text-emerald-300 font-bold"><%= notice %></div>
+    <% end %>
+    <% if alert %>
+      <div class="rounded-xl bg-red-50 dark:bg-red-950/40 p-3 border border-red-200 dark:border-red-900/40 text-xs text-red-800 dark:text-red-300 font-bold"><%= alert %></div>
+    <% end %>
+
     <!-- Main Biodata Grid Layout Card -->
     <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-sm space-y-6">
       <div class="flex items-center gap-x-4 border-b border-slate-200/60 dark:border-slate-800 pb-6">
@@ -28,8 +35,13 @@
         </div>
 
         <div class="space-y-1">
-          <span class="text-xs font-bold text-slate-400 text-xs">Primary Exam Target</span>
-          <p class="font-medium text-slate-900 dark:text-white bg-white dark:bg-slate-950 p-3 rounded-xl border border-slate-200/60 dark:border-slate-850">UPSC Civil Services (Prelims)</p>
+          <span class="text-xs font-bold text-slate-400 text-xs">Preparing for</span>
+          <%= form_with url: profile_exam_path, method: :patch, class: "flex gap-2" do %>
+            <%= select_tag :target_exam, options_for_select(Exam.options, @user.target_exam), include_blank: "Choose your exam",
+                  class: "flex-1 font-medium text-slate-900 dark:text-white bg-white dark:bg-slate-950 p-3 rounded-xl border border-slate-200/60 dark:border-slate-850 text-sm" %>
+            <%= submit_tag "Save", name: nil, class: "rounded-xl bg-brand-800 hover:bg-brand-900 text-white text-xs font-bold px-4 cursor-pointer" %>
+          <% end %>
+          <p class="text-xs text-slate-400">Your rank is calculated only among students of this exam.</p>
         </div>
 
         <div class="space-y-1">
