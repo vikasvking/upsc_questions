@@ -1,7 +1,7 @@
 <div class="py-8 sm:py-10">
   <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-6">
     <%= render "admin/shared/header", title: "Edit “#{@test_session.title}”",
-          action: capture { test_kind_badge(@test_session) + " ".html_safe + exam_chip(@test_session.exam_type) } %>
+          action: capture { kind_badge_for(@test_session) + " ".html_safe + exam_chip(@test_session.exam_type) } %>
     <%= render "admin/test_sessions/form" %>
 
     <% attempts = @test_session.test_attempts.count %>

@@ -45,7 +45,7 @@
         <ul class="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
           <% @tests.each do |t| %>
             <li class="py-2 flex items-center justify-between gap-3">
-              <span class="flex flex-wrap items-center gap-1.5 min-w-0"><%= test_kind_badge(t) %> <%= exam_chip(t.exam_type) %> <span class="truncate text-slate-900 dark:text-white"><%= t.title %></span></span>
+              <span class="flex flex-wrap items-center gap-1.5 min-w-0"><%= kind_badge_for(t) %> <%= exam_chip(t.exam_type) %> <span class="truncate text-slate-900 dark:text-white"><%= t.title %></span></span>
               <%= link_to "Edit", edit_admin_test_session_path(t), class: "shrink-0 text-brand-700 dark:text-brand-300 font-medium" %>
             </li>
           <% end %>

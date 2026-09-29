@@ -28,18 +28,18 @@ module TestStylesHelper
     "IBPS"         => "bg-yellow-50 text-yellow-800 dark:bg-yellow-950/40 dark:text-yellow-300"
   }.freeze
 
-  def test_kind(test)
+  def kind_of_test(test)
     if test.strict_mode? then :strict
     elsif test.pin_required? then :pin
     else :open
     end
   end
 
-  def test_style(test) = TEST_KIND_STYLES.fetch(test_kind(test))
+  def style_for_test(test) = TEST_KIND_STYLES.fetch(kind_of_test(test))
 
   # 🛡️ Strict / 🔐 PIN / 🟢 Open to all
-  def test_kind_badge(test)
-    style = test_style(test)
+  def kind_badge_for(test)
+    style = style_for_test(test)
     tag.span("#{style[:icon]} #{style[:label]}", class: "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold #{style[:badge]}")
   end
 

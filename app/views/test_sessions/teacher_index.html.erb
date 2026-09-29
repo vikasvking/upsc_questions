@@ -35,12 +35,12 @@
               else test.ends_at ? ["⏰ Live until #{l(test.ends_at, format: :short)}", "bg-amber-50 text-amber-800 ring-1 ring-inset ring-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900/60"] : ["Live (no time window)", "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"]
               end
           %>
-          <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 flex justify-between items-center gap-4 shadow-sm hover:border-brand-800/40 transition-all <%= test_style(test)[:stripe] %>">
+          <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 flex justify-between items-center gap-4 shadow-sm hover:border-brand-800/40 transition-all <%= style_for_test(test)[:stripe] %>">
             <div class="space-y-3 min-w-0">
               <div>
                 <div class="flex flex-wrap gap-1.5">
                   <%= exam_chip(test.exam_type) %>
-                  <%= test_kind_badge(test) %>
+                  <%= kind_badge_for(test) %>
                   <span class="inline-block px-2 py-0.5 rounded text-xs font-semibold <%= status_class %>"><%= status_label %></span>
                   <%= audience_chip(test) %>
                 </div>

@@ -1,6 +1,6 @@
 module DashboardsHelper
   # [label, css classes] for the small status badge on a test card. Scheduled tests get an amber ⏰ chip.
-  def test_window_badge(test)
+  def window_badge_for(test)
     case test.window_status
     when :upcoming
       ["⏰ Opens #{l(test.starts_at, format: :short)}", "bg-amber-50 text-amber-800 ring-1 ring-inset ring-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900/60"]

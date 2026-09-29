@@ -1,10 +1,10 @@
 <%# locals: test, mine (the student's attempt or nil), subjects (array of topic names) %>
-<% label, label_class = test_window_badge(test) %>
-<% style = test_style(test) %>
+<% label, label_class = window_badge_for(test) %>
+<% style = style_for_test(test) %>
 <div class="bg-white dark:bg-slate-900 rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 shadow-[0_1px_2px_rgba(15,23,42,0.04)] p-5 flex flex-col justify-between gap-4 <%= style[:stripe] %>">
   <div class="min-w-0">
     <div class="flex flex-wrap gap-1.5">
-      <%= test_kind_badge(test) %>
+      <%= kind_badge_for(test) %>
       <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium <%= label_class %>"><%= label %></span>
       <%= audience_chip(test) %>
     </div>

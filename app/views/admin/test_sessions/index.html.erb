@@ -16,10 +16,10 @@
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <% @tests.each do |t| %>
-        <% label, label_class = test_window_badge(t) %>
-        <div class="bg-white dark:bg-slate-900 rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-5 space-y-3 <%= test_style(t)[:stripe] %>">
+        <% label, label_class = window_badge_for(t) %>
+        <div class="bg-white dark:bg-slate-900 rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-5 space-y-3 <%= style_for_test(t)[:stripe] %>">
           <div class="flex flex-wrap gap-1.5">
-            <%= test_kind_badge(t) %>
+            <%= kind_badge_for(t) %>
             <%= exam_chip(t.exam_type) %>
             <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium <%= label_class %>"><%= label %></span>
             <%= audience_chip(t) %>
