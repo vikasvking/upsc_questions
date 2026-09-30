@@ -85,7 +85,7 @@ module Api
 
         def results
           results = @test.rankings
-          @test.test_attempts.in_progress.each(&:enforce_presence!) if @test.strict_mode?
+          @test.block_silent_students!
           blocked = @test.test_attempts.blocked.includes(:user).order(:blocked_at)
           rating = Rating.summary_for(@test)
 
@@ -106,36 +106,25 @@ module Api
           }
         end
 
+        # (shared between teachers for a few seconds, see TestSession#live_snapshot)
         def live
           now = Time.current
-          attempts = @test.test_attempts.first_tries.includes(:user).to_a # retakes are practice, not the live test
-          attempts.each { |a| a.enforce_presence!(now) }
-          answered = UserResponse.where(test_session_token: attempts.map(&:token)).group(:test_session_token).distinct.count(:question_id)
-
-          rows = attempts.map do |a|
-            status =
-              if a.blocked? then "blocked"
-              elsif a.finished? || a.expired?(now) then "submitted"
-              elsif a.last_seen_at.nil? then "opening"
-              elsif now - a.last_seen_at <= ONLINE_WITHIN then "writing"
-              else "no_signal"
-              end
-            { attempt_id: a.id, name: a.user.display_name, email_address: a.user.email_address, status: status,
-              answered: answered[a.token].to_i, leave_count: a.leave_count, block_reason: a.block_reason,
-              seconds_silent: a.last_seen_at && (now - a.last_seen_at).to_i, seconds_left: a.seconds_left(now),
+          snapshot = @test.live_snapshot(now)
+          rows = snapshot.rows.map do |r|
+            a = r.attempt
+            { attempt_id: a.id, name: r.user.display_name, email_address: r.user.email_address, status: r.status.to_s,
+              answered: r.answered, leave_count: a.leave_count, block_reason: a.block_reason,
+              seconds_silent: r.seconds_silent, seconds_left: a.seconds_left(now),
               finished_at: time_json(a.finished_at) }
           end
-          order = %w[no_signal blocked opening writing submitted]
-          rows.sort_by! { |r| [order.index(r[:status]), r[:name].downcase] }
-          not_started = @test.test_pin_entries.includes(:user).where.not(user_id: attempts.map(&:user_id)).order(:created_at)
 
           render json: {
             live: @test.live_view?(now),
-            refreshed_at: time_json(now),
-            total_questions: @test.questions.count,
-            counts: rows.map { |r| r[:status] }.tally.merge("not_started" => not_started.size),
+            refreshed_at: time_json(snapshot.refreshed_at),
+            total_questions: snapshot.total_questions,
+            counts: snapshot.counts.transform_keys(&:to_s).merge("not_started" => snapshot.not_started.size),
             rows: rows,
-            not_started: not_started.map { |e| { name: e.user.display_name, email_address: e.user.email_address, pin_entered_at: time_json(e.created_at) } }
+            not_started: snapshot.not_started.map { |e| { name: e.user.display_name, email_address: e.user.email_address, pin_entered_at: time_json(e.created_at) } }
           }
         end
 

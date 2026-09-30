@@ -103,9 +103,9 @@ module Api
         rank = nil
         can_retake = false
         if (test = @attempt.test_session)
-          ranking = test.rankings
           # a retake is never ranked: show the rank the student's first attempt earned
           ranked = @attempt.retake? ? test.first_attempt_for(current_user) : @attempt
+          ranking = test.rankings(for_attempt: ranked)
           mine = ranked && ranking.find { |r| r.attempt.id == ranked.id }
           rank = mine && { rank: mine.rank, of: ranking.size, from_first_attempt: @attempt.retake?, marks: mine.marks }
           can_retake = TestAttempt.latest_for(current_user, test)&.retake_allowed? || false

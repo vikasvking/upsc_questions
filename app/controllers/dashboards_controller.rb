@@ -177,8 +177,8 @@ class DashboardsController < ApplicationController
 
     # Rank among everyone who has submitted this teacher test so far (a retake shows the first attempt's rank)
     if (test = @attempt.test_session)
-      ranking = test.rankings
       ranked = @attempt.retake? ? test.first_attempt_for(Current.user) : @attempt
+      ranking = test.rankings(for_attempt: ranked)
       @my_result = ranked && ranking.find { |r| r.attempt.id == ranked.id }
       @ranked_count = ranking.size
       @can_retake = TestAttempt.latest_for(Current.user, test)&.retake_allowed? || false
@@ -245,7 +245,7 @@ class DashboardsController < ApplicationController
       mine = first_tries[t.id]
       next unless mine&.finished? || mine&.expired?
       next if mine.blocked? || !t.results_released? # strict tests show ranks only after they close
-      ranking = t.rankings
+      ranking = t.rankings(for_attempt: mine)
       me = ranking.find { |r| r.attempt.id == mine.id }
       @ranks_by_test[t.id] = [me.rank, ranking.size] if me
     end

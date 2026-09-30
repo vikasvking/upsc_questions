@@ -128,38 +128,113 @@ class TestSession < ApplicationRecord
   Result = Struct.new(:attempt, :user, :rank, :correct, :wrong, :skipped, :unattempted, :total,
                       :marks, :max_marks, :percentage, :passed, :time_taken, keyword_init: true)
 
+  # ---------- speed: results and the live view are shared, not recalculated for every page ----------
+  #
+  # A big test (500 students x 100 questions = 50,000 answers) is expensive to rank. Result pages, test cards and
+  # teachers' pages all need the same ranking, so it is worked out once and shared by everyone (per server process):
+  #   * reused as long as nothing changed (same "fingerprint": submitted attempts, questions, test settings);
+  #   * also reused for up to RANKINGS_REUSE while students are still submitting, except when the page asks for
+  #     a student who is not in it yet (they just submitted), so nobody misses their own rank.
+  # The teachers' live panel is shared the same way for LIVE_REUSE (it refreshes every 15 seconds anyway).
+  # Sharing is off in tests, where every test has its own data (see test/models/shared_results_test.rb).
+
+  ONLINE_WITHIN   = 35.seconds # two missed heartbeats = "no signal" on the live panel
+  RANKINGS_REUSE  = 15.seconds
+  LIVE_REUSE      = 5.seconds
+  SHARED_ENTRIES  = 200        # tests kept in memory; the oldest are dropped first
+
+  LiveRow = Struct.new(:attempt, :user, :status, :answered, :seconds_silent, keyword_init: true)
+  LiveSnapshot = Struct.new(:rows, :not_started, :counts, :total_questions, :refreshed_at, keyword_init: true)
+  LIVE_ORDER = { no_signal: 0, blocked: 1, opening: 2, writing: 3, submitted: 4 }.freeze
+
+  @shared = {}
+  @shared_lock = Mutex.new
+
+  class << self
+    attr_accessor :share_results
+
+    def shared_read(key) = @shared_lock.synchronize { @shared[key] }
+
+    def shared_write(key, value)
+      @shared_lock.synchronize do
+        @shared.delete(key)
+        @shared[key] = value
+        @shared.shift while @shared.size > SHARED_ENTRIES
+      end
+      value
+    end
+
+    def clear_shared! = @shared_lock.synchronize { @shared.clear }
+  end
+  self.share_results = !Rails.env.test?
+
   # Submitted attempts ranked by marks under this test's exam scheme (see Exam) high to low,
   # then less time taken, then earlier submission. Equal marks and time share a rank (1, 2, 2, 4).
   # Only each student's first attempt is ranked: retakes are practice, taken after seeing the answers.
-  # Uses 3 queries no matter how many students took the test.
-  def rankings
-    # blocked attempts stay open so a reinstated student can carry on
-    test_attempts.first_tries.in_progress.not_blocked.select(&:expired?).each(&:finish!)
+  # `for_attempt`: the attempt the page is about; a shared ranking without it is not reused.
+  # Returns a frozen array: do not change it, it is shared.
+  def rankings(for_attempt: nil)
+    finish_expired_attempts!
+    return compute_rankings unless self.class.share_results
 
-    attempts = test_attempts.first_tries.finished.not_blocked.includes(:user).to_a
-    qids     = ordered_questions.pluck(:id)
-    total    = qids.size
-    latest   = UserResponse.where(test_session_token: attempts.map(&:token), question_id: qids)
-                           .order(:updated_at)
-                           .index_by { |r| [r.test_session_token, r.question_id] }
-
-    results = attempts.map do |a|
-      answers = qids.filter_map { |qid| latest[[a.token, qid]] }
-      correct = answers.count(&:is_correct)
-      skipped = answers.count { |r| r.chosen_option == "SKIPPED" }
-      wrong   = answers.size - correct - skipped
-      pct     = total.positive? ? (correct * 100.0 / total).round(1) : 0.0
-      Result.new(attempt: a, user: a.user, correct: correct, wrong: wrong, skipped: skipped,
-                 unattempted: total - answers.size, total: total,
-                 marks: exam.marks_for(correct, wrong), max_marks: (total * exam.correct).round(2),
-                 percentage: pct, passed: pct >= pass_mark_percentage, time_taken: a.time_taken)
+    fingerprint = rankings_fingerprint
+    entry = self.class.shared_read([:rankings, id])
+    if entry && (entry[:fingerprint] == fingerprint ||
+                 (entry[:computed_at] > RANKINGS_REUSE.ago && (for_attempt.nil? || entry[:attempt_ids].include?(for_attempt.id))))
+      return entry[:results]
     end
 
-    results.sort_by! { |r| [-r.marks, r.time_taken || Float::INFINITY, r.attempt.finished_at] }
-    results.each_with_index do |r, i|
-      prev = results[i - 1] if i.positive?
-      r.rank = prev && prev.marks == r.marks && prev.time_taken == r.time_taken ? prev.rank : i + 1
+    results = compute_rankings
+    self.class.shared_write([:rankings, id], { fingerprint: fingerprint, computed_at: Time.current, results: results,
+                                              attempt_ids: results.map { |r| r.attempt.id }.to_set })
+    results
+  end
+
+  # Submits attempts whose time ran out (the student closed the page), in one query.
+  # Blocked attempts stay open so a reinstated student can carry on.
+  def finish_expired_attempts!(now = Time.current)
+    test_attempts.first_tries.in_progress.not_blocked
+                 .where("deadline_at < ?", now - TestAttempt::GRACE_PERIOD)
+                 .find_each(&:finish!)
+  end
+
+  # Strict tests: blocks students whose test page went silent (closed tab, locked phone...).
+  # Only the silent ones are loaded, instead of checking every attempt one by one.
+  def block_silent_students!(now = Time.current)
+    return unless strict_mode?
+    test_attempts.first_tries.in_progress.not_blocked
+                 .where("last_seen_at < ?", now - TestAttempt::LEAVE_TIMEOUT)
+                 .where("deadline_at IS NULL OR deadline_at >= ?", now - TestAttempt::GRACE_PERIOD)
+                 .find_each { |attempt| attempt.enforce_presence!(now) }
+  end
+
+  # The teachers' live panel (website and app): who is writing, silent, blocked or submitted
+  def live_snapshot(now = Time.current)
+    if self.class.share_results && (cached = self.class.shared_read([:live, id])) && cached.refreshed_at > now - LIVE_REUSE
+      return cached
     end
+
+    block_silent_students!(now)
+    attempts = test_attempts.first_tries.includes(:user).to_a # retakes are practice, not the live test
+    answered = UserResponse.where(test_session_token: attempts.map(&:token))
+                           .group(:test_session_token).distinct.count(:question_id)
+    rows = attempts.map do |a|
+      status =
+        if a.blocked? then :blocked
+        elsif a.finished? || a.expired?(now) then :submitted
+        elsif a.last_seen_at.nil? then :opening
+        elsif now - a.last_seen_at <= ONLINE_WITHIN then :writing
+        else :no_signal
+        end
+      LiveRow.new(attempt: a, user: a.user, status: status, answered: answered[a.token].to_i,
+                  seconds_silent: a.last_seen_at && (now - a.last_seen_at).to_i)
+    end
+    rows.sort_by! { |r| [LIVE_ORDER[r.status], r.user.display_name.downcase] }
+    not_started = test_pin_entries.includes(:user).where.not(user_id: attempts.map(&:user_id)).order(:created_at).to_a
+
+    snapshot = LiveSnapshot.new(rows: rows.freeze, not_started: not_started.freeze, counts: rows.map(&:status).tally,
+                                total_questions: questions.count, refreshed_at: now)
+    self.class.share_results ? self.class.shared_write([:live, id], snapshot) : snapshot
   end
 
   # Questions in the order the teacher added them
@@ -252,6 +327,46 @@ class TestSession < ApplicationRecord
   end
 
   private
+
+  # Changes whenever the ranking could change: a submission, a block or reinstatement, the questions or the test's settings
+  def rankings_fingerprint
+    attempts = test_attempts.first_tries.finished.not_blocked
+                            .pick(Arel.sql("COUNT(*)"), Arel.sql("MAX(test_attempts.updated_at)"))
+    questions_sig = test_questions.pick(Arel.sql("COUNT(*)"), Arel.sql("MAX(test_questions.id)"))
+    [updated_at, *attempts, *questions_sig]
+  end
+
+  # Works out the ranking (4 queries however many students). Answers are read as plain values rather than
+  # loaded as records, which is several times faster for tens of thousands of answers.
+  def compute_rankings
+    attempts = test_attempts.first_tries.finished.not_blocked.includes(:user).to_a
+    qids     = ordered_questions.pluck(:id)
+    total    = qids.size
+    latest   = {} # [token, question_id] => [choice, correct]; ordered by time, so the last answer wins
+    UserResponse.where(test_session_token: attempts.map(&:token), question_id: qids)
+                .order(:updated_at)
+                .pluck(:test_session_token, :question_id, :chosen_option, :is_correct)
+                .each { |token, qid, choice, correct| latest[[token, qid]] = [choice, correct] }
+
+    results = attempts.map do |a|
+      answers = qids.filter_map { |qid| latest[[a.token, qid]] }
+      correct = answers.count { |_, ok| ok }
+      skipped = answers.count { |choice, _| choice == "SKIPPED" }
+      wrong   = answers.size - correct - skipped
+      pct     = total.positive? ? (correct * 100.0 / total).round(1) : 0.0
+      Result.new(attempt: a, user: a.user, correct: correct, wrong: wrong, skipped: skipped,
+                 unattempted: total - answers.size, total: total,
+                 marks: exam.marks_for(correct, wrong), max_marks: (total * exam.correct).round(2),
+                 percentage: pct, passed: pct >= pass_mark_percentage, time_taken: a.time_taken)
+    end
+
+    results.sort_by! { |r| [-r.marks, r.time_taken || Float::INFINITY, r.attempt.finished_at] }
+    results.each_with_index do |r, i|
+      prev = results[i - 1] if i.positive?
+      r.rank = prev && prev.marks == r.marks && prev.time_taken == r.time_taken ? prev.rank : i + 1
+    end
+    results.freeze
+  end
 
   def generate_secure_pin
     self.pin_code ||= loop do

@@ -1,9 +1,8 @@
 class TestSessionsController < ApplicationController
   include AudienceAssignment
   FACULTY_ACTIONS = [:index, :new, :create, :show, :edit, :update, :reinstate, :live, :upload_form, :import, :download_template].freeze
-  ONLINE_WITHIN = 35.seconds # two missed heartbeats = "no signal"
-
-  LiveRow = Struct.new(:attempt, :user, :status, :answered, :seconds_silent, keyword_init: true)
+  ONLINE_WITHIN = TestSession::ONLINE_WITHIN # two missed heartbeats = "no signal"
+  LiveRow = TestSession::LiveRow
 
   before_action :ensure_faculty_access, only: FACULTY_ACTIONS - [:index]
   before_action :set_test_session, only: [:show, :edit, :update, :reinstate, :live]
@@ -30,7 +29,7 @@ class TestSessionsController < ApplicationController
   # Results for one test, ranked by marks then time
   def show
     @results = @test_session.rankings
-    @test_session.test_attempts.in_progress.each(&:enforce_presence!) if @test_session.strict_mode?
+    @test_session.block_silent_students!
     @blocked_attempts = @test_session.test_attempts.blocked.includes(:user).order(:blocked_at)
     @in_progress_count = @test_session.test_attempts.first_tries.in_progress.not_blocked.count
     @total_participants = @results.size
@@ -99,33 +98,14 @@ class TestSessionsController < ApplicationController
   end
 
   # GET /test_sessions/:id/live -> the live panel (a Turbo frame the Results page reloads every 15 s)
+  # (shared between teachers for a few seconds, see TestSession#live_snapshot)
   def live
-    now = Time.current
-    attempts = @test_session.test_attempts.first_tries.includes(:user).to_a # retakes are practice, not the live test
-    attempts.each { |a| a.enforce_presence!(now) }
-
-    answered = UserResponse.where(test_session_token: attempts.map(&:token))
-                           .group(:test_session_token).distinct.count(:question_id)
-    @total_questions = @test_session.questions.count
-
-    @live_rows = attempts.map do |a|
-      status =
-        if a.blocked? then :blocked
-        elsif a.finished? || a.expired?(now) then :submitted
-        elsif a.last_seen_at.nil? then :opening
-        elsif now - a.last_seen_at <= ONLINE_WITHIN then :writing
-        else :no_signal
-        end
-      LiveRow.new(attempt: a, user: a.user, status: status, answered: answered[a.token].to_i,
-                  seconds_silent: a.last_seen_at && (now - a.last_seen_at).to_i)
-    end
-    order = { no_signal: 0, blocked: 1, opening: 2, writing: 3, submitted: 4 }
-    @live_rows.sort_by! { |r| [order[r.status], r.user.display_name.downcase] }
-
-    @not_started = @test_session.test_pin_entries.includes(:user)
-                                .where.not(user_id: attempts.map(&:user_id)).order(:created_at).to_a
-    @counts = @live_rows.map(&:status).tally
-    @refreshed_at = now
+    snapshot = @test_session.live_snapshot
+    @live_rows       = snapshot.rows
+    @not_started     = snapshot.not_started
+    @counts          = snapshot.counts
+    @total_questions = snapshot.total_questions
+    @refreshed_at    = snapshot.refreshed_at
     render layout: false
   end
 
