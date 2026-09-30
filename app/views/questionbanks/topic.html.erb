@@ -20,6 +20,16 @@
       </div>
     </div>
 
+    <% if alert %>
+      <div class="rounded-xl bg-red-50 dark:bg-red-950/40 px-4 py-3 ring-1 ring-red-200 dark:ring-red-900/40 text-sm text-red-800 dark:text-red-300"><%= alert %></div>
+    <% end %>
+    <% if Current.user.free_tier? %>
+      <div class="rounded-xl bg-pink-50 dark:bg-pink-950/30 px-4 py-3 ring-1 ring-pink-200 dark:ring-pink-900/50 text-sm text-pink-900 dark:text-pink-200 flex flex-wrap items-center justify-between gap-2">
+        <span>🌱 Free trial: you can see every question, and answer the 🎁 sample questions once each.</span>
+        <%= link_to "Unlock all questions →", membership_path, class: "font-medium underline" %>
+      </div>
+    <% end %>
+
     <!-- Filter tabs -->
     <div class="flex flex-wrap gap-2">
       <% labels.each do |key, label| %>
@@ -38,6 +48,25 @@
       <% @questions.each do |q| %>
         <% s = @question_stats[q.id] %>
         <% last = s.last_response %>
+        <% if q.locked_for?(Current.user) %>
+          <%# Free members see the question, but only Plus and Warrior can answer it %>
+          <div id="q-<%= q.id %>" class="scroll-mt-6 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30">
+            <div class="flex flex-wrap items-center gap-2 mb-3">
+              <span class="text-xs font-semibold bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 px-2.5 py-1 rounded-lg text-slate-700 dark:text-slate-300">#<%= @numbers[q.id] %></span>
+              <span class="text-xs font-mono text-slate-400"><%= [(exam_name(q.exam_type) if q.exam_type.present?), q.year].compact_blank.join(" · ") %></span>
+              <span class="ml-auto text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700">🔒 Plus / Warrior</span>
+            </div>
+            <p class="text-sm font-semibold text-slate-900 dark:text-white leading-relaxed"><%= q.content %></p>
+            <div class="mt-3 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800/60 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <p class="text-sm font-semibold text-slate-700 dark:text-slate-200">🔒 Upgrade to attempt</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Plus or Warrior unlocks this question, its answer and explanation.</p>
+              </div>
+              <%= link_to "See plans", membership_path, class: "shrink-0 self-start sm:self-auto rounded-lg bg-slate-700 hover:bg-slate-800 dark:bg-slate-600 dark:hover:bg-slate-500 text-white text-xs font-bold px-4 py-2" %>
+            </div>
+          </div>
+          <% next %>
+        <% end %>
         <div id="q-<%= q.id %>" class="scroll-mt-6 p-5 rounded-2xl border bg-slate-50/50 dark:bg-slate-900/30 <%= s.solved? ? "border-emerald-200 dark:border-emerald-900/50" : "border-slate-200 dark:border-slate-800" %> <%= "ring-2 ring-offset-2 dark:ring-offset-slate-950 #{flash[:answered_correct] ? "ring-emerald-500" : "ring-red-500"}" if q.id == @answered_id %>">
           <% if q.id == @answered_id %>
             <p class="mb-3 text-sm font-semibold <%= flash[:answered_correct] ? "text-emerald-700 dark:text-emerald-400" : "text-red-700 dark:text-red-400" %>">

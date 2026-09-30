@@ -48,11 +48,33 @@ class TiersAndPlansTest < ActionDispatch::IntegrationTest
     post question_bank_answer_path, params: { question_id: questions(:one).id, answer_choice: "B" }
     assert_equal 1, @free.user_responses.count # only once
 
+    # not a sample question: shown locked, and answering it is refused
     post question_bank_answer_path, params: { question_id: questions(:two).id, answer_choice: "B" }
-    assert_response :not_found # not a sample question
+    assert_redirected_to question_bank_topic_path(name: questions(:two).topic, anchor: "q-#{questions(:two).id}")
+    assert_equal 0, @free.user_responses.where(question: questions(:two)).count
 
     post start_test_dashboard_path, params: { topic: "Physics" }
     assert_redirected_to question_bank_path
+  end
+
+  test "free students see every question but answer only the samples; the rest show an upgrade box" do
+    sign_in_as @free
+    get question_bank_topic_path(name: "Physics")
+    assert_response :success
+    # the sample question can be answered
+    assert_select "#q-#{questions(:one).id} form.single-practice"
+    # the other question is listed with its text, but locked: no options, an upgrade box instead
+    assert_select "#q-#{questions(:two).id}", text: /#{Regexp.escape(questions(:two).content)}/
+    assert_select "#q-#{questions(:two).id} form.single-practice", count: 0
+    assert_select "#q-#{questions(:two).id} a[href=?]", membership_path, text: "See plans"
+    assert_select "#q-#{questions(:two).id}", text: /Upgrade to attempt/
+    assert_no_match questions(:two).option_b, css_select("#q-#{questions(:two).id}").text
+
+    # a Warrior sees no locks
+    @free.update!(membership_tier: "warrior", tier_until: Date.current + 30)
+    get question_bank_topic_path(name: "Physics")
+    assert_select "#q-#{questions(:two).id} form.single-practice"
+    assert_no_match "Upgrade to attempt", response.body
   end
 
   test "an active school plan makes its students Plus, limited to their exams outside school tests" do

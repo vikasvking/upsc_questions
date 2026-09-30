@@ -38,6 +38,18 @@ class Question < ApplicationRecord
     end
   end
 
+  # What a student sees in the Question Bank. Free students see every visible question (to show what upgrading
+  # unlocks), but can only answer the free samples: the rest are shown locked (see #locked_for?).
+  # Everyone else sees exactly what they may answer.
+  def self.listed_to(user)
+    user&.student? && user.free_tier? ? visible_to(user) : available_to(user)
+  end
+
+  # Shown in the Question Bank but not answerable on this student's tier (Free: every question but the samples)
+  def locked_for?(user)
+    !!(user&.student? && user.free_tier? && !free_sample?)
+  end
+
   # Tests using this question that are locked (see TestSession#editing_locked?)
   def locked_tests
     test_sessions.select(&:editing_locked?)

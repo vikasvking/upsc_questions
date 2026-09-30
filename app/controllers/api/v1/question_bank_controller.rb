@@ -2,6 +2,8 @@
 #   GET  /api/v1/question_bank?exams=all                  -> topics with my progress (my exams by default)
 #   GET  /api/v1/question_bank/topic?name=Physics&filter=all|solved|wrong|not_attempted
 #   POST /api/v1/question_bank/answer  question_id, choice=A|B|C|D, duration_seconds
+#   Free students see every question but answer only the samples: the others come with locked: true
+#   (no answer or explanation) and answering them is refused with upgrade_required.
 module Api
   module V1
     class QuestionBankController < BaseController
@@ -44,7 +46,12 @@ module Api
       end
 
       def answer
-        question = Question.available_to(current_user).find(params[:question_id])
+        question = Question.listed_to(current_user).find(params[:question_id])
+        if question.locked_for?(current_user)
+          return render_error("upgrade_required",
+                              "This question is for Plus and Warrior members. Free members can answer the sample questions. Join your school's plan (Plus) or become a Warrior to unlock every question.",
+                              status: :forbidden, upgrade: upgrade_json(current_user))
+        end
         choice = params[:choice].to_s.strip.upcase
         return render_error("no_choice", "Pick an option first.") unless Question::ANSWER_KEYS.include?(choice)
 
@@ -74,10 +81,17 @@ module Api
           accuracy_pct: t.accuracy_pct, progress_pct: t.progress_pct, completed: t.completed? }
       end
 
-      # The answer and explanation appear once the student has attempted the question (as on the website)
+      # The answer and explanation appear once the student has attempted the question (as on the website).
+      # locked: a Free student sees the question text but cannot answer it; like the website, its options,
+      # answer and explanation are left out and the app shows an Upgrade box instead.
       def practice_question_json(question, stat, number: nil)
-        attempted = stat.attempted?
-        question_json(question, number: number).merge(
+        locked = question.locked_for?(current_user)
+        attempted = stat.attempted? && !locked
+        json = question_json(question, number: number)
+        json[:options] = {} if locked
+        json.merge(
+          locked: locked,
+          free_sample: question.free_sample?,
           attempts: stat.attempts,
           solved: stat.solved?,
           last_choice: stat.last_response&.chosen_option,

@@ -39,10 +39,15 @@ class QuestionbanksController < ApplicationController
 
   # POST /question_bank/answer -> practise one question on its own (not part of any test)
   def answer
-    question = Question.available_to(Current.user).find(params[:question_id])
+    question = Question.listed_to(Current.user).find(params[:question_id])
     choice = params[:answer_choice].to_s.strip.upcase
     back = question_bank_topic_path(name: question.topic, filter: params[:filter].presence, anchor: "q-#{question.id}")
 
+    # Free members see every question but answer only the free samples
+    if question.locked_for?(Current.user)
+      redirect_to back, alert: "This question is for Plus and Warrior members. Free members can answer the 🎁 sample questions. Join your school's plan (Plus) or become a Warrior to unlock every question."
+      return
+    end
     unless Question::ANSWER_KEYS.include?(choice)
       redirect_to back, alert: "Pick an option first."
       return

@@ -21,10 +21,11 @@ class StudentProgress
 
   attr_reader :user, :questions
 
-  # Only questions this student may see; optionally only some exams (their own by default on the pages)
+  # Questions this student may see in the Question Bank (Free students also see the locked, non-sample ones);
+  # optionally only some exams (their own by default on the pages)
   def initialize(user, exams: nil)
     @user = user
-    @questions = Question.available_to(user)
+    @questions = Question.listed_to(user)
     @questions = @questions.where(exam_type: exams) if exams.present?
   end
 

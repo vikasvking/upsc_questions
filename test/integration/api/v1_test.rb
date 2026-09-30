@@ -128,6 +128,32 @@ class ApiV1Test < ActionDispatch::IntegrationTest
     end
   end
 
+  test "free students see every question in the question bank but answer only the samples" do
+    free = User.create!(name: "Free Student", email_address: "free-api@example.com", password: "Sunflower2026x",
+                        date_of_birth: "2000-01-01")
+    free.replace_exams!(["UPSC_PRELIMS"])
+    questions(:one).update!(free_sample: true)
+    headers = api_sign_in(free, password: "Sunflower2026x")
+
+    get api_v1_question_bank_topic_path, params: { name: "Physics" }, headers: headers
+    assert_response :success
+    listed = json["questions"].index_by { |q| q["id"] }
+    assert_equal false, listed[questions(:one).id]["locked"]
+    locked = listed[questions(:two).id]
+    assert_equal true, locked["locked"]
+    assert_equal questions(:two).content, locked["content"]
+    assert_empty locked["options"]
+    assert_nil locked["correct_answer"]
+
+    post api_v1_question_bank_answer_path, params: { question_id: questions(:two).id, choice: "B" }, headers: headers, as: :json
+    assert_response :forbidden
+    assert_equal "upgrade_required", json.dig("error", "code")
+
+    post api_v1_question_bank_answer_path, params: { question_id: questions(:one).id, choice: "A" }, headers: headers, as: :json
+    assert_response :success
+    assert_equal true, json["correct"]
+  end
+
   test "PIN tests need the PIN first" do
     headers = api_sign_in(users(:one))
     test = test_sessions(:two)
