@@ -30,6 +30,7 @@ class User < ApplicationRecord
   has_many :ratings, dependent: :delete_all                                   # ratings this student gave
   has_many :received_ratings, as: :rateable, class_name: "Rating", dependent: :delete_all # a teacher's ratings
   has_many :question_reports, dependent: :delete_all
+  has_many :device_tokens, dependent: :delete_all                             # phones for push notifications
 
   has_many :attempted_questions, -> { distinct }, through: :user_responses, source: :question
   enum :role, { student: 0, teacher: 1, admin: 2 }, default: :student
@@ -114,6 +115,17 @@ class User < ApplicationRecord
   def reload(*)
     @tier = nil
     super
+  end
+
+  # ---------- push notifications (see PushNotifier) ----------
+
+  # Firebase topics the app subscribes this phone to, for new public tests:
+  #   all_<EXAM>   every exam they prepare for (free sample tests, which every tier can take)
+  #   tests_<EXAM> those whose public tests their tier includes
+  # Empty when they turned "New tests" off, or for teachers and admins.
+  def push_topics
+    return [] unless student? && push_new_tests?
+    exam_codes.map { |c| "all_#{c}" } + (exam_codes & allowed_exam_codes).map { |c| "tests_#{c}" }
   end
 
   # Students a teacher can pick for "selected" tests and batches: those at the teacher's institutions

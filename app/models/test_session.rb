@@ -35,6 +35,10 @@ class TestSession < ApplicationRecord
 
   before_validation :generate_secure_pin, on: :create
 
+  # Tell students about the new test. A minute later, so the questions and the chosen audience
+  # (saved right after the test itself) are in place.
+  after_create_commit -> { NewTestNotificationJob.set(wait: 1.minute).perform_later(id) }
+
   scope :newest_first, -> { order(created_at: :desc) }
 
   # Everyone the test is shown to, plus students who already started it (they keep seeing their result)
@@ -235,6 +239,33 @@ class TestSession < ApplicationRecord
     snapshot = LiveSnapshot.new(rows: rows.freeze, not_started: not_started.freeze, counts: rows.map(&:status).tally,
                                 total_questions: questions.count, refreshed_at: now)
     self.class.share_results ? self.class.shared_write([:live, id], snapshot) : snapshot
+  end
+
+  # ---------- push notifications (see NewTestNotificationJob) ----------
+
+  # The Firebase topic for a new public test with open access: its exam's students whose tier includes it
+  # (sample tests: every student of that exam). Public PIN tests are not announced to everyone, since only
+  # the teacher's own students have the PIN. nil for school and selected tests.
+  def push_topic
+    return nil unless visibility == "public" && open_access?
+    "#{free_sample? ? "all" : "tests"}_#{exam_type}"
+  end
+
+  # School and selected tests: the students it is shown to who can open it on their tier
+  def push_recipient_ids
+    return [] if visibility == "public"
+
+    candidate_ids =
+      if visibility == "institution"
+        Membership.approved.where(institution_id: institution_id).pluck(:user_id)
+      else
+        grants = audience_grants.to_a
+        ids_of = ->(type) { grants.select { |g| g.grantee_type == type }.map(&:grantee_id) }
+        ids_of.("User") +
+          Membership.approved.where(institution_id: ids_of.("Institution")).pluck(:user_id) +
+          BatchMember.where(batch_id: ids_of.("Batch")).pluck(:user_id)
+      end
+    User.student.where(id: candidate_ids.uniq).select { |u| TestSession.available_to(u).exists?(id) }.map(&:id)
   end
 
   # Questions in the order the teacher added them

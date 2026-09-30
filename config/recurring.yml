@@ -24,6 +24,13 @@ production:
   finish_expired_attempts:
     class: FinishExpiredAttemptsJob
     schedule: every 5 minutes
+  # Push notifications (see PushNotifier); nothing is sent until FIREBASE_CREDENTIALS is set
+  results_released_notifications:
+    class: ResultsReleasedNotificationJob
+    schedule: every 5 minutes
+  daily_practice_reminder:
+    class: DailyPracticeReminderJob
+    schedule: "0 19 * * * Asia/Kolkata"
   clear_solid_queue_finished_jobs:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
     schedule: every hour at minute 12

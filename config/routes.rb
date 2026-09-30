@@ -10,6 +10,9 @@ Rails.application.routes.draw do
       get   "me",    to: "profiles#show"
       patch "me",    to: "profiles#update"
       get   "exams", to: "profiles#exams"
+      patch "me/notifications", to: "profiles#notifications"
+      post   "devices", to: "devices#create"
+      delete "devices", to: "devices#destroy"
 
       # Students
       get "dashboard",  to: "dashboard#show"

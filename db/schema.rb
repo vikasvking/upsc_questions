@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_29_180000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_30_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -58,6 +58,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_180000) do
     t.datetime "updated_at", null: false
     t.index ["institution_id"], name: "index_batches_on_institution_id"
     t.index ["user_id"], name: "index_batches_on_user_id"
+  end
+
+  create_table "device_tokens", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "token", null: false
+    t.string "platform", default: "android", null: false
+    t.datetime "last_seen_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["token"], name: "index_device_tokens_on_token", unique: true
+    t.index ["user_id"], name: "index_device_tokens_on_user_id"
   end
 
   create_table "guardian_consents", force: :cascade do |t|
@@ -457,6 +468,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_180000) do
     t.string "visibility", default: "public", null: false
     t.bigint "institution_id"
     t.boolean "free_sample", default: false, null: false
+    t.datetime "new_test_notified_at"
+    t.datetime "results_notified_at"
     t.index ["free_sample"], name: "index_test_sessions_on_free_sample"
     t.index ["institution_id"], name: "index_test_sessions_on_institution_id"
     t.index ["pin_code"], name: "index_test_sessions_on_pin_code", unique: true
@@ -505,6 +518,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_180000) do
     t.date "tier_until"
     t.string "tier_source"
     t.string "payment_reference"
+    t.boolean "push_new_tests", default: true, null: false
+    t.boolean "push_results", default: true, null: false
+    t.boolean "push_reminders", default: true, null: false
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
   end
 
@@ -513,6 +529,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_180000) do
   add_foreign_key "batch_members", "users", on_delete: :cascade
   add_foreign_key "batches", "institutions", on_delete: :nullify
   add_foreign_key "batches", "users", on_delete: :cascade
+  add_foreign_key "device_tokens", "users", on_delete: :cascade
   add_foreign_key "guardian_consents", "users", on_delete: :cascade
   add_foreign_key "institutions", "plans", on_delete: :nullify
   add_foreign_key "institutions", "users", column: "created_by_id", on_delete: :nullify

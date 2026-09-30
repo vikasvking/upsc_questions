@@ -94,7 +94,10 @@ module Api
           ranking_exam: user.student? ? user.ranking_exam_code : nil,
           subjects: user.subject_names,
           email_confirmed: user.email_confirmed?,
-          account_issue: account_issue(user)
+          account_issue: account_issue(user),
+          # push notification switches (students) and the Firebase topics the phone should subscribe to
+          notifications: { new_tests: user.push_new_tests?, results: user.push_results?, reminders: user.push_reminders? },
+          push_topics: user.push_topics
         }
       end
 

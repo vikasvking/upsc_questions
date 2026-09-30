@@ -1,6 +1,7 @@
 # GET   /api/v1/me    -> the signed-in user (with any account step still to finish on the website)
 # PATCH /api/v1/me    name, exam_codes[] (students), target_exam (students), subjects (teachers, "Physics, Chemistry")
 # GET   /api/v1/exams -> every exam with its marking scheme
+# PATCH /api/v1/me/notifications  new_tests, results, reminders (true/false) -> push notification switches
 module Api
   module V1
     class ProfilesController < BaseController
@@ -37,6 +38,16 @@ module Api
 
       def exams
         render json: { exams: Exam.all.map { |e| exam_json(e.code) } }
+      end
+
+      NOTIFICATION_SWITCHES = { "new_tests" => :push_new_tests, "results" => :push_results, "reminders" => :push_reminders }.freeze
+
+      def notifications
+        changes = NOTIFICATION_SWITCHES.filter_map do |key, column|
+          [column, ActiveModel::Type::Boolean.new.cast(params[key])] if params.key?(key)
+        end.to_h
+        current_user.update!(changes) if changes.any?
+        render json: { user: user_json(current_user) }
       end
     end
   end
