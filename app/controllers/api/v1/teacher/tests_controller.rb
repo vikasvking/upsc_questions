@@ -1,6 +1,7 @@
 # A teacher's tests (admins see every test), with the same rules as the website.
 #   GET   /api/v1/teacher/form_options          -> exams, my schools/coachings (with test quota), my batches
-#   GET   /api/v1/teacher/tests                 -> my tests
+#   GET   /api/v1/teacher/tests                 -> my tests, newest first, 50 a page: ?exam=CBSE_XII (blank = all) &page=2
+#                                                    -> { tests, next_page, exam, exams: [{ code, name, count }] }
 #   GET   /api/v1/teacher/tests/:id             -> one test with its questions and audience (for editing)
 #   POST  /api/v1/teacher/tests                 -> test[title, exam_type, duration_minutes, pass_mark_percentage, access_type,
 #                                                    starts_at, ends_at, strict_mode, visibility, institution_id, question_ids[]], audience[...]
@@ -32,13 +33,28 @@ module Api
           }
         end
 
+        PER_PAGE = 50
+
+        # One exam at a time (or all), one page at a time, so the list stays fast however many tests there are
         def index
           scope = current_user.admin? ? TestSession.all : current_user.test_sessions
-          tests = scope.includes(:user, :institution, :audience_grants).newest_first.limit(300).to_a
+          exam = Exam.normalize(params[:exam])
+          counts = scope.group(:exam_type).count
+          scope = scope.where(exam_type: exam) if exam
+
+          page = [params[:page].to_i, 1].max
+          rows = scope.includes(:user, :institution, :audience_grants).newest_first.order(id: :desc) # id keeps pages stable
+                      .offset((page - 1) * PER_PAGE).limit(PER_PAGE + 1).to_a
+          tests = rows.first(PER_PAGE)
           ids = tests.map(&:id)
           question_counts = TestQuestion.where(test_session_id: ids).group(:test_session_id).count
           attempt_counts = TestAttempt.first_tries.where(test_session_id: ids).group(:test_session_id).count # students, not retakes
-          render json: { tests: tests.map { |t| teacher_card(t, question_counts[t.id].to_i, attempt_counts[t.id].to_i) } }
+          render json: {
+            tests: tests.map { |t| teacher_card(t, question_counts[t.id].to_i, attempt_counts[t.id].to_i) },
+            next_page: rows.size > PER_PAGE ? page + 1 : nil,
+            exam: exam,
+            exams: Exam.all.filter_map { |e| { code: e.code, name: e.name, count: counts[e.code] } if counts[e.code].to_i.positive? }
+          }
         end
 
         def show

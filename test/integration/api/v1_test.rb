@@ -250,6 +250,32 @@ class ApiV1Test < ActionDispatch::IntegrationTest
     assert_response :forbidden
   end
 
+  test "a teacher's tests come one exam and 50 at a time" do
+    teacher = users(:teacher)
+    55.times do |i|
+      TestSession.create!(user: teacher, title: "NEET mock #{i + 1}", exam_type: "NEET", duration_minutes: 30,
+                          pass_mark_percentage: 40, access_type: "open")
+    end
+    headers = api_sign_in(teacher)
+
+    get api_v1_teacher_tests_path, params: { exam: "NEET" }, headers: headers
+    assert_response :success
+    assert_equal 50, json["tests"].size
+    assert_equal 2, json["next_page"]
+    assert_equal "NEET", json["exam"]
+    assert_equal({ "code" => "NEET", "name" => "NEET", "count" => 55 }, json["exams"].find { |e| e["code"] == "NEET" })
+    assert json["exams"].any? { |e| e["code"] == "UPSC_PRELIMS" }
+
+    get api_v1_teacher_tests_path, params: { exam: "NEET", page: 2 }, headers: headers
+    assert_equal 5, json["tests"].size
+    assert_nil json["next_page"]
+    assert_equal "NEET mock 1", json["tests"].last["title"] # newest first
+
+    get api_v1_teacher_tests_path, headers: headers # every exam
+    assert_nil json["exam"]
+    assert_equal 50, json["tests"].size
+  end
+
   test "question bank practice reveals the answer only after an attempt" do
     headers = api_sign_in(users(:one))
     get api_v1_question_bank_topic_path, params: { name: "Physics" }, headers: headers
