@@ -1,0 +1,4 @@
+<p><strong><%= @payment.user.display_name %></strong> (<%= @payment.user.email_address %>) paid by UPI and sent this transaction ID:</p>
+<p style="font-family: monospace; font-size: 18px;"><strong><%= @payment.utr %></strong></p>
+<p>For: <%= @payment.what %> · <%= @payment.period_label %><br>Amount: <strong><%= rupees(@payment.amount_inr) %></strong></p>
+<p>Check it in your bank statement, then <%= link_to "approve or reject it", @url %>.</p>

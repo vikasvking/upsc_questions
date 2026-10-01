@@ -23,6 +23,7 @@ class User < ApplicationRecord
   has_many :memberships, dependent: :delete_all
   has_many :approved_memberships, -> { approved }, class_name: "Membership"
   has_many :institutions, through: :approved_memberships
+  has_many :payments, dependent: :delete_all # plans this person paid for (see Payment)
   has_many :guardian_consents, dependent: :delete_all
   has_many :batches, dependent: :destroy                 # a teacher's saved groups
   has_many :batch_members, dependent: :delete_all        # a student's places in batches

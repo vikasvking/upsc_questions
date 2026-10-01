@@ -1,0 +1,8 @@
+<%= @payment.user.display_name %> (<%= @payment.user.email_address %>) paid by UPI and sent this transaction ID:
+
+  <%= @payment.utr %>
+
+For: <%= @payment.what %> · <%= @payment.period_label %>
+Amount: ₹<%= @payment.amount_inr %>
+
+Check it in your bank statement, then approve or reject it: <%= @url %>

@@ -68,3 +68,6 @@ group :test do
 end
 
 gem "roo", "~> 3.0"
+
+# UPI payment QR codes on the Pay page
+gem "rqrcode", "~> 3.0"

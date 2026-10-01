@@ -5,7 +5,8 @@
 
     <section class="grid grid-cols-2 lg:grid-cols-4 gap-4">
       <% me = Current.user %>
-      <% [["Teachers waiting for approval", @counts[:pending_teachers], admin_approvals_path, me.can_manage?(:approvals)],
+      <% [["Payments to check", @counts[:pending_payments], admin_payments_path, me.admin?],
+          ["Teachers waiting for approval", @counts[:pending_teachers], admin_approvals_path, me.can_manage?(:approvals)],
           ["Join requests waiting", @counts[:pending_requests], admin_approvals_path, me.can_manage?(:approvals)],
           ["Teachers", @counts[:teachers], admin_users_path(role: "teacher"), me.admin?],
           ["Students", @counts[:students], admin_users_path(role: "student"), me.admin?],
@@ -18,7 +19,7 @@
           ["Admins", @counts[:admins], admin_users_path(role: "admin"), me.admin?]].select(&:last).each do |label, value, path, _| %>
         <%= link_to path, class: "#{card} hover:ring-brand-300 transition" do %>
           <p class="text-sm text-slate-500"><%= label %></p>
-          <p class="mt-1 text-2xl font-semibold tabular-nums <%= ["Blocked students", "Teachers waiting for approval", "Join requests waiting"].include?(label) && value.positive? ? "text-red-700 dark:text-red-400" : "text-slate-900 dark:text-white" %>"><%= number_with_delimiter(value) %></p>
+          <p class="mt-1 text-2xl font-semibold tabular-nums <%= ["Blocked students", "Teachers waiting for approval", "Join requests waiting", "Payments to check"].include?(label) && value.positive? ? "text-red-700 dark:text-red-400" : "text-slate-900 dark:text-white" %>"><%= number_with_delimiter(value) %></p>
         <% end %>
       <% end %>
     </section>

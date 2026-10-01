@@ -1,0 +1,21 @@
+<%# locals: payments (this person's submitted payments) %>
+<% if payments.any? %>
+  <section class="bg-white dark:bg-slate-900 rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-6 space-y-3">
+    <h2 class="font-semibold text-slate-900 dark:text-white">Your payments</h2>
+    <ul class="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
+      <% payments.each do |p| %>
+        <li class="py-2.5 flex flex-wrap items-center justify-between gap-2">
+          <div class="min-w-0">
+            <p class="font-medium text-slate-900 dark:text-white"><%= p.what %> · <%= p.period_label %> · <%= rupees(p.amount_inr) %></p>
+            <p class="text-xs text-slate-500">
+              <%= l(p.created_at, format: :short) %> · <%= Payment::METHODS[p.pay_method] %><%= " · #{p.utr}" if p.utr %>
+              <%= " · active until #{l(p.paid_until, format: :long)}" if p.approved? && p.paid_until %>
+              <%= " · #{p.admin_note}" if p.rejected? && p.admin_note %>
+            </p>
+          </div>
+          <%= payment_status_chip(p) %>
+        </li>
+      <% end %>
+    </ul>
+  </section>
+<% end %>

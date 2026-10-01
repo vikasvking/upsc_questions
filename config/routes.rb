@@ -92,6 +92,12 @@ Rails.application.routes.draw do
     end
   end
 
+  # Paying for Warrior (students) or a school plan (teachers): UPI QR + transaction ID, or Razorpay when switched on
+  resources :payments, only: [:index, :new, :create] do
+    post :razorpay_order, on: :collection
+    post :razorpay_verify, on: :member
+  end
+
   # Contact form in the home page footer (open only while email is on)
   resources :contact_messages, only: :create
 
@@ -154,6 +160,11 @@ Rails.application.routes.draw do
     resources :test_sessions, path: "tests", except: [:show] do
       patch :toggle_gift, on: :member
     end
+    resources :payments, only: [:index] do # UPI transaction IDs to check, and Razorpay payments
+      patch :approve, on: :member
+      patch :reject, on: :member
+    end
+    resource :payment_settings, only: [:edit, :update] # Razorpay keys + on/off, UPI ID for the QR
     resources :contact_messages, path: "messages", only: [:index, :update] # from the home page contact form
     resources :logs, only: [:index]
     resources :moderation, only: [:index] do

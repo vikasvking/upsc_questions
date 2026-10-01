@@ -1,0 +1,78 @@
+<% field = "rounded-lg border-0 py-1.5 px-2.5 bg-white dark:bg-slate-950 ring-1 ring-inset ring-slate-200 dark:ring-slate-800 text-sm" %>
+<div class="py-8 sm:py-10">
+  <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 space-y-6">
+    <%= render "admin/shared/header", title: "Payments",
+          subtitle: "Check each UPI transaction ID in your bank statement (same amount, same ID), then approve it to switch the plan on, or reject it with a reason.",
+          action: link_to("⚙️ Settings", edit_admin_payment_settings_path, class: "rounded-lg ring-1 ring-slate-200 dark:ring-slate-800 text-sm font-medium px-4 py-2 text-slate-700 dark:text-slate-300") %>
+
+    <p class="rounded-xl px-4 py-3 text-sm <%= @setting.gateway_ready? ? "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300" : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300" %>">
+      <% if @setting.gateway_ready? %>
+        ✅ Online payment (Razorpay<%= ", test mode" unless @setting.live_mode? %>) is ON: payments are confirmed automatically.
+      <% elsif @setting.qr_ready? %>
+        💳 Online payment is OFF. Payers see a UPI QR for <span class="font-mono"><%= @setting.upi_id %></span> and send their transaction ID here.
+      <% else %>
+        ⚠️ Nothing is set up yet, so payers are asked to contact you. <%= link_to "Add your UPI ID", edit_admin_payment_settings_path, class: "underline font-medium" %>.
+      <% end %>
+    </p>
+
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div class="flex gap-2 text-sm">
+        <% [["pending", "To check"], ["approved", "Approved"], ["rejected", "Rejected"], ["all", "All"]].each do |value, label| %>
+          <% count = value == "all" ? @counts.values.sum : @counts[value].to_i %>
+          <%= link_to "#{label} (#{count})", admin_payments_path(status: value),
+                class: "rounded-full px-3 py-1 font-medium #{@status == value ? "bg-brand-700 text-white" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"}" %>
+        <% end %>
+      </div>
+      <%= form_with url: admin_payments_path, method: :get, class: "flex gap-2" do %>
+        <%= hidden_field_tag :status, @status, id: nil %>
+        <%= search_field_tag :q, params[:q], placeholder: "Transaction ID or email", class: field %>
+        <%= submit_tag "Find", name: nil, class: "rounded-lg bg-slate-800 text-white text-xs font-semibold px-3 cursor-pointer" %>
+      <% end %>
+    </div>
+
+    <ul class="space-y-3">
+      <% @payments.each do |p| %>
+        <li class="bg-white dark:bg-slate-900 rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-5 space-y-3">
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div class="min-w-0">
+              <p class="font-semibold text-slate-900 dark:text-white"><%= rupees(p.amount_inr) %> · <%= p.what %> · <%= p.period_label %></p>
+              <p class="text-xs text-slate-500">
+                <%= link_to p.user.display_name, admin_user_path(p.user), class: "text-brand-700 dark:text-brand-300 hover:underline" %>
+                (<%= p.user.email_address %>) · <%= Payment::METHODS[p.pay_method] %> · <%= time_ago_in_words(p.created_at) %> ago
+              </p>
+            </div>
+            <%= payment_status_chip(p) %>
+          </div>
+
+          <p class="text-sm text-slate-700 dark:text-slate-300">
+            <% if p.utr %>Transaction ID: <span class="font-mono font-semibold text-base select-all"><%= p.utr %></span><% end %>
+            <% if p.razorpay_payment_id %>Razorpay: <span class="font-mono select-all"><%= p.razorpay_payment_id %></span><% end %>
+          </p>
+
+          <% if p.pending? %>
+            <div class="flex flex-col sm:flex-row gap-2">
+              <%= form_with url: approve_admin_payment_path(p), method: :patch, class: "flex gap-2 flex-1",
+                    data: { turbo_confirm: "Approve #{rupees(p.amount_inr)} with transaction ID #{p.utr}? This switches on #{p.what}." } do %>
+                <%= text_field_tag :note, nil, placeholder: "Note (optional)", class: "flex-1 min-w-0 #{field}" %>
+                <%= submit_tag "Approve", name: nil, class: "rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-semibold px-4 py-1.5 cursor-pointer" %>
+              <% end %>
+              <%= form_with url: reject_admin_payment_path(p), method: :patch, class: "flex gap-2 flex-1" do %>
+                <%= text_field_tag :note, nil, placeholder: "Reason, e.g. not found in bank", required: true, class: "flex-1 min-w-0 #{field}" %>
+                <%= submit_tag "Reject", name: nil, class: "rounded-lg bg-red-700 hover:bg-red-800 text-white text-sm font-semibold px-4 py-1.5 cursor-pointer" %>
+              <% end %>
+            </div>
+          <% elsif p.reviewed_at || p.approved? %>
+            <p class="text-xs text-slate-500">
+              <%= p.approved? ? "Approved" : "Rejected" %><%= " by #{p.reviewed_by.display_name}" if p.reviewed_by %><%= " automatically (Razorpay)" if p.razorpay? && p.approved? && !p.reviewed_by %>
+              <%= " · #{time_ago_in_words(p.reviewed_at)} ago" if p.reviewed_at %>
+              <%= " · active until #{l(p.paid_until, format: :long)}" if p.approved? && p.paid_until %>
+              <%= " · #{p.admin_note}" if p.admin_note %>
+            </p>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+    <% if @payments.empty? %><p class="text-sm text-slate-500 py-6 text-center">No payments here.</p><% end %>
+    <%= render "admin/shared/pager" %>
+  </div>
+</div>

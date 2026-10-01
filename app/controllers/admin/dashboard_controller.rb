@@ -10,7 +10,8 @@ class Admin::DashboardController < Admin::BaseController
       blocked: TestAttempt.blocked.in_progress.count,
       pending_teachers: pending_teachers.count,
       pending_requests: pending_requests.count,
-      institutions: Institution.count
+      institutions: Institution.count,
+      pending_payments: Payment.pending.count
     }
     @blocked = TestAttempt.blocked.in_progress.includes(:user, :test_session).order(blocked_at: :desc).limit(10)
     @logs = Current.user.admin? ? AdminLog.newest_first.limit(10) : AdminLog.where(admin: Current.user).newest_first.limit(10)

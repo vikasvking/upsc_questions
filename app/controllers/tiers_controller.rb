@@ -8,5 +8,6 @@ class TiersController < ApplicationController
     @answered_samples = @user.user_responses.joins(:question).where(questions: { free_sample: true }).distinct.count(:question_id)
     @schools = @user.subscribed_institutions
     @warrior = Plan.warrior
+    @payments = @user.payments.submitted.includes(:plan, :institution).newest_first.limit(20)
   end
 end

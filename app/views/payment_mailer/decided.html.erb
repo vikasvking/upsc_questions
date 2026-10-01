@@ -1,0 +1,9 @@
+<p>Hello <%= @payment.user.display_name %>,</p>
+<% if @payment.approved? %>
+  <p>Your payment of <strong><%= rupees(@payment.amount_inr) %></strong> is confirmed. Your <%= @payment.what %> is active until <strong><%= l(@payment.paid_until, format: :long) %></strong>.</p>
+<% else %>
+  <p>We could not confirm your payment of <strong><%= rupees(@payment.amount_inr) %></strong><%= " (transaction ID #{@payment.utr})" if @payment.utr %>.</p>
+  <p><strong>Reason:</strong> <%= @payment.admin_note %></p>
+  <p>If you did pay, reply to this email or send the correct transaction ID again.</p>
+<% end %>
+<p><%= link_to "Open Rankwise", @url %></p>

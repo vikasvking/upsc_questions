@@ -1,0 +1,170 @@
+<% content_for :title, "Pay · Rankwise" %>
+<%
+  card  = "bg-white dark:bg-slate-900 rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-6"
+  plan  = @payment.plan
+  input = "mt-1 block w-full rounded-xl border-0 py-2.5 px-3 bg-white dark:bg-slate-950 ring-1 ring-inset ring-slate-200 dark:ring-slate-800 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-700"
+  pick  = ->(period) { new_payment_path(plan_id: plan.id, period: period, institution_id: @payment.institution_id) }
+  schools = plan.school? ? Current.user.institutions.ordered.to_a : []
+%>
+<div class="py-10 min-h-screen w-full">
+  <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 space-y-6">
+    <div>
+      <%= link_to "← Back", (plan.school? ? payments_path : membership_path), class: "text-xs font-bold text-brand-800 dark:text-brand-400 hover:underline" %>
+      <h1 class="mt-2 text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">Pay for <%= @payment.what %></h1>
+    </div>
+
+    <% if flash[:alert] %>
+      <p class="rounded-xl bg-red-50 dark:bg-red-950/40 px-4 py-3 text-sm text-red-800 dark:text-red-300"><%= flash[:alert] %></p>
+    <% end %>
+
+    <% if @pending %>
+      <p class="rounded-xl bg-amber-50 dark:bg-amber-950/40 px-4 py-3 text-sm text-amber-900 dark:text-amber-200">
+        ⏳ We are already checking your payment of <%= rupees(@pending.amount_inr) %> (transaction ID <span class="font-mono"><%= @pending.utr %></span>,
+        sent <%= time_ago_in_words(@pending.created_at) %> ago). You don't need to pay again.
+      </p>
+    <% end %>
+
+    <%# What is being paid for %>
+    <section class="<%= card %> space-y-4">
+      <% if plan.school? %>
+        <% if schools.empty? && !Current.user.admin? %>
+          <p class="text-sm text-slate-700 dark:text-slate-300">First create or join your school or coaching on the <%= link_to "Institutions", institutions_path, class: "font-medium text-brand-700 dark:text-brand-300 underline" %> page, then pay for its plan here.</p>
+        <% elsif schools.size > 1 %>
+          <div>
+            <p class="text-xs font-bold text-slate-500">School or coaching</p>
+            <div class="mt-2 flex flex-wrap gap-2">
+              <% schools.each do |school| %>
+                <%= link_to school.name, new_payment_path(plan_id: plan.id, period: @payment.period, institution_id: school.id),
+                      class: "rounded-full px-3 py-1 text-sm #{school.id == @payment.institution_id ? "bg-brand-700 text-white" : "ring-1 ring-slate-200 dark:ring-slate-700 text-slate-700 dark:text-slate-300"}" %>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+        <% if (school = @payment.institution) %>
+          <p class="text-sm text-slate-600 dark:text-slate-400">Now: <%= school.plan&.name || "no plan" %> · <%= school.subscription_label %><%= " until #{l(school.subscription_renews_on, format: :long)}" if school.subscribed? && school.subscription_renews_on %></p>
+        <% end %>
+      <% end %>
+
+      <div>
+        <p class="text-xs font-bold text-slate-500">Pay for</p>
+        <div class="mt-2 grid grid-cols-2 gap-3">
+          <% Payment::PERIODS.each do |period, label| %>
+            <% amount = Payment.amount_for(plan, period, Current.user) %>
+            <%= link_to pick.(period), class: "rounded-xl p-4 ring-1 #{period == @payment.period ? "ring-2 ring-brand-600 bg-brand-50/50 dark:bg-brand-950/30" : "ring-slate-200 dark:ring-slate-800"}" do %>
+              <span class="block text-sm text-slate-600 dark:text-slate-400"><%= label %></span>
+              <span class="block text-2xl font-semibold text-slate-900 dark:text-white"><%= rupees(amount) %></span>
+            <% end %>
+          <% end %>
+        </div>
+        <% if !plan.school? && plan.price_month_upgrade_inr && Current.user.tier == "plus" %>
+          <p class="mt-2 text-xs text-slate-500">As a Plus student you pay <%= rupees(plan.price_month_upgrade_inr) %> a month instead of <%= rupees(plan.price_month_inr) %>.</p>
+        <% end %>
+      </div>
+      <p class="text-sm text-slate-700 dark:text-slate-300">
+        <%= plan.school? ? plan.limits_text : "Every exam, all public tests and practice" %>.
+        Starts today<%= ", or after your current #{plan.name} time ends" if !plan.school? && Current.user.membership_tier == plan.member_tier && Current.user.tier_until&.future? %>.
+      </p>
+    </section>
+
+    <% can_pay = !plan.school? || @payment.institution %>
+    <% if can_pay && @setting.gateway_ready? %>
+      <%# Online payment: Razorpay checkout (UPI, cards, netbanking) %>
+      <section class="<%= card %> space-y-3">
+        <h2 class="font-semibold text-slate-900 dark:text-white">Pay online</h2>
+        <p class="text-sm text-slate-600 dark:text-slate-400">UPI, cards, netbanking or wallets, through Razorpay. Your plan starts as soon as the payment goes through.</p>
+        <button type="button" id="razorpay-button" data-url="<%= razorpay_order_payments_path %>"
+                data-plan="<%= plan.id %>" data-period="<%= @payment.period %>" data-institution="<%= @payment.institution_id %>"
+                class="w-full rounded-xl bg-brand-700 hover:bg-brand-800 px-4 py-3 text-sm font-semibold text-white cursor-pointer">
+          Pay <%= rupees(@payment.amount_inr) %>
+        </button>
+        <p id="razorpay-error" class="hidden text-sm text-red-700 dark:text-red-400" role="alert"></p>
+        <%= form_with url: "#", method: :post, id: "razorpay-verify-form", class: "hidden", data: { turbo: false } do %>
+          <%= hidden_field_tag :razorpay_order_id %>
+          <%= hidden_field_tag :razorpay_payment_id %>
+          <%= hidden_field_tag :razorpay_signature %>
+        <% end %>
+      </section>
+      <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+      <script>
+        (function () {
+          const button = document.getElementById("razorpay-button");
+          const error = document.getElementById("razorpay-error");
+          const form = document.getElementById("razorpay-verify-form");
+          if (!button || button.dataset.ready) return;
+          button.dataset.ready = "1";
+          const showError = (message) => { error.textContent = message; error.classList.remove("hidden"); button.disabled = false; };
+
+          button.addEventListener("click", async () => {
+            button.disabled = true;
+            error.classList.add("hidden");
+            try {
+              const response = await fetch(button.dataset.url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Accept": "application/json",
+                           "X-CSRF-Token": document.querySelector("meta[name=csrf-token]")?.content },
+                body: JSON.stringify({ plan_id: button.dataset.plan, period: button.dataset.period, institution_id: button.dataset.institution })
+              });
+              const order = await response.json();
+              if (!response.ok) return showError(order.error || "Could not start the payment.");
+              if (typeof Razorpay === "undefined") return showError("Razorpay could not load. Check your internet connection and try again.");
+
+              new Razorpay({
+                key: order.key, order_id: order.order_id, amount: order.amount, currency: order.currency,
+                name: order.name, description: order.description, prefill: order.prefill,
+                handler: (result) => {
+                  form.action = order.verify_url;
+                  form.querySelector("#razorpay_order_id").value = result.razorpay_order_id;
+                  form.querySelector("#razorpay_payment_id").value = result.razorpay_payment_id;
+                  form.querySelector("#razorpay_signature").value = result.razorpay_signature;
+                  form.submit();
+                },
+                modal: { ondismiss: () => { button.disabled = false; } }
+              }).open();
+            } catch (e) {
+              showError("Could not reach Rankwise. Please try again.");
+            }
+          });
+        })();
+      </script>
+
+    <% elsif can_pay && @setting.qr_ready? %>
+      <%# UPI QR + transaction ID, checked by an admin %>
+      <% uri = @setting.upi_uri(@payment.amount_inr, "Rankwise #{plan.name} #{Current.user.id}") %>
+      <section class="<%= card %> grid sm:grid-cols-[auto_1fr] gap-6 items-start">
+        <div class="mx-auto rounded-2xl bg-white p-3 ring-1 ring-slate-200"><%= upi_qr_svg(uri) %></div>
+        <div class="space-y-3">
+          <h2 class="font-semibold text-slate-900 dark:text-white">1. Pay <%= rupees(@payment.amount_inr) %> by UPI</h2>
+          <p class="text-sm text-slate-600 dark:text-slate-400">Scan the QR with any UPI app (Google Pay, PhonePe, Paytm, BHIM or your bank's app). The amount is filled in for you.</p>
+          <p class="text-sm text-slate-700 dark:text-slate-300">UPI ID: <span class="font-mono font-semibold select-all"><%= @setting.upi_id %></span><%= " · #{@setting.payee_name}" if @setting.payee_name %></p>
+          <a href="<%= uri %>" class="sm:hidden inline-block rounded-xl ring-1 ring-brand-300 px-4 py-2 text-sm font-semibold text-brand-800 dark:text-brand-200">Open my UPI app</a>
+          <% if @setting.instructions.present? %>
+            <p class="text-xs text-slate-500 whitespace-pre-line"><%= @setting.instructions %></p>
+          <% end %>
+        </div>
+      </section>
+
+      <section class="<%= card %> space-y-4">
+        <h2 class="font-semibold text-slate-900 dark:text-white">2. Enter the transaction ID</h2>
+        <p class="text-sm text-slate-600 dark:text-slate-400">After paying, copy the UPI transaction ID (the 12-digit UTR / UPI reference number) from your payment app and send it here. We check it with our bank and switch your plan on, usually within a day.</p>
+        <% if @payment.errors.any? %>
+          <div class="rounded-xl bg-red-50 dark:bg-red-950/40 px-4 py-3 text-sm text-red-800 dark:text-red-300" role="alert">
+            <% @payment.errors.full_messages.each do |msg| %><p><%= msg %></p><% end %>
+          </div>
+        <% end %>
+        <%= form_with model: @payment, url: payments_path, class: "flex flex-col sm:flex-row gap-3" do |f| %>
+          <%= f.hidden_field :plan_id %>
+          <%= f.hidden_field :period %>
+          <%= f.hidden_field :institution_id %>
+          <%= f.text_field :utr, required: true, maxlength: 40, autocomplete: "off", inputmode: "text", placeholder: "e.g. 412345678901",
+                class: "flex-1 font-mono #{input}", aria: { label: "Transaction ID" } %>
+          <%= f.submit "Send transaction ID", class: "rounded-xl bg-brand-700 hover:bg-brand-800 px-5 py-2.5 text-sm font-semibold text-white cursor-pointer" %>
+        <% end %>
+      </section>
+
+    <% elsif can_pay %>
+      <section class="<%= card %>">
+        <p class="text-sm text-slate-700 dark:text-slate-300">Payments are not set up yet. Please contact the Rankwise team to pay for <%= @payment.what %>.</p>
+      </section>
+    <% end %>
+  </div>
+</div>

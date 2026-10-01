@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_01_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_01_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -158,6 +158,43 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_01_120000) do
     t.index ["institution_id"], name: "index_memberships_on_institution_id"
     t.index ["user_id", "institution_id"], name: "index_memberships_on_user_id_and_institution_id", unique: true
     t.index ["user_id"], name: "index_memberships_on_user_id"
+  end
+
+  create_table "payment_settings", force: :cascade do |t|
+    t.boolean "gateway_enabled", default: false, null: false
+    t.string "razorpay_key_id"
+    t.text "encrypted_razorpay_key_secret"
+    t.string "upi_id"
+    t.string "payee_name"
+    t.text "instructions"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "payments", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "plan_id", null: false
+    t.bigint "institution_id"
+    t.string "period", default: "month", null: false
+    t.integer "amount_inr", null: false
+    t.string "pay_method", default: "upi_qr", null: false
+    t.string "status", default: "pending", null: false
+    t.string "utr"
+    t.string "razorpay_order_id"
+    t.string "razorpay_payment_id"
+    t.date "paid_until"
+    t.bigint "reviewed_by_id"
+    t.datetime "reviewed_at"
+    t.string "admin_note"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["institution_id"], name: "index_payments_on_institution_id"
+    t.index ["plan_id"], name: "index_payments_on_plan_id"
+    t.index ["razorpay_order_id"], name: "index_payments_on_razorpay_order_id", unique: true, where: "(razorpay_order_id IS NOT NULL)"
+    t.index ["reviewed_by_id"], name: "index_payments_on_reviewed_by_id"
+    t.index ["status", "created_at"], name: "index_payments_on_status_and_created_at"
+    t.index ["user_id"], name: "index_payments_on_user_id"
+    t.index ["utr"], name: "index_payments_on_utr", unique: true, where: "(utr IS NOT NULL)"
   end
 
   create_table "pending_signups", force: :cascade do |t|
@@ -557,6 +594,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_01_120000) do
   add_foreign_key "memberships", "institutions", on_delete: :cascade
   add_foreign_key "memberships", "users", column: "approved_by_id", on_delete: :nullify
   add_foreign_key "memberships", "users", on_delete: :cascade
+  add_foreign_key "payments", "institutions", on_delete: :nullify
+  add_foreign_key "payments", "plans"
+  add_foreign_key "payments", "users", column: "reviewed_by_id", on_delete: :nullify
+  add_foreign_key "payments", "users", on_delete: :cascade
   add_foreign_key "pending_signups", "users", on_delete: :cascade
   add_foreign_key "question_reports", "questions", on_delete: :cascade
   add_foreign_key "question_reports", "users", column: "resolved_by_id", on_delete: :nullify

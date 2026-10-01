@@ -1,0 +1,50 @@
+<% input = "mt-1 block w-full rounded-xl border-0 py-2.5 px-3 bg-white dark:bg-slate-950 ring-1 ring-inset ring-slate-200 dark:ring-slate-800 text-sm text-slate-900 dark:text-white" %>
+<% label = "block text-xs font-bold text-slate-500" %>
+<% box = "bg-white dark:bg-slate-900 rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-6 grid grid-cols-1 sm:grid-cols-2 gap-4" %>
+<div class="py-8 sm:py-10">
+  <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 space-y-6">
+    <%= render "admin/shared/header", title: "Payment settings",
+          subtitle: "How students and schools pay. While online payment is off, they pay by UPI QR and you approve each transaction ID on the Payments page.",
+          action: link_to("← Payments", admin_payments_path, class: "rounded-lg ring-1 ring-slate-200 dark:ring-slate-800 text-sm font-medium px-4 py-2 text-slate-700 dark:text-slate-300") %>
+
+    <%= render "admin/shared/errors", record: @setting %>
+
+    <%= form_with model: @setting, url: admin_payment_settings_path, method: :patch, class: "space-y-6" do |f| %>
+      <section class="<%= box %>">
+        <div class="sm:col-span-2">
+          <h2 class="font-semibold text-slate-900 dark:text-white">UPI QR (used while online payment is off)</h2>
+          <p class="text-xs text-slate-500 mt-1">Each Pay page shows a QR for this UPI ID with the exact amount filled in. Payers then send their transaction ID.</p>
+        </div>
+        <div><%= f.label :upi_id, "Your UPI ID", class: label %><%= f.text_field :upi_id, placeholder: "rankwise@okhdfcbank", autocomplete: "off", class: "font-mono #{input}" %></div>
+        <div><%= f.label :payee_name, "Name shown in the UPI app", class: label %><%= f.text_field :payee_name, placeholder: "Rankwise", maxlength: 60, class: input %></div>
+        <div class="sm:col-span-2">
+          <%= f.label :instructions, "Extra note on the Pay page (optional)", class: label %>
+          <%= f.text_area :instructions, rows: 2, maxlength: 1000, placeholder: "e.g. Payments are checked every day by 8 pm.", class: input %>
+        </div>
+      </section>
+
+      <section class="<%= box %>">
+        <div class="sm:col-span-2">
+          <h2 class="font-semibold text-slate-900 dark:text-white">Online payment (Razorpay)</h2>
+          <p class="text-xs text-slate-500 mt-1">
+            Get the keys at dashboard.razorpay.com → Account &amp; Settings → API Keys. Test keys (rzp_test_…) take test payments only; switch to live keys after Razorpay activates your account.
+            When this is on, payments are confirmed automatically and the QR is not shown.
+          </p>
+        </div>
+        <label class="sm:col-span-2 flex items-center gap-3 rounded-xl ring-1 ring-slate-200 dark:ring-slate-800 p-3 cursor-pointer">
+          <%= f.check_box :gateway_enabled, class: "h-5 w-5 accent-emerald-600" %>
+          <span><span class="block text-sm font-semibold text-slate-900 dark:text-white">Take payments online with Razorpay</span>
+            <span class="block text-xs text-slate-500">Switch off to go back to the UPI QR without losing the keys.</span></span>
+        </label>
+        <div><%= f.label :razorpay_key_id, "Key ID", class: label %><%= f.text_field :razorpay_key_id, placeholder: "rzp_live_…", autocomplete: "off", class: "font-mono #{input}" %></div>
+        <div>
+          <%= f.label :razorpay_key_secret, "Key Secret", class: label %>
+          <%= f.password_field :razorpay_key_secret, value: nil, autocomplete: "new-password",
+                placeholder: @setting.secret_saved? ? "Saved (leave blank to keep)" : "", class: "font-mono #{input}" %>
+        </div>
+      </section>
+
+      <%= f.submit "Save", class: "w-full rounded-xl bg-brand-800 hover:bg-brand-900 px-4 py-3 text-sm font-bold text-white cursor-pointer" %>
+    <% end %>
+  </div>
+</div>
