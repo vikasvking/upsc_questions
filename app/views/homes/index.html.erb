@@ -1,8 +1,14 @@
 <% content_for :title, "Rankwise · Practise smarter, rank higher" %>
+<% content_for :head do %>
+  <%# Archivo for the home page headings (see font-paper in application.css) %>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap">
+<% end %>
 <%= render "homes/hero" %>
-<%= render "homes/stats" %>
+<%= render "homes/exams" %>
+<%= render "homes/fresh_questions" %>
 <%= render "homes/features" %>
 <%= render "homes/teachers" %>
 <%= render "homes/topper_matrix" %>
 <%= render "homes/pricing" %>
+<%= render "homes/closing" %>
 <%= render "homes/footer" %>

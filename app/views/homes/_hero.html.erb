@@ -1,42 +1,82 @@
-<section class="relative overflow-hidden">
-  <div class="absolute inset-x-0 -top-24 h-[28rem] bg-gradient-to-b from-brand-50 to-transparent dark:from-brand-950/30 -z-10"></div>
-  <div class="mx-auto max-w-6xl px-6 pt-16 pb-20 lg:pt-24 grid lg:grid-cols-2 gap-12 items-center">
+<%# The top of the home page: headline, and the newest free sample question on an OMR-style answer sheet %>
+<% q = @sample_question %>
+<section class="bg-slate-50 dark:bg-slate-950">
+  <div class="mx-auto max-w-6xl px-6 pt-14 pb-16 lg:pt-20 lg:pb-20 grid lg:grid-cols-[1fr_1.05fr] gap-12 items-center">
     <div>
-      <p class="inline-flex items-center gap-2 rounded-full bg-white dark:bg-slate-900 ring-1 ring-slate-200 dark:ring-slate-800 px-3 py-1 text-sm text-slate-600 dark:text-slate-300">
-        <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span> Free while in beta
-      </p>
-      <h1 class="mt-5 text-4xl sm:text-5xl font-semibold tracking-tight text-slate-900 dark:text-white leading-[1.1]">
-        Practise smarter.<br><span class="text-brand-700 dark:text-brand-400">Rank higher.</span>
+      <h1 class="font-paper font-extrabold text-5xl sm:text-6xl lg:text-7xl leading-[0.98] tracking-tight text-slate-900 dark:text-white">
+        Fill the bubble.<br>Know where you stand.
       </h1>
-      <p class="mt-5 text-lg text-slate-600 dark:text-slate-400 max-w-xl">
-        Topic-wise practice and timed tests for UPSC, JEE, NEET, SSC, Banking and CBSE. See every explanation, track your progress, and find out exactly where you stand against the toppers.
+      <p class="mt-6 text-lg leading-relaxed text-slate-700 dark:text-slate-300 max-w-xl">
+        Practice questions and timed tests for UPSC, JEE, NEET, SSC, Banking and CBSE, marked the way each exam marks.
+        Try the newest sample question on the answer sheet, no sign-up needed.
       </p>
       <div class="mt-8 flex flex-col sm:flex-row gap-3">
-        <%= link_to "Start practising free", new_registration_path, class: "rounded-lg bg-brand-700 px-5 py-3 text-center text-sm font-medium text-white shadow-sm hover:bg-brand-800" %>
-        <%= link_to "I already have an account", new_session_path, class: "rounded-lg bg-white dark:bg-slate-900 px-5 py-3 text-center text-sm font-medium text-slate-700 dark:text-slate-200 ring-1 ring-slate-200 dark:ring-slate-700 hover:bg-slate-50" %>
+        <%= link_to "Start practising free", new_registration_path, class: "rounded-lg bg-brand-700 px-5 py-3 text-center font-semibold text-white shadow-sm hover:bg-brand-800" %>
+        <%= link_to "I have an account", new_session_path, class: "rounded-lg bg-white dark:bg-slate-900 px-5 py-3 text-center font-semibold text-slate-800 dark:text-slate-200 ring-1 ring-slate-300 dark:ring-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800" %>
       </div>
-      <p class="mt-4 text-sm text-slate-500">No payment details needed. Teachers get their own workspace.</p>
+      <p class="mt-4 text-sm text-slate-600 dark:text-slate-400">Free while in beta. No payment details needed.</p>
     </div>
 
-    <!-- Example of the practice screen (illustration, not live data) -->
-    <div class="relative sm:pb-10">
-      <div class="rounded-2xl bg-white dark:bg-slate-900 ring-1 ring-slate-200 dark:ring-slate-800 shadow-xl shadow-slate-200/60 dark:shadow-none p-6 space-y-4">
-        <div class="flex items-center justify-between text-sm">
-          <span class="text-slate-500">Example · Indian Polity · Q2 of 20</span>
-          <span class="rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5 text-xs font-medium">✓ Correct</span>
-        </div>
-        <p class="font-medium text-slate-900 dark:text-white">Which Article of the Constitution provides the Right to Constitutional Remedies?</p>
-        <div class="grid grid-cols-2 gap-2 text-sm">
-          <div class="rounded-lg ring-1 ring-slate-200 dark:ring-slate-700 px-3 py-2 text-slate-600 dark:text-slate-300">A. Article 14</div>
-          <div class="rounded-lg ring-1 ring-slate-200 dark:ring-slate-700 px-3 py-2 text-slate-600 dark:text-slate-300">B. Article 19</div>
-          <div class="rounded-lg ring-1 ring-slate-200 dark:ring-slate-700 px-3 py-2 text-slate-600 dark:text-slate-300">C. Article 21</div>
-          <div class="rounded-lg bg-emerald-50 dark:bg-emerald-950/40 ring-1 ring-emerald-300 px-3 py-2 font-medium text-emerald-800 dark:text-emerald-300">D. Article 32</div>
-        </div>
-        <p class="text-sm text-slate-500 border-t border-slate-100 dark:border-slate-800 pt-3">Article 32 lets citizens go to the Supreme Court to enforce Fundamental Rights.</p>
+    <%# The answer sheet. Free samples only, so putting the answer in the page gives nothing away. %>
+    <div class="flex overflow-hidden rounded-md border-[1.5px] border-brand-700/35 dark:border-brand-400/40 bg-white dark:bg-slate-900"
+         data-controller="answer-sheet" data-answer-sheet-correct-value="<%= q.correct_answer %>">
+      <div aria-hidden="true" class="w-[22px] shrink-0 flex flex-col justify-around items-center py-3.5 bg-brand-700/[0.06] dark:bg-brand-400/10 border-r-[1.5px] border-brand-700/35 dark:border-brand-400/40">
+        <% 14.times do %><span class="block h-1 w-2.5 bg-slate-800 dark:bg-slate-300"></span><% end %>
       </div>
-      <div class="relative mt-4 sm:mt-0 sm:absolute sm:bottom-0 sm:-left-8 inline-block rounded-xl bg-white dark:bg-slate-900 ring-1 ring-slate-200 dark:ring-slate-800 shadow-lg px-4 py-3">
-        <p class="text-xs text-slate-500">Example test result</p>
-        <p class="text-sm font-semibold text-slate-900 dark:text-white">🥉 Rank 3 of 41 · 37.3 / 40 marks</p>
+
+      <div class="flex-1 min-w-0 p-5 sm:p-6">
+        <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+          <p class="font-paper-semi font-bold text-[15px] text-brand-700 dark:text-brand-400"><%= q.example? ? "Example question" : "Newest sample question" %></p>
+          <p class="text-[13px] text-slate-600 dark:text-slate-400"><%= q.where_from %></p>
+        </div>
+
+        <div class="mt-3.5 flex items-start gap-3">
+          <p class="font-paper font-bold text-lg text-slate-900 dark:text-white">Q.</p>
+          <p class="flex-1 text-lg leading-normal font-semibold text-slate-900 dark:text-white"><%= q.content %></p>
+          <% if q.marks_label %><p class="mt-1 text-xs text-slate-600 dark:text-slate-400 whitespace-nowrap"><%= q.marks_label %></p><% end %>
+        </div>
+
+        <div class="mt-4 space-y-1.5">
+          <% q.options.each do |letter, text| %>
+            <div data-answer-sheet-target="option" data-letter="<%= letter %>"
+                 class="flex gap-2.5 rounded-md border border-slate-100 dark:border-slate-800 px-2.5 py-2 text-[15px] text-slate-700 dark:text-slate-300
+                        data-[correct=true]:bg-emerald-50 data-[correct=true]:border-emerald-300 dark:data-[correct=true]:bg-emerald-950/40 dark:data-[correct=true]:border-emerald-800">
+              <span class="w-5 font-bold text-slate-900 dark:text-white"><%= letter %></span>
+              <span><%= text %></span>
+            </div>
+          <% end %>
+        </div>
+
+        <div class="mt-5 pt-4 border-t-[1.5px] border-dashed border-brand-700/35 dark:border-brand-400/40">
+          <p class="text-[13px] text-slate-600 dark:text-slate-400">Fill one bubble to answer</p>
+          <div class="mt-3 flex flex-wrap gap-3.5">
+            <% q.options.each do |letter, text| %>
+              <button type="button" data-answer-sheet-target="bubble" data-letter="<%= letter %>" data-action="answer-sheet#pick"
+                      aria-pressed="false" aria-label="Answer <%= letter %>: <%= text %>"
+                      class="h-12 w-12 rounded-full border-2 border-brand-700 dark:border-brand-400 bg-white dark:bg-slate-900 font-paper-semi font-bold text-base text-brand-700 dark:text-brand-300 cursor-pointer
+                             hover:bg-brand-50 dark:hover:bg-brand-950/40
+                             aria-pressed:bg-slate-800 aria-pressed:border-slate-800 aria-pressed:text-white dark:aria-pressed:bg-slate-100 dark:aria-pressed:border-slate-100 dark:aria-pressed:text-slate-900
+                             data-[correct=true]:border-emerald-600 data-[correct=true]:ring-4 data-[correct=true]:ring-emerald-600/25
+                             focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-blue-700"><%= letter %></button>
+            <% end %>
+          </div>
+        </div>
+
+        <div aria-live="polite">
+          <div data-answer-sheet-target="right" hidden class="mt-4 rounded-md bg-emerald-50 dark:bg-emerald-950/40 px-4 py-3.5 text-emerald-900 dark:text-emerald-200">
+            <p class="font-bold">Correct.<% if q.show_stats? %> Rankwise students get this right <%= q.right_pct %>% of the time.<% end %></p>
+            <% if q.explanation.present? %><p class="mt-1.5 text-sm leading-relaxed"><%= q.explanation %></p><% end %>
+          </div>
+          <div data-answer-sheet-target="wrong" hidden class="mt-4 rounded-md bg-red-50 dark:bg-red-950/40 px-4 py-3.5 text-red-900 dark:text-red-200">
+            <p class="font-bold">Not this one. The answer is <%= q.correct_answer %>, <%= q.correct_text %>.<% if q.show_stats? %> Rankwise students get it right <%= q.right_pct %>% of the time.<% end %></p>
+            <% if q.explanation.present? %><p class="mt-1.5 text-sm leading-relaxed"><%= q.explanation %></p><% end %>
+          </div>
+          <div data-answer-sheet-target="after" hidden class="mt-3.5 flex flex-wrap items-center gap-4 text-sm">
+            <%= link_to(q.topic.present? ? "Practise more #{q.topic} questions" : "Practise more questions", new_registration_path,
+                        class: "font-semibold text-brand-700 dark:text-brand-400 hover:underline") %>
+            <button type="button" data-action="answer-sheet#clear" class="text-slate-600 dark:text-slate-400 underline cursor-pointer">Clear my answer</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>

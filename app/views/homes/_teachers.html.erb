@@ -1,39 +1,48 @@
-<section id="teachers" class="bg-white dark:bg-slate-900 border-y border-slate-200/70 dark:border-slate-800 scroll-mt-16">
+<%# For teachers and coaching institutes, with an example of the question-wise analysis they get %>
+<%
+  check = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="mt-0.5 shrink-0 text-indigo-700 dark:text-indigo-300"><path d="M5 12l5 5L20 7"></path></svg>'.html_safe
+  points = [
+    ["Strict PIN tests with a live view", "See who is writing, who has submitted and who left, while the test is on."],
+    ["Question-wise analysis", "Which questions the class got wrong, the wrong answer most picked, and the weakest topics."],
+    ["Results in Excel or as a PDF report", "Ranks, marks and time taken, ready for records and parent meetings."],
+    ["Questions from Excel", "Upload a sheet or add questions one by one. Open tests, PIN tests and time windows."]
+  ]
+  example = [[1, "Preamble", 89, nil], [2, "Fundamental Rights", 71, nil], [3, "Emergency provisions", 34, "Most picked wrong answer: B, Article 356"],
+             [4, "Parliament", 58, nil], [5, "Amendments", 46, nil]]
+  tone = ->(p) { p < 40 ? "bg-red-600 text-red-700 dark:text-red-400" : (p < 70 ? "bg-amber-600 text-amber-700 dark:text-amber-400" : "bg-emerald-600 text-emerald-700 dark:text-emerald-400") }
+%>
+<section id="teachers" class="bg-indigo-50/70 dark:bg-indigo-950/30 scroll-mt-16">
   <div class="mx-auto max-w-6xl px-6 py-20 grid lg:grid-cols-2 gap-12 items-center">
     <div>
-      <p class="text-sm font-medium text-brand-700 dark:text-brand-300">For teachers and coaching institutes</p>
-      <h2 class="mt-2 text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">Run your own test series</h2>
-      <p class="mt-3 text-slate-600 dark:text-slate-400">Everything you need to test a class, without spreadsheets of marks.</p>
-      <ul class="mt-8 space-y-4">
-        <% [
-             ["Upload questions from Excel", "Or add them one at a time. They go straight into the question bank."],
-             ["Open or PIN tests", "Make a test free for everyone, or share a PIN with your class only."],
-             ["Time windows", "Set when a test opens and closes. Late starters only get the time that's left."],
-             ["Ranked results", "Marks, time taken, pass/fail and the class topper for every test."]
-           ].each do |title, text| %>
-          <li class="flex gap-3">
-            <span class="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-emerald-100 text-emerald-700 text-xs">✓</span>
-            <div><p class="font-medium text-slate-900 dark:text-white"><%= title %></p><p class="text-sm text-slate-600 dark:text-slate-400"><%= text %></p></div>
-          </li>
+      <p class="font-semibold text-indigo-800 dark:text-indigo-300">For teachers and coaching institutes</p>
+      <h2 class="mt-2 font-paper font-extrabold text-4xl sm:text-[44px] leading-[1.05] text-slate-900 dark:text-white">Run tests you can trust, and know what to teach next</h2>
+      <ul class="mt-8 space-y-[18px]">
+        <% points.each do |title, text| %>
+          <li class="flex gap-3"><%= check %><div><p class="font-semibold text-slate-900 dark:text-white"><%= title %></p><p class="mt-0.5 text-[15px] text-slate-700 dark:text-slate-300"><%= text %></p></div></li>
         <% end %>
       </ul>
+      <%= link_to "Sign up as a teacher", new_registration_path(role: "teacher"), class: "mt-8 inline-block rounded-lg bg-indigo-700 px-5 py-3 font-semibold text-white hover:bg-indigo-800" %>
     </div>
 
-    <!-- Example results table (illustration) -->
-    <div class="rounded-2xl ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden bg-white dark:bg-slate-950">
-      <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-        <p class="font-semibold text-slate-900 dark:text-white">Weekly Polity Mock · Results</p>
-        <span class="rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-xs text-slate-600 dark:text-slate-300">PIN K7Q2XM</span>
+    <!-- Example question-wise analysis (illustration, not live data) -->
+    <div class="rounded-lg border border-indigo-200/70 dark:border-indigo-900/60 bg-white dark:bg-slate-900 p-5 sm:p-6">
+      <div class="flex flex-wrap items-baseline justify-between gap-3">
+        <p class="font-bold text-slate-900 dark:text-white">Weekly Polity Mock</p>
+        <p class="text-[13px] text-slate-600 dark:text-slate-400">Example, 38 students</p>
       </div>
-      <table class="w-full text-sm">
-        <thead class="text-xs text-slate-500"><tr><th class="px-5 py-2 text-left font-normal">Rank</th><th class="py-2 text-left font-normal">Student</th><th class="py-2 text-right font-normal">Marks</th><th class="px-5 py-2 text-right font-normal">Time</th></tr></thead>
-        <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
-          <% [["🥇", "priya.s", "38", "21m 10s"], ["🥈", "arjun.k", "38", "24m 02s"], ["🥉", "asha.v", "37.3", "19m 45s"], ["#4", "rahul.m", "33.3", "27m 30s"]].each do |r, name, marks, time| %>
-            <tr><td class="px-5 py-2.5"><%= r %></td><td class="py-2.5"><%= name %></td><td class="py-2.5 text-right tabular-nums"><%= marks %> / 40</td><td class="px-5 py-2.5 text-right tabular-nums text-slate-500"><%= time %></td></tr>
-          <% end %>
-        </tbody>
-      </table>
-      <p class="px-5 py-3 text-xs text-slate-400 border-t border-slate-100 dark:border-slate-800">Example · +2 correct, −0.66 wrong · equal marks: faster ranks higher</p>
+      <div class="mt-5 space-y-3.5">
+        <% example.each do |n, topic, pct, note| %>
+          <% bar, text = tone.(pct).split(" ", 2) %>
+          <div>
+            <div class="flex justify-between gap-3 text-sm">
+              <span class="text-slate-900 dark:text-white"><strong>Q<%= n %></strong> <%= topic %></span>
+              <span class="font-bold <%= text %>"><%= pct %>%</span>
+            </div>
+            <div class="mt-1.5 h-2 rounded bg-indigo-50 dark:bg-slate-800 overflow-hidden"><div class="h-2 rounded <%= bar %>" style="width: <%= pct %>%"></div></div>
+            <% if note %><p class="mt-1.5 text-[13px] text-slate-600 dark:text-slate-400"><%= note %></p><% end %>
+          </div>
+        <% end %>
+      </div>
     </div>
   </div>
 </section>

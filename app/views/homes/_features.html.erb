@@ -1,35 +1,82 @@
-<section id="features" class="mx-auto max-w-6xl px-6 py-20 scroll-mt-16">
-  <div class="max-w-2xl">
-    <h2 class="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">How it works</h2>
-    <p class="mt-3 text-slate-600 dark:text-slate-400">Three steps, every day. The app keeps score so you can focus on learning.</p>
-  </div>
+<%# What Rankwise does that a PDF paper or a form in a group chat cannot (every item here is a real feature) %>
+<%
+  h3 = "font-paper-semi font-bold text-[21px] leading-snug text-slate-900 dark:text-white"
+  body = "mt-2 text-[15px] leading-relaxed text-slate-700 dark:text-slate-300"
+  chip = "rounded border border-brand-700/35 dark:border-brand-400/40 px-2 py-0.5 text-slate-900 dark:text-slate-100"
+  marking = [["UPSC Prelims", "UPSC_PRELIMS"], ["JEE Main, NEET", "JEE_MAIN"], ["SSC CGL, CHSL", "SSC_CGL"], ["IBPS", "IBPS"], ["CBSE X, XII", "CBSE_XII"]]
+  num = ->(n) { n.round(2).to_s.sub(/\.0\z/, "") }
+  # a sample question grid: answered, marked for review, skipped, not yet
+  grid = %w[a a m a s o a m o o]
+%>
+<section id="features" class="bg-white dark:bg-slate-900 border-y border-slate-200/70 dark:border-slate-800 scroll-mt-16">
+  <div class="mx-auto max-w-6xl px-6 py-20 grid lg:grid-cols-[1fr_2fr] gap-14">
+    <div class="lg:sticky lg:top-24 self-start">
+      <h2 class="font-paper font-extrabold text-4xl sm:text-[44px] leading-[1.05] text-slate-900 dark:text-white">Built like the real exam. Fair for the whole class.</h2>
+      <p class="mt-4 leading-relaxed text-slate-700 dark:text-slate-300">The things a PDF paper or a form in a group chat can’t do for you.</p>
+    </div>
 
-  <ol class="mt-10 grid md:grid-cols-3 gap-6">
-    <% [
-         ["1", "Practise by topic", "Pick a subject from the Question Bank. Answer one question or a whole set, and read the explanation right after."],
-         ["2", "Take timed tests", "Start open tests or enter your teacher's PIN. Tests submit themselves when time runs out, marked the way each exam marks."],
-         ["3", "See where you stand", "Get your rank on every test and a rank score across the platform, and compare yourself with the top 10."]
-       ].each do |n, title, text| %>
-      <li class="rounded-2xl bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 p-6">
-        <span class="grid h-8 w-8 place-items-center rounded-full bg-brand-50 dark:bg-brand-950 text-sm font-semibold text-brand-700 dark:text-brand-300"><%= n %></span>
-        <h3 class="mt-4 font-semibold text-slate-900 dark:text-white"><%= title %></h3>
-        <p class="mt-2 text-sm text-slate-600 dark:text-slate-400 leading-relaxed"><%= text %></p>
-      </li>
-    <% end %>
-  </ol>
-
-  <div class="mt-16 grid sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-10">
-    <% [
-         ["📚", "Every exam, one place", "UPSC, JEE, NEET, SSC, Banking and CBSE questions, organised by exam, year and topic."],
-         ["🧩", "Topic progress", "A topic is complete when every question in it is answered correctly, and you can see exactly which ones are left."],
-         ["🔥", "Daily streak", "Aim for 25 questions a day. Your week at a glance keeps you consistent."],
-         ["🎯", "Focus next", "The dashboard points you to your weakest topic, so practice time goes where it counts."]
-       ].each do |icon, title, text| %>
+    <div class="grid sm:grid-cols-2 gap-x-10 gap-y-12">
       <div>
-        <p class="text-2xl"><%= icon %></p>
-        <h3 class="mt-3 font-semibold text-slate-900 dark:text-white"><%= title %></h3>
-        <p class="mt-1.5 text-sm text-slate-600 dark:text-slate-400 leading-relaxed"><%= text %></p>
+        <h3 class="<%= h3 %>">Every student gets a different paper</h3>
+        <p class="<%= body %>">In strict tests the questions and the options are shuffled for each student, so answers can’t be passed along a classroom.</p>
+        <div aria-hidden="true" class="mt-3.5 space-y-1.5 text-[13px] text-slate-600 dark:text-slate-400">
+          <% [["Riya", %w[3 1 4 2]], ["Arjun", %w[2 4 1 3]]].each do |name, order| %>
+            <div class="flex items-center gap-1.5"><span class="w-12"><%= name %></span><% order.each do |n| %><span class="<%= chip %>">Q<%= n %></span><% end %></div>
+          <% end %>
+        </div>
       </div>
-    <% end %>
+
+      <div>
+        <h3 class="<%= h3 %>">Leaving the test is noticed</h3>
+        <p class="<%= body %>">Switch to another tab or app once and you get a warning. Do it again and you’re blocked until your teacher lets you back in. The Android app blocks screenshots too.</p>
+      </div>
+
+      <div>
+        <h3 class="<%= h3 %>">Marked the way your exam marks</h3>
+        <p class="<%= body %>">Each exam’s own negative marking, so your practice score means what your real score will.</p>
+        <table class="mt-3.5 w-full max-w-xs text-sm text-slate-700 dark:text-slate-300">
+          <thead class="text-[13px] text-slate-600 dark:text-slate-400"><tr><th class="py-1 text-left font-semibold">Exam</th><th class="py-1 text-right font-semibold">Right</th><th class="py-1 text-right font-semibold">Wrong</th></tr></thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+            <% marking.each do |label, code| %>
+              <% e = Exam::BY_CODE.fetch(code) %>
+              <tr><td class="py-1"><%= label %></td><td class="py-1 text-right tabular-nums">+<%= num.(e.correct) %></td><td class="py-1 text-right tabular-nums"><%= e.wrong.zero? ? "0" : "−#{num.(e.wrong)}" %></td></tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <div>
+        <h3 class="<%= h3 %>">Review before you submit</h3>
+        <p class="<%= body %>">Mark questions for review and come back to them. The test stays open until you submit or the time runs out, like the computer-based exams.</p>
+        <div aria-hidden="true" class="mt-3.5 flex flex-wrap gap-1.5">
+          <% grid.each_with_index do |s, i| %>
+            <span class="relative grid h-[30px] w-[30px] place-items-center rounded-md text-xs font-semibold <%= { "a" => "bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900", "m" => "bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900", "s" => "bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300", "o" => "border border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-400" }.fetch(s) %>">
+              <%= i + 1 %>
+              <% if s == "m" %><span class="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-violet-600 ring-2 ring-white dark:ring-slate-900"></span><% end %>
+            </span>
+          <% end %>
+        </div>
+      </div>
+
+      <div>
+        <h3 class="<%= h3 %>">A separate rank for every exam</h3>
+        <p class="<%= body %>">Your UPSC rank is only against UPSC students and your NEET rank only against NEET students, with the toppers’ numbers to aim for.</p>
+      </div>
+
+      <div>
+        <h3 class="<%= h3 %>">See exactly what to fix</h3>
+        <p class="<%= body %>">Topic progress shows which questions you still get wrong, and your dashboard points you to your weakest topic next.</p>
+      </div>
+
+      <div>
+        <h3 class="<%= h3 %>">Retake as often as you like</h3>
+        <p class="<%= body %>">Practise a test again once it closes. Your first attempt keeps its rank, so retakes are pure practice.</p>
+      </div>
+
+      <div>
+        <h3 class="<%= h3 %>">Safe for school students</h3>
+        <p class="<%= body %>">Students under 18 join with a consent code sent to a parent’s email.</p>
+      </div>
+    </div>
   </div>
 </section>

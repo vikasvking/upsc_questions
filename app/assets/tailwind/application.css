@@ -58,3 +58,13 @@
   h1, h2, h3 { letter-spacing: -0.01em; }
   input, select, textarea { font-size: 0.875rem; }
 }
+
+/* ---- Home page headings: Archivo, narrowed like a printed exam paper (homes/index loads the font) ---- */
+@utility font-paper {
+  font-family: "Archivo", ui-sans-serif, system-ui, sans-serif;
+  font-stretch: 80%;
+}
+@utility font-paper-semi {
+  font-family: "Archivo", ui-sans-serif, system-ui, sans-serif;
+  font-stretch: 87.5%;
+}

@@ -1,0 +1,64 @@
+<%# Always the newest public questions. Free samples can be answered right here; the rest need an account. %>
+<% if @fresh_questions.any? %>
+  <section id="fresh" class="scroll-mt-16">
+    <div class="mx-auto max-w-6xl px-6 pt-16 flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <h2 class="font-paper font-extrabold text-4xl sm:text-[44px] leading-[1.05] text-slate-900 dark:text-white">Fresh questions</h2>
+        <p class="mt-2.5 text-slate-700 dark:text-slate-300">The newest questions in the Question Bank, newest first.</p>
+      </div>
+      <%= link_to "Open the Question Bank", question_bank_path, class: "font-semibold text-brand-700 dark:text-brand-400 hover:underline" %>
+    </div>
+
+    <div class="mx-auto max-w-6xl px-6 pt-6 pb-16">
+      <div class="flex gap-4 overflow-x-auto snap-x pb-3">
+        <% @fresh_questions.each do |q| %>
+          <article class="snap-start shrink-0 w-[300px] rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-[18px] flex flex-col gap-3"
+                   <%= tag.attributes(data: { controller: "answer-sheet", answer_sheet_correct_value: q.correct_answer }) if q.free? %>>
+            <div class="flex justify-between gap-2 text-xs text-slate-600 dark:text-slate-400">
+              <span class="font-semibold text-slate-900 dark:text-slate-100"><%= q.exam&.name || "Practice" %></span>
+              <span><%= time_ago_in_words(q.created_at) %> ago</span>
+            </div>
+            <% if q.topic.present? %><p class="-mt-1 text-[13px] text-slate-600 dark:text-slate-400"><%= q.topic %></p><% end %>
+            <p class="flex-1 text-[15px] leading-normal font-semibold text-slate-900 dark:text-white line-clamp-6"><%= q.content %></p>
+
+            <% if q.free? %>
+              <div class="space-y-1">
+                <% q.options.each do |letter, text| %>
+                  <button type="button" data-answer-sheet-target="bubble option" data-letter="<%= letter %>" data-action="answer-sheet#pick"
+                          aria-pressed="false" aria-label="Answer <%= letter %>: <%= text %>"
+                          class="group w-full min-h-11 flex items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-sm text-slate-700 dark:text-slate-300 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800
+                                 data-[correct=true]:bg-emerald-50 dark:data-[correct=true]:bg-emerald-950/40">
+                    <span class="grid h-6 w-6 shrink-0 place-items-center rounded-full border-[1.5px] border-brand-700 dark:border-brand-400 text-[11px] font-bold text-brand-700 dark:text-brand-300
+                                 group-aria-pressed:bg-slate-800 group-aria-pressed:border-slate-800 group-aria-pressed:text-white dark:group-aria-pressed:bg-slate-100 dark:group-aria-pressed:text-slate-900"><%= letter %></span>
+                    <span><%= text %></span>
+                  </button>
+                <% end %>
+              </div>
+              <div aria-live="polite" class="text-sm">
+                <p data-answer-sheet-target="right" hidden class="font-semibold text-emerald-800 dark:text-emerald-300">Correct.<% if q.show_stats? %> <%= q.right_pct %>% get this right.<% end %></p>
+                <p data-answer-sheet-target="wrong" hidden class="font-semibold text-red-800 dark:text-red-300">The answer is <%= q.correct_answer %>, <%= q.correct_text %>.</p>
+                <% if q.explanation.present? %>
+                  <p data-answer-sheet-target="after" hidden class="mt-1 text-slate-600 dark:text-slate-400 line-clamp-3"><%= q.explanation %></p>
+                <% end %>
+              </div>
+              <p class="text-xs font-semibold text-brand-700 dark:text-brand-400">Free sample: answer it here</p>
+            <% else %>
+              <div class="space-y-1 text-sm text-slate-700 dark:text-slate-300">
+                <% q.options.each do |letter, text| %>
+                  <div class="flex items-center gap-2">
+                    <span aria-hidden="true" class="grid h-[18px] w-[18px] shrink-0 place-items-center rounded-full border-[1.5px] border-brand-700/40 dark:border-brand-400/50 text-[10px] font-bold text-brand-700 dark:text-brand-300"><%= letter %></span>
+                    <span><%= text %></span>
+                  </div>
+                <% end %>
+              </div>
+              <%= link_to new_registration_path, class: "flex items-center justify-center gap-2 rounded-lg bg-slate-100 dark:bg-slate-800 py-3 text-sm font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700" do %>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+                Sign up free to answer
+              <% end %>
+            <% end %>
+          </article>
+        <% end %>
+      </div>
+    </div>
+  </section>
+<% end %>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_01_161000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_01_170000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -269,6 +269,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_01_161000) do
     t.index ["free_sample"], name: "index_questions_on_free_sample"
     t.index ["institution_id"], name: "index_questions_on_institution_id"
     t.index ["user_id"], name: "index_questions_on_user_id"
+    t.index ["visibility", "created_at"], name: "index_questions_on_visibility_and_created_at"
     t.index ["visibility"], name: "index_questions_on_visibility"
   end
 
