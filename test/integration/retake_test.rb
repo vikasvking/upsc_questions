@@ -13,11 +13,14 @@ class RetakeTest < ActionDispatch::IntegrationTest
     users(:one).test_attempts.order(:id).last
   end
 
-  # Answers every question in the test paper's order; the last answer submits the test
+  # Answers every question in the test paper's order (as the student sees the options), then submits
   def answer_all(attempt, choices)
     attempt.questions.to_a.each_with_index do |q, i|
-      post submit_answer_dashboard_path, params: { token: attempt.token, n: i + 1, question_id: q.id, answer_choice: choices.fetch(q) }
+      shown = attempt.shown_letter(q, choices.fetch(q))
+      post submit_answer_dashboard_path, params: { token: attempt.token, n: i + 1, question_id: q.id, answer_choice: shown }
     end
+    assert_not attempt.reload.finished?, "teacher tests wait for Submit"
+    post finish_test_dashboard_path, params: { token: attempt.token }
     assert attempt.reload.finished?
   end
 

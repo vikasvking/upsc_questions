@@ -13,15 +13,20 @@
       <%= link_to_if @position < @questions.size, "Next →", arena_dashboard_path(@attempt.token, n: @position + 1), class: "text-xs font-bold text-slate-500 hover:text-brand-800" %>
     </div>
 
+    <% if @marked_ids.include?(@question.id) %>
+      <p class="inline-block text-xs font-bold bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-900/50 px-2.5 py-1 rounded-full">🚩 Marked for review</p>
+    <% end %>
+
     <div class="text-slate-900 dark:text-white text-base leading-relaxed font-semibold">
       <%= @question.content %>
     </div>
 
+    <% saved_letter = @attempt.shown_letter(@question, @previous_attempt&.chosen_option) %>
     <div class="grid grid-cols-1 gap-3 pt-2">
-      <% [["A", @question.option_a], ["B", @question.option_b], ["C", @question.option_c], ["D", @question.option_d]].each do |letter, option_text| %>
-        <% next if option_text.blank? %>
+      <%# letter = what this student sees; strict tests shuffle the options for each student %>
+      <% @options.each do |letter, _own, option_text| %>
         <label class="flex items-start gap-x-3.5 p-4 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800/60 cursor-pointer hover:border-brand-800/40 transition-colors group">
-          <%= radio_button_tag :answer_choice, letter, @previous_attempt&.chosen_option == letter, class: "mt-1 accent-brand-800 dark:accent-brand-500 h-4 w-4" %>
+          <%= radio_button_tag :answer_choice, letter, saved_letter == letter, class: "mt-1 accent-brand-800 dark:accent-brand-500 h-4 w-4" %>
           <span class="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white">
             <strong class="text-brand-800 dark:text-brand-400"><%= letter %>.</strong> <%= option_text %>
           </span>
@@ -31,17 +36,24 @@
 
     <% if @previous_attempt %>
       <p class="text-xs text-slate-400">
-        <%= @previous_attempt.chosen_option == "SKIPPED" ? "You skipped this question earlier." : "Saved answer: #{@previous_attempt.chosen_option}. Pick another option and submit to change it." %>
+        <%= saved_letter == "SKIPPED" ? "You skipped this question earlier." : "Saved answer: #{saved_letter}. Pick another option and submit to change it." %>
       </p>
     <% end %>
   </div>
 
-  <div class="mt-8 flex items-center justify-between border-t border-slate-200 dark:border-slate-800 pt-4 gap-4">
+  <div class="mt-8 flex flex-wrap items-center justify-between border-t border-slate-200 dark:border-slate-800 pt-4 gap-3">
     <%= link_to "Skip Question ↷",
                 skip_question_dashboard_path(token: @attempt.token, question_id: @question.id, n: @position),
                 data: { turbo_method: :post },
                 class: "text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-brand-800 dark:hover:text-brand-400 border border-slate-200 dark:border-slate-800 rounded-lg px-4 py-2.5 transition-colors bg-white dark:bg-slate-950" %>
 
-    <%= form.submit "Save Answer & Next", class: "rounded-lg bg-brand-800 dark:bg-brand-700 hover:bg-brand-900 dark:hover:bg-brand-600 text-white font-bold text-sm px-6 py-2.5 shadow-sm transition-all cursor-pointer" %>
+    <div class="flex flex-wrap items-center gap-3">
+      <% if @attempt.test_session %>
+        <%# saves the chosen option too, if there is one; the mark stays until "Save Answer & Next" %>
+        <%= form.button "🚩 Mark for Review & Next", type: "submit", name: "mark", value: "1",
+                        class: "text-xs font-bold text-violet-700 dark:text-violet-300 border border-violet-300 dark:border-violet-900/60 rounded-lg px-4 py-2.5 bg-white dark:bg-slate-950 hover:bg-violet-50 dark:hover:bg-violet-950/30 transition-colors cursor-pointer" %>
+      <% end %>
+      <%= form.submit "Save Answer & Next", class: "rounded-lg bg-brand-800 dark:bg-brand-700 hover:bg-brand-900 dark:hover:bg-brand-600 text-white font-bold text-sm px-6 py-2.5 shadow-sm transition-all cursor-pointer" %>
+    </div>
   </div>
 <% end %>

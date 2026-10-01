@@ -45,4 +45,12 @@ module DashboardsHelper
   def marks_text(marks)
     marks.to_f.round(2).to_s.sub(/\.0\z/, "")
   end
+
+  # The "Finish & Submit" confirmation, mentioning what the student has not finished yet
+  def finish_confirm_text(unanswered, marked)
+    left = []
+    left << "#{pluralize(unanswered, "question")} not answered" if unanswered.positive?
+    left << "#{marked} marked for review" if marked.positive?
+    [("You still have #{left.to_sentence}." if left.any?), "Submit the test now? You cannot change answers afterwards."].compact.join(" ")
+  end
 end

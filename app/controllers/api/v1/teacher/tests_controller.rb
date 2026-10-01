@@ -104,6 +104,7 @@ module Api
           @test.block_silent_students!
           blocked = @test.test_attempts.blocked.includes(:user).order(:blocked_at)
           rating = Rating.summary_for(@test)
+          question_stats = @test.question_analysis
 
           render json: {
             test: teacher_card(@test, @test.questions.count, @test.test_attempts.first_tries.count),
@@ -118,7 +119,12 @@ module Api
                 correct: r.correct, wrong: r.wrong, skipped: r.skipped, unattempted: r.unattempted, total: r.total,
                 time_taken: r.time_taken, finished_at: time_json(r.attempt.finished_at) }
             end,
-            blocked: blocked.map { |a| blocked_json(a) }
+            blocked: blocked.map { |a| blocked_json(a) },
+            questions: question_stats.map { |st| question_stat_json(st) },
+            topics: @test.topic_analysis(question_stats).map { |t| { topic: t.topic, questions: t.questions, correct_pct: t.correct_pct } },
+            # the website's downloads (the teacher signs in there): CSV for Excel, and a printable report
+            export_path: export_test_session_path(@test),
+            report_path: report_test_session_path(@test)
           }
         end
 
@@ -205,6 +211,17 @@ module Api
           { id: q.id, exam: q.exam_type, year: q.year, topic: q.topic, content: q.content,
             options: { "A" => q.option_a, "B" => q.option_b, "C" => q.option_c, "D" => q.option_d },
             correct_answer: q.correct_answer }
+        end
+
+        # One row of the question-wise analysis (letters are the question's own)
+        def question_stat_json(stat)
+          wrong = stat.common_wrong
+          q = stat.question
+          { id: q.id, number: stat.number, content: q.content, topic: q.topic, correct_answer: q.correct_answer,
+            students: stat.students, correct: stat.correct, wrong: stat.wrong, skipped: stat.skipped,
+            unattempted: stat.unattempted, correct_pct: stat.correct_pct, picks: stat.picks,
+            common_wrong: wrong && { letter: wrong.first, count: wrong.last, pct: stat.percent(wrong.last),
+                                     text: q.option_text(wrong.first) } }
         end
       end
     end

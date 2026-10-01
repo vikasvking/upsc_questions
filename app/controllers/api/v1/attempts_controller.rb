@@ -1,13 +1,19 @@
 # Taking a test or a topic practice, and its result (same rules as the website's test pages).
 #   POST /api/v1/practice  topic=Physics                  -> { attempt_token } (Plus and Warrior)
 #   GET  /api/v1/attempts                                 -> my recent tests and practices
-#   GET  /api/v1/attempts/:token                          -> questions, my saved answers, time left
-#   POST /api/v1/attempts/:token/answer  question_id, choice=A|B|C|D|SKIPPED, duration_seconds
+#   GET  /api/v1/attempts/:token                          -> questions, my saved answers, marked for review, time left
+#   POST /api/v1/attempts/:token/answer  question_id, choice=A|B|C|D|SKIPPED, duration_seconds, marked=true|false (optional)
+#   POST /api/v1/attempts/:token/mark    question_id, marked=true|false -> mark for review without answering
 #   POST /api/v1/attempts/:token/finish
 #   GET  /api/v1/attempts/:token/result                   -> marks, rank and answer review (after a strict test closes);
 #                                                            for a retake: rank of the first attempt, retake: true, can_retake
 #   POST /api/v1/attempts/:token/heartbeat                -> strict tests: the app is open (every 15 s)
-#   POST /api/v1/attempts/:token/report_leave  seconds=12 -> strict tests: the app was in the background
+#   POST /api/v1/attempts/:token/report_leave  seconds=12 kind=background|other_app_on_screen
+#                                                         -> strict tests: the app was in the background, or another
+#                                                            app had the screen (split screen, chat bubble...)
+#
+# Strict tests shuffle each question's options for each student: choices and answers use the letters the
+# student sees, the server turns them into the question's own letters.
 module Api
   module V1
     class AttemptsController < BaseController
@@ -16,8 +22,8 @@ module Api
       before_action :require_student!
       before_action :require_ready_account!
       before_action :set_attempt, except: [:practice, :index]
-      before_action :stop_if_blocked, only: [:show, :answer, :finish, :result]
-      before_action :stop_if_closed, only: [:show, :answer]
+      before_action :stop_if_blocked, only: [:show, :answer, :mark, :finish, :result]
+      before_action :stop_if_closed, only: [:show, :answer, :mark]
 
       def practice
         if current_user.free_tier?
@@ -51,36 +57,56 @@ module Api
         questions = @attempt.questions.to_a
         return render_error("empty", "This test has no questions yet.", status: :conflict) if questions.empty?
 
-        answers = @attempt.responses_by_question.transform_values(&:chosen_option)
+        by_id = questions.index_by(&:id)
+        answers = @attempt.responses_by_question.filter_map do |qid, r|
+          [qid.to_s, @attempt.shown_letter(by_id[qid], r.chosen_option)] if by_id[qid] # skips questions since removed
+        end
         render json: {
           attempt: attempt_json(@attempt),
-          questions: questions.each_with_index.map { |q, i| question_json(q, number: i + 1) },
-          answers: answers.transform_keys(&:to_s)
+          questions: questions.each_with_index.map { |q, i| paper_question_json(q, i + 1) },
+          answers: answers.to_h,
+          marked: @attempt.marked_ids_in(questions)
         }
       end
 
-      # One answer per question per attempt: answering again replaces it. Like the website, the
-      # test is submitted as soon as every question has an answer (or a skip).
+      # One answer per question per attempt: answering again replaces it. Like the website, topic practice is
+      # submitted once every question has an answer (or a skip); teacher tests wait for /finish or the time limit,
+      # so students can go back over their answers ("all_answered" tells the app when everything is answered).
       def answer
         question = @attempt.questions.find_by(id: params[:question_id])
         return render_error("not_in_test", "That question is not part of this test.", status: :not_found) unless question
 
-        choice = params[:choice].to_s.strip.upcase
-        unless Question::ANSWER_KEYS.include?(choice) || choice == "SKIPPED"
-          return render_error("no_choice", "Please select an option before submitting.")
-        end
+        shown = params[:choice].to_s.strip.upcase
+        choice = shown == "SKIPPED" ? "SKIPPED" : @attempt.own_letter(question, shown)
+        return render_error("no_choice", "Please select an option before submitting.") unless choice
 
         response = current_user.user_responses.find_or_initialize_by(question: question, test_session_token: @attempt.token)
         response.update!(chosen_option: choice,
                          is_correct: choice != "SKIPPED" && choice == question.correct_answer.to_s.strip.upcase,
                          duration_seconds: response.duration_seconds.to_i + params[:duration_seconds].to_i.clamp(0, 3600))
+        @attempt.mark!(question, boolean_param(:marked)) if params.key?(:marked) && @attempt.test_session
 
         question_ids = @attempt.questions.pluck(:id)
         total = question_ids.size
         answered = @attempt.user_responses.where(question_id: question_ids).distinct.count(:question_id)
-        @attempt.finish! if answered >= total
-        render json: { saved: true, answered: answered, total: total, finished: @attempt.finished?,
-                       message: (@attempt.finished? ? "All questions answered. Test submitted." : nil) }
+        all_answered = answered >= total
+        @attempt.finish! if all_answered && @attempt.submits_when_all_answered?
+        message =
+          if @attempt.finished? then "All questions answered. Test submitted."
+          elsif all_answered then "All questions answered. Go over your answers, then submit the test."
+          end
+        render json: { saved: true, answered: answered, total: total, all_answered: all_answered, finished: @attempt.finished?,
+                       marked: @attempt.marked_ids_in(@attempt.questions.to_a), message: message }
+      end
+
+      # Mark for review on or off, without answering (teacher tests)
+      def mark
+        question = @attempt.questions.find_by(id: params[:question_id])
+        return render_error("not_in_test", "That question is not part of this test.", status: :not_found) unless question
+        return render_error("practice", "Marking for review is for teacher tests.", status: :unprocessable_entity) unless @attempt.test_session
+
+        @attempt.mark!(question, params.key?(:marked) ? boolean_param(:marked) : true)
+        render json: { marked: @attempt.marked_ids_in(@attempt.questions.to_a) }
       end
 
       def finish
@@ -119,8 +145,8 @@ module Api
           can_retake: can_retake,
           review: questions.each_with_index.map do |q, i|
             mine = responses[q.id]
-            question_json(q, number: i + 1).merge(correct_answer: q.correct_answer, explanation: q.explanation,
-                                                  my_choice: mine&.chosen_option, correct: mine&.is_correct || false)
+            paper_question_json(q, i + 1).merge(correct_answer: @attempt.shown_letter(q, q.correct_answer), explanation: q.explanation,
+                                                my_choice: @attempt.shown_letter(q, mine&.chosen_option), correct: mine&.is_correct || false)
           end
         }
       end
@@ -137,7 +163,8 @@ module Api
         @attempt.enforce_presence!
         seconds = params[:seconds].to_i
         if seconds >= TestAttempt::AWAY_GRACE.to_i
-          @attempt.record_violation!("Left the test (switched to another app) for #{seconds}s")
+          where = params[:kind] == "other_app_on_screen" ? "used another app on the screen" : "switched to another app"
+          @attempt.record_violation!("Left the test (#{where}) for #{seconds}s")
         end
         render json: strict_state(present: true)
       end
@@ -147,6 +174,13 @@ module Api
       def set_attempt
         @attempt = current_user.test_attempts.find_by!(token: params[:token])
       end
+
+      # A question on this student's paper: options under the letters they see (shuffled on strict tests)
+      def paper_question_json(question, number)
+        question_json(question, number: number).merge(options: @attempt.options_for(question).to_h { |shown, _own, text| [shown, text] })
+      end
+
+      def boolean_param(key) = ActiveModel::Type::Boolean.new.cast(params[key]) || false
 
       def stop_if_blocked
         @attempt.enforce_presence!
@@ -174,6 +208,7 @@ module Api
           status: attempt_status(attempt),
           retake: attempt.retake?,
           strict: attempt.strict?,
+          submits_when_all_answered: attempt.submits_when_all_answered?,
           started_at: time_json(attempt.started_at),
           deadline_at: time_json(attempt.deadline_at),
           seconds_left: attempt.seconds_left,

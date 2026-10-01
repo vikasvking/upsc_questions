@@ -101,9 +101,27 @@
 
           <p class="text-sm font-semibold text-slate-900 dark:text-white leading-relaxed mb-4"><%= q.content %></p>
 
+          <%# letters as this student saw them (strict tests shuffle the options for each student) %>
+          <ul class="space-y-1.5 text-xs mb-4">
+            <% @attempt.options_for(q).each do |letter, own, option_text| %>
+              <%
+                tone =
+                  if own == q.correct_answer then "border-emerald-300 dark:border-emerald-900/60 bg-emerald-50/60 dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-300"
+                  elsif own == resp&.chosen_option then "border-red-300 dark:border-red-900/60 bg-red-50/60 dark:bg-red-950/20 text-red-800 dark:text-red-300"
+                  else "border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-400"
+                  end
+              %>
+              <li class="p-2 rounded border <%= tone %>">
+                <strong><%= letter %>.</strong> <%= option_text %>
+                <% if own == q.correct_answer %> <span class="font-bold">✓ correct</span><% end %>
+                <% if own == resp&.chosen_option %> <span class="font-bold">← your answer</span><% end %>
+              </li>
+            <% end %>
+          </ul>
+
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs mb-4">
-            <div class="p-2 rounded bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800"><strong class="text-emerald-700 dark:text-emerald-400">Correct answer:</strong> <%= q.correct_answer %></div>
-            <div class="p-2 rounded bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800"><strong class="text-slate-500">Your answer:</strong> <%= resp&.chosen_option || "None" %></div>
+            <div class="p-2 rounded bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800"><strong class="text-emerald-700 dark:text-emerald-400">Correct answer:</strong> <%= @attempt.shown_letter(q, q.correct_answer) %></div>
+            <div class="p-2 rounded bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800"><strong class="text-slate-500">Your answer:</strong> <%= @attempt.shown_letter(q, resp&.chosen_option) || "None" %></div>
           </div>
 
           <% if q.explanation.present? %>

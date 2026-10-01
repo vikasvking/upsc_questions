@@ -16,11 +16,11 @@
 
     <%= button_to "Finish & Submit 📥", finish_test_dashboard_path(token: @attempt.token), method: :post,
                   form: { id: "finish-test-form" },
-                  data: { turbo_confirm: "Submit the test now? You cannot change answers afterwards." },
+                  data: { turbo_confirm: finish_confirm_text(@unanswered_count, @marked_ids.size) },
                   class: "w-full mt-4 text-center font-bold text-xs bg-white dark:bg-slate-950 text-brand-800 dark:text-brand-400 border border-brand-800/30 dark:border-slate-800/80 hover:bg-brand-50 dark:hover:bg-brand-950/20 py-2.5 rounded-xl transition-all shadow-sm cursor-pointer" %>
   </div>
 
-  <!-- Question grid: filled = answered, grey = skipped, outlined = not yet seen -->
+  <!-- Question grid: filled = answered, grey = skipped, outlined = not yet seen, violet dot = marked for review -->
   <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/60 dark:border-slate-800 shadow-sm">
     <p class="text-xs font-bold text-slate-400 mb-4">Questions</p>
     <div class="grid grid-cols-6 gap-2">
@@ -35,9 +35,20 @@
             else "border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-950"
             end
         %>
-        <%= link_to n, arena_dashboard_path(@attempt.token, n: n), class: "h-9 w-full flex items-center justify-center rounded-lg text-xs font-bold #{state_class}" %>
+        <%= link_to arena_dashboard_path(@attempt.token, n: n), class: "relative h-9 w-full flex items-center justify-center rounded-lg text-xs font-bold #{state_class}",
+                    title: (@marked_ids.include?(q.id) ? "Marked for review" : nil) do %>
+          <%= n %>
+          <% if @marked_ids.include?(q.id) %><span class="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-violet-500 ring-2 ring-white dark:ring-slate-900"></span><% end %>
+        <% end %>
       <% end %>
     </div>
+    <% if @attempt.test_session %>
+      <p class="mt-4 text-[11px] text-slate-400 leading-relaxed">
+        Filled = answered · grey = skipped · outlined = not yet ·
+        <span class="inline-block h-2 w-2 rounded-full bg-violet-500 align-middle"></span> marked for review.
+        Your test stays open until you press Finish &amp; Submit or the time runs out.
+      </p>
+    <% end %>
   </div>
 </div>
 

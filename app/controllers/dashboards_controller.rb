@@ -123,21 +123,29 @@ class DashboardsController < ApplicationController
     @question = @questions[@position - 1]
     @responses = @attempt.responses_by_question
     @previous_attempt = @responses[@question.id]
+    @options = @attempt.options_for(@question)
+    @marked_ids = @attempt.marked_ids_in(@questions).to_set
+    @unanswered_count = @questions.count { |q| !@responses.key?(q.id) }
     @attempt.record_presence! if @attempt.strict?
     render :quiz_arena
   end
 
+  # "Save & Next" saves the chosen option and clears any review mark.
+  # "Mark for Review & Next" (teacher tests, params[:mark]) flags the question, saving the option too if one is chosen.
   def submit_answer
-    chosen = params[:answer_choice].to_s.strip.upcase
     question = find_question_in_attempt
     return unless question
 
-    unless Question::ANSWER_KEYS.include?(chosen)
+    mark = params[:mark].present? && @attempt.test_session.present?
+    chosen = @attempt.own_letter(question, params[:answer_choice]) # strict tests: the letter on screen may differ
+
+    if chosen.nil? && !mark
       redirect_to arena_dashboard_path(@attempt.token, n: params[:n]), alert: "Please select an option before submitting."
       return
     end
 
-    save_response(question, chosen, chosen == question.correct_answer.to_s.strip.upcase)
+    save_response(question, chosen, chosen == question.correct_answer.to_s.strip.upcase) if chosen
+    @attempt.mark!(question, mark)
     go_to_next_question(question)
   end
 
@@ -311,7 +319,7 @@ class DashboardsController < ApplicationController
       return
     end
 
-    attempt = Current.user.test_attempts.create!(test_session: test)
+    attempt = TestAttempt.start_first_try!(Current.user, test)
     redirect_to arena_dashboard_path(attempt.token, n: 1)
   end
 
@@ -386,10 +394,12 @@ class DashboardsController < ApplicationController
     )
   end
 
-  # Next unanswered question after the current one; wraps round to earlier gaps; finishes when all are done
+  # Next unanswered question after the current one, wrapping round to earlier gaps. Once everything is answered:
+  # topic practice finishes; a teacher test goes through the questions marked for review and then waits for Submit.
   def go_to_next_question(question)
     questions = @attempt.questions.to_a
     answered  = @attempt.user_responses.pluck(:question_id).to_set
+    marked    = @attempt.marked_ids_in(questions).to_set
     current   = questions.index { |q| q.id == question.id }.to_i + 1
 
     order = ((current + 1)..questions.size).to_a + (1...current).to_a
@@ -397,9 +407,16 @@ class DashboardsController < ApplicationController
 
     if next_n
       redirect_to arena_dashboard_path(@attempt.token, n: next_n)
-    else
+    elsif @attempt.submits_when_all_answered?
       @attempt.finish!
       redirect_to test_results_dashboard_path(token: @attempt.token), notice: "All questions answered. Test submitted."
+    elsif (next_marked = order.find { |n| marked.include?(questions[n - 1].id) })
+      redirect_to arena_dashboard_path(@attempt.token, n: next_marked),
+                  notice: "All questions answered. Here is the next one you marked for review (#{marked.size} marked)."
+    else
+      still = marked.any? ? " #{marked.size} still marked for review." : ""
+      redirect_to arena_dashboard_path(@attempt.token, n: current),
+                  notice: "All questions answered.#{still} Check any answer from the question grid, then press Finish & Submit."
     end
   end
 

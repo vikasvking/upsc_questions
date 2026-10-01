@@ -32,8 +32,14 @@ class TestFlowTest < ActionDispatch::IntegrationTest
 
     wrong = (%w[A B C D] - [second_q.correct_answer]).first
     post submit_answer_dashboard_path, params: { token: attempt.token, n: 2, question_id: second_q.id, answer_choice: wrong }
-    assert_redirected_to test_results_dashboard_path(token: attempt.token)
+    # every question answered: the test stays open for review until the student submits
+    assert_redirected_to arena_dashboard_path(attempt.token, n: 2)
+    assert_not attempt.reload.finished?
+    follow_redirect!
+    assert_match "All questions answered", response.body
 
+    post finish_test_dashboard_path, params: { token: attempt.token }
+    assert_redirected_to test_results_dashboard_path(token: attempt.token)
     follow_redirect!
     assert_response :success
     assert attempt.reload.finished?

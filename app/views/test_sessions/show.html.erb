@@ -32,6 +32,16 @@
       </div>
     </div>
 
+    <div class="flex flex-wrap items-center gap-3">
+      <%= link_to "⬇ Download results (Excel)", export_test_session_path(@test_session),
+                  data: { turbo: false },
+                  class: "rounded-lg bg-brand-800 hover:bg-brand-900 text-white font-bold text-xs px-4 py-2.5 shadow-sm" %>
+      <%= link_to "🖨 Printable report / PDF", report_test_session_path(@test_session),
+                  target: "_blank", rel: "noopener", data: { turbo: false },
+                  class: "rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-brand-800/40 font-bold text-xs px-4 py-2.5" %>
+      <span class="text-xs text-slate-400">The Excel file is a .csv that opens in Excel or Google Sheets. In the report, choose “Save as PDF” in the print dialog.</span>
+    </div>
+
     <% if notice %>
       <div class="rounded-xl bg-emerald-50 dark:bg-emerald-950/40 p-3 border border-emerald-200 dark:border-emerald-900/40 text-xs text-emerald-800 dark:text-emerald-300 font-bold"><%= notice %></div>
     <% end %>
@@ -142,6 +152,8 @@
         </table>
       </div>
     </div>
+
+    <%= render "test_sessions/question_analysis", stats: @question_stats, topics: @topic_stats %>
 
   </div>
 </div>

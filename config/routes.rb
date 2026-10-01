@@ -26,6 +26,7 @@ Rails.application.routes.draw do
       resources :attempts, only: [:index, :show], param: :token do
         member do
           post :answer
+          post :mark
           post :finish
           get  :result
           post :heartbeat
@@ -68,6 +69,9 @@ Rails.application.routes.draw do
     # Strict mode: teacher lets a blocked student continue; live panel while the test is open
     post :reinstate, on: :member
     get  :live, on: :member
+    # Results as a CSV file for Excel, and as a printable report (Save as PDF from the print dialog)
+    get  :export, on: :member
+    get  :report, on: :member
   end
 
   # Quiz lifecycle

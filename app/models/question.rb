@@ -25,6 +25,27 @@ class Question < ApplicationRecord
 
   def exam = Exam.find(exam_type)
 
+  OPTION_COLUMNS = { "A" => :option_a, "B" => :option_b, "C" => :option_c, "D" => :option_d }.freeze
+
+  # Options that refer to other options ("All of the above", "Both (a) and (b)", "A and C") only make sense in the
+  # order they were written, so these questions keep that order even where strict tests shuffle options.
+  # A false match only means the options are not shuffled for that question.
+  FIXED_ORDER_PATTERNS = [
+    /\b(all|none|both|neither)\b[^.]{0,30}\babove\b/i,
+    /\(\s*[a-d]\s*\)/i,
+    /\boption\s+[a-d]\b/i,
+    /\b[A-D]\s*(,|&|and|or)\s*[A-D]\b/ # capitals only, so everyday words do not match
+  ].freeze
+
+  def option_text(letter) = public_send(OPTION_COLUMNS.fetch(letter))
+
+  # Letters of the options that have text, in the order the question was written
+  def option_letters = ANSWER_KEYS.select { |letter| option_text(letter).present? }
+
+  def fixed_option_order?
+    option_letters.any? { |letter| FIXED_ORDER_PATTERNS.any? { |pattern| pattern.match?(option_text(letter)) } }
+  end
+
   # Free -> sample questions only; Plus -> their exams plus their school's private questions; Warrior -> all visible
   def self.available_to(user)
     scope = visible_to(user)

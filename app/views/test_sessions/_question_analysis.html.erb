@@ -1,0 +1,78 @@
+<%# Question-wise and topic-wise analysis for the teacher (ranked attempts only). Locals: stats, topics %>
+<% students = stats.first&.students.to_i %>
+<div class="space-y-4">
+  <div>
+    <h3 class="text-base font-semibold text-slate-900 dark:text-white">Question-wise analysis</h3>
+    <p class="text-xs text-slate-500">
+      From the <%= pluralize(students, "ranked student") %> (first attempts that were submitted; blocked students are left out).
+      Letters are the question's own; strict tests showed the options to each student in a different order.
+    </p>
+  </div>
+
+  <% if students.zero? %>
+    <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 text-center text-xs text-slate-400">The analysis appears once students submit.</div>
+  <% else %>
+    <% if topics.size > 1 %>
+      <div class="flex flex-wrap gap-2">
+        <% topics.each do |t| %>
+          <span class="text-xs font-semibold px-3 py-1.5 rounded-full border <%= t.correct_pct < 40 ? "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50 text-red-800 dark:text-red-300" : (t.correct_pct < 70 ? "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/50 text-amber-800 dark:text-amber-300" : "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-300") %>">
+            <%= t.topic %> · <%= t.correct_pct %>% correct · <%= pluralize(t.questions, "question") %>
+          </span>
+        <% end %>
+      </div>
+      <p class="text-xs text-slate-400">Topics from weakest to strongest.</p>
+    <% end %>
+
+    <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900">
+      <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-left text-xs">
+        <thead class="bg-slate-50 dark:bg-slate-950 font-bold text-slate-900 dark:text-slate-300">
+          <tr>
+            <th class="px-4 py-3.5">Q</th>
+            <th class="px-4 py-3.5">Question</th>
+            <th class="px-3 py-3.5 text-center">Answer</th>
+            <th class="px-3 py-3.5 w-40">Correct</th>
+            <th class="px-3 py-3.5 text-center">✗ Wrong</th>
+            <th class="px-3 py-3.5 text-center">Skipped / not attempted</th>
+            <th class="px-4 py-3.5">Most chosen wrong option</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-700 dark:text-slate-400">
+          <% stats.each do |s| %>
+            <% pct = s.correct_pct %>
+            <tr class="<%= "bg-red-50/40 dark:bg-red-950/10" if pct < 40 %>">
+              <td class="px-4 py-3 font-mono font-bold text-slate-900 dark:text-white"><%= s.number %></td>
+              <td class="px-4 py-3 max-w-md">
+                <p class="text-slate-800 dark:text-slate-200" title="<%= s.question.content %>"><%= s.question.content.to_s.truncate(110) %></p>
+                <% if s.question.topic.present? %><p class="text-[11px] text-slate-400 mt-0.5"><%= s.question.topic %></p><% end %>
+              </td>
+              <td class="px-3 py-3 text-center font-mono font-bold"><%= s.question.correct_answer %></td>
+              <td class="px-3 py-3">
+                <div class="flex items-center gap-2">
+                  <div class="h-2 flex-1 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                    <div class="h-full rounded-full <%= pct < 40 ? "bg-red-500" : (pct < 70 ? "bg-amber-500" : "bg-emerald-500") %>" style="width: <%= pct.clamp(0, 100) %>%"></div>
+                  </div>
+                  <span class="font-mono font-semibold text-slate-900 dark:text-white w-12 text-right"><%= pct %>%</span>
+                </div>
+                <p class="text-[11px] text-slate-400 mt-0.5"><%= s.correct %> of <%= s.students %></p>
+              </td>
+              <td class="px-3 py-3 text-center font-mono"><%= s.wrong %></td>
+              <td class="px-3 py-3 text-center font-mono"><%= s.skipped %> / <%= s.unattempted %></td>
+              <td class="px-4 py-3">
+                <% wrong = s.common_wrong %>
+                <% if wrong %>
+                  <% letter, count = wrong %>
+                  <span class="font-mono font-bold"><%= letter %></span>
+                  <span class="text-slate-500">· <%= count %> (<%= s.percent(count) %>%)</span>
+                  <p class="text-[11px] text-slate-400 mt-0.5"><%= s.question.option_text(letter).to_s.truncate(60) %></p>
+                <% else %>
+                  <span class="text-slate-400">—</span>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+    <p class="text-xs text-slate-400">Rows in red: fewer than 40% answered correctly — worth going over in class.</p>
+  <% end %>
+</div>

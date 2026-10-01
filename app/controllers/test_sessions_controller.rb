@@ -1,13 +1,13 @@
 class TestSessionsController < ApplicationController
   include AudienceAssignment
   include ExamListing
-  FACULTY_ACTIONS = [:index, :new, :create, :show, :edit, :update, :reinstate, :live, :upload_form, :import, :download_template].freeze
+  FACULTY_ACTIONS = [:index, :new, :create, :show, :edit, :update, :reinstate, :live, :export, :report, :upload_form, :import, :download_template].freeze
   ONLINE_WITHIN = TestSession::ONLINE_WITHIN # two missed heartbeats = "no signal"
   LiveRow = TestSession::LiveRow
 
   before_action :ensure_faculty_access, only: FACULTY_ACTIONS - [:index]
-  before_action :set_test_session, only: [:show, :edit, :update, :reinstate, :live]
-  before_action :ensure_test_ownership, only: [:show, :edit, :update, :reinstate, :live]
+  before_action :set_test_session, only: [:show, :edit, :update, :reinstate, :live, :export, :report]
+  before_action :ensure_test_ownership, only: [:show, :edit, :update, :reinstate, :live, :export, :report]
   before_action :ensure_editable, only: [:edit, :update]
 
   rate_limit to: 10, within: 5.minutes, only: :verify_pin,
@@ -42,6 +42,23 @@ class TestSessionsController < ApplicationController
     @topper_email = toppers.any? ? toppers.map { |r| "#{r.user.display_name} (#{r.marks} marks)" }.join(", ") : "No submissions yet"
     @rating_summary = Rating.summary_for(@test_session)
     @rating_comments = @test_session.ratings.with_visible_comment.includes(:user).newest_first.limit(20)
+    @question_stats = @test_session.question_analysis
+    @topic_stats = @test_session.topic_analysis(@question_stats)
+  end
+
+  # GET /test_sessions/:id/export -> the results as a CSV file for Excel
+  def export
+    csv = TestResultsCsv.new(@test_session)
+    send_data csv.to_s, filename: csv.filename, type: "text/csv; charset=utf-8"
+  end
+
+  # GET /test_sessions/:id/report -> a printable report (Print, or Save as PDF from the print dialog)
+  def report
+    @results = @test_session.rankings
+    @question_stats = @test_session.question_analysis
+    @topic_stats = @test_session.topic_analysis(@question_stats)
+    @blocked_count = @test_session.test_attempts.first_tries.blocked.count
+    render layout: false
   end
 
   def new

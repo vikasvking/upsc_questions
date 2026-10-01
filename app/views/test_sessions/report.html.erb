@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title><%= @test_session.title %> · Results report</title>
+  <%# Its own plain styles (no app theme), so it prints the same in light and dark mode %>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 24px; font: 12px/1.45 -apple-system, "Segoe UI", Roboto, "Noto Sans", Arial, sans-serif; color: #111827; background: #fff; }
+    .page { max-width: 960px; margin: 0 auto; }
+    h1 { font-size: 20px; margin: 0 0 4px; }
+    h2 { font-size: 14px; margin: 24px 0 8px; padding-bottom: 4px; border-bottom: 2px solid #111827; }
+    .meta { color: #4b5563; margin: 0 0 2px; }
+    .tiles { display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
+    .tile { flex: 1 1 150px; border: 1px solid #d1d5db; border-radius: 8px; padding: 10px 12px; }
+    .tile b { display: block; font-size: 18px; }
+    .tile span { color: #6b7280; font-size: 11px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #d1d5db; padding: 5px 7px; text-align: left; vertical-align: top; }
+    th { background: #f3f4f6; font-size: 11px; }
+    td.num, th.num { text-align: center; white-space: nowrap; }
+    tr.weak td { background: #fef2f2; }
+    .small { color: #6b7280; font-size: 10.5px; }
+    .bar { height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden; margin-top: 3px; }
+    .bar i { display: block; height: 100%; background: #374151; }
+    .toolbar { display: flex; gap: 8px; justify-content: flex-end; margin-bottom: 16px; }
+    .toolbar button { font: inherit; font-weight: 700; padding: 8px 14px; border-radius: 6px; border: 1px solid #111827; background: #111827; color: #fff; cursor: pointer; }
+    .toolbar a { padding: 8px 14px; color: #111827; }
+    thead { display: table-header-group; } /* repeat table headings on every printed page */
+    tr { break-inside: avoid; }
+    @media print {
+      body { padding: 0; }
+      .toolbar { display: none; }
+      @page { margin: 14mm; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <div class="toolbar">
+    <a href="<%= test_session_path(@test_session) %>">← Back to results</a>
+    <button type="button" onclick="window.print()">🖨 Print / Save as PDF</button>
+  </div>
+
+  <h1><%= @test_session.title %></h1>
+  <p class="meta">
+    <%= exam_name(@test_session.exam_type) %> · marking: <%= @test_session.exam.marking_text %> · pass mark <%= @test_session.pass_mark_percentage %>% ·
+    <%= pluralize(@test_session.questions.count, "question") %> · <%= @test_session.duration_minutes %> minutes
+  </p>
+  <% if @test_session.starts_at || @test_session.ends_at %>
+    <p class="meta">
+      <%= "Opens #{l(@test_session.starts_at, format: :long)}" if @test_session.starts_at %>
+      <%= " · " if @test_session.starts_at && @test_session.ends_at %>
+      <%= "Closes #{l(@test_session.ends_at, format: :long)}" if @test_session.ends_at %>
+    </p>
+  <% end %>
+  <p class="meta">Teacher: <%= @test_session.user&.display_name || "—" %> · Report made <%= l(Time.current, format: :long) %></p>
+
+  <% count = @results.size %>
+  <div class="tiles">
+    <div class="tile"><b><%= count %></b><span>students ranked<%= " · #{@blocked_count} blocked" if @blocked_count.positive? %></span></div>
+    <div class="tile"><b><%= count.positive? ? marks_text((@results.sum(&:marks) / count).round(2)) : "—" %></b><span>average marks</span></div>
+    <div class="tile"><b><%= count.positive? ? "#{(@results.sum(&:percentage) / count).round(1)}%" : "—" %></b><span>average correct</span></div>
+    <div class="tile"><b><%= @results.count(&:passed) %></b><span>passed</span></div>
+  </div>
+
+  <h2>Rankings</h2>
+  <% if @results.empty? %>
+    <p class="small">No submissions yet.</p>
+  <% else %>
+    <table>
+      <thead>
+        <tr>
+          <th class="num">Rank</th><th>Student</th><th class="num">✓ / ✗ / skip</th><th class="num">Marks</th>
+          <th class="num">Correct %</th><th class="num">Time taken</th><th class="num">Result</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @results.each do |r| %>
+          <tr>
+            <td class="num"><b><%= r.rank %></b></td>
+            <td><%= r.user.display_name %><br><span class="small"><%= r.user.email_address %></span></td>
+            <td class="num"><%= r.correct %> / <%= r.wrong %> / <%= r.skipped + r.unattempted %></td>
+            <td class="num"><%= marks_text(r.marks) %> / <%= marks_text(r.max_marks) %></td>
+            <td class="num"><%= r.percentage %>%</td>
+            <td class="num"><%= duration_text(r.time_taken) %></td>
+            <td class="num"><%= r.passed ? "Passed" : "Failed" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+
+  <% if @topic_stats.size > 1 && count.positive? %>
+    <h2>Topics (weakest first)</h2>
+    <table>
+      <thead><tr><th>Topic</th><th class="num">Questions</th><th class="num">Correct</th></tr></thead>
+      <tbody>
+        <% @topic_stats.each do |t| %>
+          <tr class="<%= "weak" if t.correct_pct < 40 %>">
+            <td><%= t.topic %></td><td class="num"><%= t.questions %></td>
+            <td class="num"><%= t.correct_pct %>%<div class="bar"><i style="width: <%= t.correct_pct.clamp(0, 100) %>%"></i></div></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+
+  <% if count.positive? %>
+    <h2>Question-wise analysis</h2>
+    <table>
+      <thead>
+        <tr>
+          <th class="num">Q</th><th>Question</th><th class="num">Answer</th><th class="num">Correct</th>
+          <th class="num">✗ Wrong</th><th class="num">Skipped / not attempted</th><th>Most chosen wrong option</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @question_stats.each do |s| %>
+          <% wrong = s.common_wrong %>
+          <tr class="<%= "weak" if s.correct_pct < 40 %>">
+            <td class="num"><b><%= s.number %></b></td>
+            <td><%= s.question.content.to_s.truncate(160) %><% if s.question.topic.present? %><br><span class="small"><%= s.question.topic %></span><% end %></td>
+            <td class="num"><b><%= s.question.correct_answer %></b></td>
+            <td class="num"><%= s.correct_pct %>%<br><span class="small"><%= s.correct %> of <%= s.students %></span></td>
+            <td class="num"><%= s.wrong %></td>
+            <td class="num"><%= s.skipped %> / <%= s.unattempted %></td>
+            <td><% if wrong %><b><%= wrong.first %></b> · <%= wrong.last %> (<%= s.percent(wrong.last) %>%)<br><span class="small"><%= s.question.option_text(wrong.first).to_s.truncate(70) %></span><% else %>—<% end %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+    <p class="small">Shaded rows: fewer than 40% answered correctly. Only students' first, submitted attempts are counted; blocked students are left out.</p>
+  <% end %>
+</div>
+</body>
+</html>

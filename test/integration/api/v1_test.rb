@@ -52,7 +52,10 @@ class ApiV1Test < ActionDispatch::IntegrationTest
     assert_response :success
     assert_equal false, json["finished"]
     post answer_api_v1_attempt_path(token), params: { question_id: questions(:two).id, choice: "SKIPPED" }, headers: headers, as: :json
-    assert_equal true, json["finished"] # every question answered or skipped -> submitted, as on the website
+    assert_equal true, json["all_answered"]
+    assert_equal false, json["finished"] # teacher tests wait for /finish, so students can go over their answers
+    post finish_api_v1_attempt_path(token), headers: headers, as: :json
+    assert_response :success
 
     get result_api_v1_attempt_path(token), headers: headers
     assert_response :success
@@ -68,7 +71,43 @@ class ApiV1Test < ActionDispatch::IntegrationTest
   def answer_both(token, headers, one:, two:)
     post answer_api_v1_attempt_path(token), params: { question_id: questions(:one).id, choice: one }, headers: headers, as: :json
     post answer_api_v1_attempt_path(token), params: { question_id: questions(:two).id, choice: two }, headers: headers, as: :json
+    assert_equal true, json["all_answered"]
+    post finish_api_v1_attempt_path(token), headers: headers, as: :json
     assert_equal true, json["finished"]
+  end
+
+  test "marking for review in the app, and strict tests' shuffled options" do
+    headers = api_sign_in(users(:one))
+    test = test_sessions(:one)
+    post start_api_v1_test_path(test), headers: headers, as: :json
+    token = json["attempt_token"]
+
+    post mark_api_v1_attempt_path(token), params: { question_id: questions(:one).id, marked: true }, headers: headers, as: :json
+    assert_response :success
+    assert_equal [questions(:one).id], json["marked"]
+    get api_v1_attempt_path(token), headers: headers
+    assert_equal [questions(:one).id], json["marked"]
+    assert_equal false, json.dig("attempt", "submits_when_all_answered")
+
+    post answer_api_v1_attempt_path(token), params: { question_id: questions(:one).id, choice: "A", marked: false }, headers: headers, as: :json
+    assert_equal [], json["marked"]
+
+    strict = test_sessions(:two) # question one, answer A
+    strict.update!(strict_mode: true, ends_at: 2.hours.from_now)
+    TestPinEntry.create!(test_session: strict, user: users(:one))
+    post start_api_v1_test_path(strict), headers: headers, as: :json
+    strict_token = json["attempt_token"]
+    attempt = TestAttempt.find_by!(token: strict_token)
+
+    get api_v1_attempt_path(strict_token), headers: headers
+    shown = attempt.shown_letter(questions(:one), "A")
+    assert_equal "Newton", json["questions"].first.dig("options", shown) # the right answer is under the letter shown
+
+    post answer_api_v1_attempt_path(strict_token), params: { question_id: questions(:one).id, choice: shown }, headers: headers, as: :json
+    assert_response :success
+    assert attempt.user_responses.last.is_correct
+    get api_v1_attempt_path(strict_token), headers: headers
+    assert_equal shown, json["answers"][questions(:one).id.to_s]
   end
 
   test "a student retakes a submitted test as often as they like; only the first attempt is ranked" do

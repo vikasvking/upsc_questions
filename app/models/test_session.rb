@@ -132,6 +132,46 @@ class TestSession < ApplicationRecord
   Result = Struct.new(:attempt, :user, :rank, :correct, :wrong, :skipped, :unattempted, :total,
                       :marks, :max_marks, :percentage, :passed, :time_taken, keyword_init: true)
 
+  # How the class did on one question. `picks`: the question's own letter => how many students chose it.
+  QuestionStat = Struct.new(:question, :number, :students, :picks, :correct, :wrong, :skipped, :unattempted,
+                            keyword_init: true) do
+    def percent(count) = students.positive? ? (count * 100.0 / students).round(1) : 0.0
+    def correct_pct = percent(correct)
+
+    # The wrong option most students fell for: [letter, count], or nil when nobody answered wrongly
+    def common_wrong
+      letter, count = picks.except(question.correct_answer).max_by { |_, c| c }
+      count.to_i.positive? ? [letter, count] : nil
+    end
+  end
+
+  TopicStat = Struct.new(:topic, :questions, :correct_pct, keyword_init: true)
+
+  # Question-wise analysis for the teacher (ranked attempts only: first tries, submitted, not blocked), in paper order
+  def question_analysis
+    tokens    = test_attempts.first_tries.finished.not_blocked.pluck(:token)
+    questions = ordered_questions.to_a
+    latest    = latest_answers(tokens, questions.map(&:id))
+
+    questions.each_with_index.map do |q, i|
+      choices = tokens.filter_map { |t| latest[[t, q.id]]&.first }
+      picks   = choices.reject { |c| c == "SKIPPED" }.tally
+      correct = picks.fetch(q.correct_answer, 0)
+      QuestionStat.new(question: q, number: i + 1, students: tokens.size, picks: picks, correct: correct,
+                       wrong: picks.values.sum - correct, skipped: choices.count("SKIPPED"),
+                       unattempted: tokens.size - choices.size)
+    end
+  end
+
+  # Topics (subjects) from weakest to strongest, by the share of correct answers
+  def topic_analysis(stats = question_analysis)
+    stats.group_by { |s| s.question.topic.presence || "Other" }.map do |topic, list|
+      answers = list.sum(&:students)
+      TopicStat.new(topic: topic, questions: list.size,
+                    correct_pct: answers.positive? ? (list.sum(&:correct) * 100.0 / answers).round(1) : 0.0)
+    end.sort_by { |t| [t.correct_pct, t.topic] }
+  end
+
   # ---------- speed: results and the live view are shared, not recalculated for every page ----------
   #
   # A big test (500 students x 100 questions = 50,000 answers) is expensive to rank. Result pages, test cards and
@@ -373,11 +413,7 @@ class TestSession < ApplicationRecord
     attempts = test_attempts.first_tries.finished.not_blocked.includes(:user).to_a
     qids     = ordered_questions.pluck(:id)
     total    = qids.size
-    latest   = {} # [token, question_id] => [choice, correct]; ordered by time, so the last answer wins
-    UserResponse.where(test_session_token: attempts.map(&:token), question_id: qids)
-                .order(:updated_at)
-                .pluck(:test_session_token, :question_id, :chosen_option, :is_correct)
-                .each { |token, qid, choice, correct| latest[[token, qid]] = [choice, correct] }
+    latest   = latest_answers(attempts.map(&:token), qids)
 
     results = attempts.map do |a|
       answers = qids.filter_map { |qid| latest[[a.token, qid]] }
@@ -397,6 +433,16 @@ class TestSession < ApplicationRecord
       r.rank = prev && prev.marks == r.marks && prev.time_taken == r.time_taken ? prev.rank : i + 1
     end
     results.freeze
+  end
+
+  # [token, question_id] => [choice, correct] for these attempts. Ordered by time, so the last answer wins.
+  def latest_answers(tokens, question_ids)
+    latest = {}
+    UserResponse.where(test_session_token: tokens, question_id: question_ids)
+                .order(:updated_at)
+                .pluck(:test_session_token, :question_id, :chosen_option, :is_correct)
+                .each { |token, qid, choice, correct| latest[[token, qid]] = [choice, correct] }
+    latest
   end
 
   def generate_secure_pin

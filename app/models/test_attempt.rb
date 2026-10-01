@@ -31,6 +31,15 @@ class TestAttempt < ApplicationRecord
     user.test_attempts.where(test_session: test_session).order(:id).last
   end
 
+  # Starts the student's ranked attempt at a teacher test. Two taps on Start, or the website and the app at the
+  # same moment, can both get here: the database lets only one through (see the one-first-try index) and the
+  # other request gets that same attempt back.
+  def self.start_first_try!(user, test_session)
+    user.test_attempts.create!(test_session: test_session)
+  rescue ActiveRecord::RecordNotUnique
+    user.test_attempts.first_tries.find_by!(test_session: test_session)
+  end
+
   def questions
     if test_session
       # Strict tests show each student the questions in their own order, so answers can't be passed around a classroom
@@ -39,6 +48,52 @@ class TestAttempt < ApplicationRecord
       Question.available_to(user).where(topic: topic).in_order
     end
   end
+
+  # ---------- options (strict tests shuffle them for each student too) ----------
+  #
+  # The student sees A, B, C, D in their own order; what is saved is always the question's own letter, so marks,
+  # rankings, re-marking after a corrected answer key and the teacher's reports all work as before.
+
+  def shuffles_options_of?(question)
+    (test_session&.strict_mode? || false) && !question.fixed_option_order?
+  end
+
+  # The options as this student sees them: [[letter shown, the question's own letter, text], ...]
+  def options_for(question)
+    own = question.option_letters
+    return own.map { |letter| [letter, letter, question.option_text(letter)] } unless shuffles_options_of?(question)
+
+    own.sort_by { |letter| Digest::MD5.hexdigest("#{token}:#{question.id}:#{letter}") }
+       .each_with_index.map { |letter, i| [Question::ANSWER_KEYS[i], letter, question.option_text(letter)] }
+  end
+
+  # Letter picked on screen -> the question's own letter; nil when it is not one of the options
+  def own_letter(question, shown)
+    options_for(question).find { |s, _, _| s == shown.to_s.strip.upcase }&.second
+  end
+
+  # The question's own letter -> the letter this student saw it as ("SKIPPED" and nil are returned as they are)
+  def shown_letter(question, own)
+    return own unless Question::ANSWER_KEYS.include?(own)
+    options_for(question).find { |_, o, _| o == own }&.first || own
+  end
+
+  # ---------- going over answers before submitting ----------
+
+  # Teacher tests stay open until the student presses Submit (or the time runs out), so they can go back over
+  # their answers as in the real exam. Topic practice still finishes by itself after the last question.
+  def submits_when_all_answered? = test_session.nil?
+
+  def marked?(question) = marked_question_ids.include?(question.id)
+
+  # "Mark for review" on (true) or off (false)
+  def mark!(question, on = true)
+    ids = on ? (marked_question_ids | [question.id]) : (marked_question_ids - [question.id])
+    update_column(:marked_question_ids, ids) unless ids == marked_question_ids
+  end
+
+  # Marked questions that are still part of the test, in paper order
+  def marked_ids_in(questions) = questions.map(&:id) & marked_question_ids
 
   def title
     test_session ? test_session.title : topic

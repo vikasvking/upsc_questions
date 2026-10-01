@@ -95,7 +95,7 @@ module Api
         end
         return render_error("empty", "This test has no questions yet.", status: :conflict) if test.questions.none?
 
-        attempt = current_user.test_attempts.create!(test_session: test)
+        attempt = TestAttempt.start_first_try!(current_user, test)
         render json: { attempt_token: attempt.token, status: "in_progress" }, status: :created
       end
 
