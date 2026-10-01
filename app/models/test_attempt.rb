@@ -33,7 +33,8 @@ class TestAttempt < ApplicationRecord
 
   def questions
     if test_session
-      test_session.ordered_questions
+      # Strict tests show each student the questions in their own order, so answers can't be passed around a classroom
+      test_session.strict_mode? ? shuffled(test_session.questions) : test_session.ordered_questions
     else
       Question.available_to(user).where(topic: topic).in_order
     end
@@ -160,6 +161,12 @@ class TestAttempt < ApplicationRecord
   end
 
   private
+
+  # Each student gets their own order, worked out from the attempt's token: the same on every
+  # refresh and device, different for every student, and nothing extra to store
+  def shuffled(scope)
+    scope.reorder(Arel.sql("md5(#{self.class.connection.quote(token)} || questions.id::text)"))
+  end
 
   def set_defaults
     self.token      ||= SecureRandom.hex(8)
