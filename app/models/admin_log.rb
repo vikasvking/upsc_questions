@@ -16,7 +16,8 @@ class AdminLog < ApplicationRecord
     "update_mail_settings" => "Changed email settings",
     "create_plan" => "Added plan", "update_plan" => "Changed plan", "update_subscription" => "Changed a school's plan",
     "update_tier" => "Changed a student's tier",
-    "hide_rating_comment" => "Hid a rating comment", "unhide_rating_comment" => "Showed a rating comment again"
+    "hide_rating_comment" => "Hid a rating comment", "unhide_rating_comment" => "Showed a rating comment again",
+    "update_contact_message" => "Changed a contact message"
   }.freeze
 
   def self.record!(admin:, action:, record: nil, label: nil, reason: nil, details: {})

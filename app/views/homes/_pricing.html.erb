@@ -1,13 +1,107 @@
-<section id="pricing" class="mx-auto max-w-6xl px-6 pb-20 scroll-mt-16">
-  <div class="rounded-3xl bg-brand-700 dark:bg-brand-900 px-8 py-12 sm:px-12 grid md:grid-cols-[1fr_auto] gap-8 items-center text-white">
-    <div>
-      <p class="text-sm text-brand-100">Pricing</p>
-      <h2 class="mt-1 text-3xl font-semibold tracking-tight">Free while in beta</h2>
-      <p class="mt-3 text-brand-100 max-w-xl">Everything is included: all exams and topics, timed tests, explanations, ranks and topper comparison. We'll tell you well in advance before any paid plan starts.</p>
+<%# Prices come from Admin → Plans (active plans only), so changes show here straight away %>
+<%
+  box  = "rounded-2xl p-6 flex flex-col"
+  card = "#{box} bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800"
+  rupees = ->(n) { "₹#{number_with_delimiter(n)}" }
+  saving = ->(plan) do
+    full = plan.price_month_inr * 12
+    pct = full.positive? ? ((full - plan.price_year_inr) * 100.0 / full).round : 0
+    pct.positive? ? "save #{pct}%" : nil
+  end
+  limit = ->(n, label) { n.nil? ? "Unlimited #{label}" : "Up to #{number_with_delimiter(n)} #{label}" }
+  contact_link = ->(topic, text, klass) { link_to text, root_path(topic: topic, anchor: "contact"), class: klass }
+  primary = "mt-6 rounded-lg bg-brand-700 px-4 py-2.5 text-center text-sm font-medium text-white hover:bg-brand-800"
+  secondary = "mt-6 rounded-lg px-4 py-2.5 text-center text-sm font-medium text-brand-800 dark:text-brand-200 ring-1 ring-brand-200 dark:ring-brand-800 hover:bg-brand-50 dark:hover:bg-brand-950/40"
+%>
+<section id="pricing" class="mx-auto max-w-6xl px-6 pb-20 scroll-mt-16 space-y-12">
+  <div class="max-w-2xl">
+    <h2 class="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">Pricing</h2>
+    <p class="mt-3 text-slate-600 dark:text-slate-400">Start free. Students can unlock every exam on their own, and schools and coachings get Plus for all their students.</p>
+    <p class="mt-4 inline-flex items-center gap-2 rounded-full bg-emerald-50 dark:bg-emerald-950/40 px-3 py-1 text-sm text-emerald-800 dark:text-emerald-300">
+      <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span> Free while in beta. These prices apply once paid plans start.
+    </p>
+  </div>
+
+  <div class="space-y-4">
+    <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500">For students</h3>
+    <div class="grid md:grid-cols-3 gap-4">
+      <div class="<%= card %>">
+        <p class="font-semibold text-slate-900 dark:text-white"><%= Tiers.label("free") %></p>
+        <p class="mt-3 text-3xl font-semibold text-slate-900 dark:text-white">₹0</p>
+        <ul class="mt-4 space-y-2 text-sm text-slate-600 dark:text-slate-300 flex-1">
+          <li>✓ <%= Tiers::FREE_SAMPLE_TESTS %> sample tests</li>
+          <li>✓ <%= Tiers::FREE_SAMPLE_QUESTIONS %> sample practice questions with explanations</li>
+          <li>✓ See every question in the bank</li>
+        </ul>
+        <%= link_to "Create free account", new_registration_path, class: secondary %>
+      </div>
+
+      <% @student_plans.each do |plan| %>
+        <div class="<%= box %> bg-white dark:bg-slate-900 ring-2 ring-brand-600 dark:ring-brand-500">
+          <p class="font-semibold text-slate-900 dark:text-white"><%= Tiers::ICONS[plan.member_tier] %> <%= plan.name %></p>
+          <p class="mt-3 text-3xl font-semibold text-slate-900 dark:text-white"><%= rupees.(plan.price_month_inr) %><span class="text-base font-normal text-slate-500">/month</span></p>
+          <p class="mt-1 text-sm text-slate-500">or <%= rupees.(plan.price_year_inr) %>/year<% if (s = saving.(plan)) %> · <span class="text-emerald-700 dark:text-emerald-400 font-medium"><%= s %></span><% end %></p>
+          <ul class="mt-4 space-y-2 text-sm text-slate-600 dark:text-slate-300 flex-1">
+            <li>✓ Every exam: <%= Exam.all.map(&:name).to_sentence %></li>
+            <li>✓ All public tests and topic practice</li>
+            <li>✓ Ranks and topper comparison</li>
+            <% if plan.price_month_upgrade_inr %>
+              <li>✓ Already Plus through your school? <strong><%= rupees.(plan.price_month_upgrade_inr) %>/month</strong></li>
+            <% end %>
+          </ul>
+          <%= link_to "Start free, upgrade any time", new_registration_path, class: primary %>
+        </div>
+      <% end %>
+
+      <div class="<%= box %> bg-slate-50 dark:bg-slate-900/60 ring-1 ring-slate-200/70 dark:ring-slate-800">
+        <p class="font-semibold text-slate-900 dark:text-white"><%= Tiers.label("plus") %></p>
+        <p class="mt-3 text-xl font-semibold text-slate-900 dark:text-white">Through your school</p>
+        <ul class="mt-4 space-y-2 text-sm text-slate-600 dark:text-slate-300 flex-1">
+          <li>✓ Every test from your school or coaching</li>
+          <li>✓ Public tests and practice in your exams</li>
+          <li>✓ Ranks and teacher reports</li>
+        </ul>
+        <p class="mt-6 text-sm text-slate-500">Included when your school or coaching has a plan below.</p>
+      </div>
     </div>
-    <div class="flex flex-col sm:flex-row md:flex-col gap-3">
-      <%= link_to "Create free account", new_registration_path, class: "rounded-lg bg-white px-5 py-3 text-center text-sm font-medium text-brand-800 hover:bg-brand-50" %>
-      <%= link_to "Log in", new_session_path, class: "rounded-lg px-5 py-3 text-center text-sm font-medium text-white ring-1 ring-white/40 hover:bg-white/10" %>
+  </div>
+
+  <div class="space-y-4">
+    <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500">For schools and coachings</h3>
+    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <% @school_plans.each do |plan| %>
+        <div class="<%= card %>">
+          <p class="font-semibold text-slate-900 dark:text-white"><%= plan.name %></p>
+          <p class="mt-3 text-3xl font-semibold text-slate-900 dark:text-white"><%= rupees.(plan.price_month_inr) %><span class="text-base font-normal text-slate-500">/month</span></p>
+          <p class="mt-1 text-sm text-slate-500">or <%= rupees.(plan.price_year_inr) %>/year<% if (s = saving.(plan)) %> · <span class="text-emerald-700 dark:text-emerald-400 font-medium"><%= s %></span><% end %></p>
+          <ul class="mt-4 space-y-2 text-sm text-slate-600 dark:text-slate-300 flex-1">
+            <li>✓ <%= limit.(plan.max_students, "students") %></li>
+            <li>✓ <%= limit.(plan.max_teachers, "teachers") %></li>
+            <li>✓ <%= plan.max_tests_per_month.nil? ? "Unlimited tests" : "#{number_with_delimiter(plan.max_tests_per_month)} tests a month" %></li>
+            <li>✓ Students get <%= Tiers.label(plan.member_tier.presence || "plus") %> with <%= pluralize(plan.member_max_exams || Tiers::DEFAULT_PLUS_EXAMS, "exam") %> each</li>
+          </ul>
+          <% if @contact_open %>
+            <%= contact_link.("school_plan", "Talk to us", secondary) %>
+          <% else %>
+            <%= link_to "Sign up as a teacher", new_registration_path, class: secondary %>
+          <% end %>
+        </div>
+      <% end %>
+
+      <div class="<%= box %> bg-brand-700 dark:bg-brand-900 text-white">
+        <p class="font-semibold">Custom</p>
+        <p class="mt-3 text-xl font-semibold">Made for you</p>
+        <ul class="mt-4 space-y-2 text-sm text-brand-100 flex-1">
+          <li>✓ More students, teachers or tests</li>
+          <li>✓ Several branches under one account</li>
+          <li>✓ More exams for your students</li>
+        </ul>
+        <% if @contact_open %>
+          <%= contact_link.("custom_plan", "Contact us", "mt-6 rounded-lg bg-white px-4 py-2.5 text-center text-sm font-medium text-brand-800 hover:bg-brand-50") %>
+        <% else %>
+          <p class="mt-6 text-sm text-brand-100">Sign up as a teacher and ask the Rankwise team for a custom plan.</p>
+        <% end %>
+      </div>
     </div>
   </div>
 </section>

@@ -92,6 +92,9 @@ Rails.application.routes.draw do
     end
   end
 
+  # Contact form in the home page footer (open only while email is on)
+  resources :contact_messages, only: :create
+
   # Question picker in the test form: one exam, 50 at a time, searched on the server (Turbo Frame)
   get "question_library", to: "question_libraries#show", as: :question_library
 
@@ -151,6 +154,7 @@ Rails.application.routes.draw do
     resources :test_sessions, path: "tests", except: [:show] do
       patch :toggle_gift, on: :member
     end
+    resources :contact_messages, path: "messages", only: [:index, :update] # from the home page contact form
     resources :logs, only: [:index]
     resources :moderation, only: [:index] do
       patch :hide_comment, on: :member

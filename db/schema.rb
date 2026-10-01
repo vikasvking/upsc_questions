@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_01_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_01_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -58,6 +58,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_01_100000) do
     t.datetime "updated_at", null: false
     t.index ["institution_id"], name: "index_batches_on_institution_id"
     t.index ["user_id"], name: "index_batches_on_user_id"
+  end
+
+  create_table "contact_messages", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "email", null: false
+    t.string "phone"
+    t.string "organisation"
+    t.string "topic", default: "other", null: false
+    t.text "message", null: false
+    t.string "status", default: "new", null: false
+    t.bigint "handled_by_id"
+    t.datetime "handled_at"
+    t.string "ip_address"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["handled_by_id"], name: "index_contact_messages_on_handled_by_id"
+    t.index ["status", "created_at"], name: "index_contact_messages_on_status_and_created_at"
   end
 
   create_table "device_tokens", force: :cascade do |t|
@@ -532,6 +549,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_01_100000) do
   add_foreign_key "batch_members", "users", on_delete: :cascade
   add_foreign_key "batches", "institutions", on_delete: :nullify
   add_foreign_key "batches", "users", on_delete: :cascade
+  add_foreign_key "contact_messages", "users", column: "handled_by_id", on_delete: :nullify
   add_foreign_key "device_tokens", "users", on_delete: :cascade
   add_foreign_key "guardian_consents", "users", on_delete: :cascade
   add_foreign_key "institutions", "plans", on_delete: :nullify

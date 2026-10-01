@@ -1,0 +1,10 @@
+<p>New message from the Rankwise contact form.</p>
+<p>
+  <strong>About:</strong> <%= @message.topic_label %><br>
+  <strong>Name:</strong> <%= @message.name %><br>
+  <strong>Email:</strong> <%= mail_to @message.email %><br>
+  <% if @message.phone %><strong>Phone:</strong> <%= @message.phone %><br><% end %>
+  <% if @message.organisation %><strong>School or coaching:</strong> <%= @message.organisation %><br><% end %>
+</p>
+<p style="white-space: pre-line"><%= @message.message %></p>
+<p>Reply to this email to answer <%= @message.name %>, or <%= link_to "open Admin → Messages", @url %>.</p>

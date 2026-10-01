@@ -1,0 +1,11 @@
+New message from the Rankwise contact form.
+
+About: <%= @message.topic_label %>
+Name: <%= @message.name %>
+Email: <%= @message.email %>
+<% if @message.phone %>Phone: <%= @message.phone %>
+<% end %><% if @message.organisation %>School or coaching: <%= @message.organisation %>
+<% end %>
+<%= @message.message %>
+
+Reply to this email to answer <%= @message.name %>, or open Admin → Messages: <%= @url %>
