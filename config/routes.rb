@@ -76,6 +76,7 @@ Rails.application.routes.draw do
 
   # Quiz lifecycle
   get  "dashboard/all_tests",      to: "dashboards#all_tests",     as: :all_tests_dashboard
+  get  "dashboard/my_tests",       to: "dashboards#my_tests",      as: :my_tests_dashboard # everything the student has attempted
   get  "dashboard/tests/:id",      to: "dashboards#test_intro",    as: :test_intro_dashboard
   post "dashboard/start_test",     to: "dashboards#start_test",    as: :start_test_dashboard
   get  "dashboard/arena/:token",   to: "dashboards#arena",         as: :arena_dashboard

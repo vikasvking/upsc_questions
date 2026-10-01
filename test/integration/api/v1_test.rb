@@ -110,6 +110,28 @@ class ApiV1Test < ActionDispatch::IntegrationTest
     assert_equal shown, json["answers"][questions(:one).id.to_s]
   end
 
+  test "my tests in the app: marks and rank once results are out, progress while writing" do
+    headers = api_sign_in(users(:one))
+    post start_api_v1_test_path(test_sessions(:one)), headers: headers, as: :json
+    done = json["attempt_token"]
+    answer_both(done, headers, one: "A", two: "C") # +2 -0.67
+    post api_v1_practice_path, params: { topic: "Physics" }, headers: headers, as: :json
+    practice = json["attempt_token"]
+
+    get api_v1_attempts_path, headers: headers
+    assert_response :success
+    assert_equal false, json["has_more"]
+    finished = json["attempts"].find { |a| a["token"] == done }
+    assert_equal "done", finished["state"]
+    assert_in_delta 1.33, finished["marks"], 0.01
+    assert_equal({ "rank" => 1, "of" => 1 }, finished["rank"])
+    running = json["attempts"].find { |a| a["token"] == practice }
+    assert_equal ["in_progress", 0, 2], running.values_at("state", "answered", "total")
+
+    get api_v1_attempts_path, params: { kind: "practice" }, headers: headers
+    assert_equal [practice], json["attempts"].map { |a| a["token"] }
+  end
+
   test "a student retakes a submitted test as often as they like; only the first attempt is ranked" do
     headers = api_sign_in(users(:one))
     test = test_sessions(:one) # no time window

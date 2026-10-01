@@ -487,8 +487,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_01_170000) do
     t.index ["test_session_id", "blocked_at"], name: "index_test_attempts_on_test_session_id_and_blocked_at"
     t.index ["test_session_id"], name: "index_test_attempts_on_test_session_id"
     t.index ["token"], name: "index_test_attempts_on_token", unique: true
-    t.index ["user_id", "test_session_id"], name: "index_test_attempts_one_first_try", unique: true, where: "((retake = false) AND (test_session_id IS NOT NULL))"
     t.index ["user_id", "test_session_id"], name: "index_test_attempts_on_user_id_and_test_session_id"
+    t.index ["user_id", "test_session_id"], name: "index_test_attempts_one_first_try", unique: true, where: "((retake = false) AND (test_session_id IS NOT NULL))"
     t.index ["user_id"], name: "index_test_attempts_on_user_id"
   end
 

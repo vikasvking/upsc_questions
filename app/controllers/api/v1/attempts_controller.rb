@@ -1,6 +1,6 @@
 # Taking a test or a topic practice, and its result (same rules as the website's test pages).
 #   POST /api/v1/practice  topic=Physics                  -> { attempt_token } (Plus and Warrior)
-#   GET  /api/v1/attempts                                 -> my recent tests and practices
+#   GET  /api/v1/attempts  page=2 kind=tests|practice     -> my tests and practices, newest first, with marks and rank
 #   GET  /api/v1/attempts/:token                          -> questions, my saved answers, marked for review, time left
 #   POST /api/v1/attempts/:token/answer  question_id, choice=A|B|C|D|SKIPPED, duration_seconds, marked=true|false (optional)
 #   POST /api/v1/attempts/:token/mark    question_id, marked=true|false -> mark for review without answering
@@ -41,14 +41,22 @@ module Api
         render json: { attempt_token: attempt.token, status: "in_progress" }
       end
 
+      # Newest first, 30 a page (?page=2, ?kind=tests|practice), with marks and rank once results are out
+      # (the same lines as the website's My Tests page, see AttemptSummary)
+      PER_PAGE = 30
+
       def index
-        attempts = current_user.test_attempts.includes(:test_session).order(started_at: :desc).limit(30)
+        page = [params[:page].to_i, 1].max
+        scope = current_user.test_attempts.includes(:test_session).order(started_at: :desc, id: :desc)
+        scope = scope.where.not(test_session_id: nil) if params[:kind] == "tests"
+        scope = scope.where(test_session_id: nil) if params[:kind] == "practice"
+        attempts = scope.offset((page - 1) * PER_PAGE).limit(PER_PAGE + 1).to_a
+        rows = AttemptSummary.for(attempts.first(PER_PAGE))
+
         render json: {
-          attempts: attempts.map do |a|
-            { token: a.token, title: a.title, kind: a.test_session ? "test" : "practice", status: attempt_status(a),
-              started_at: time_json(a.started_at), finished_at: time_json(a.finished_at),
-              results_released: a.results_released?, exam: exam_json(a.exam.code), retake: a.retake? }
-          end
+          page: page,
+          has_more: attempts.size > PER_PAGE,
+          attempts: rows.map { |row| attempt_line_json(row) }
         }
       end
 
@@ -173,6 +181,29 @@ module Api
 
       def set_attempt
         @attempt = current_user.test_attempts.find_by!(token: params[:token])
+      end
+
+      # One line of the student's list of tests (website: My Tests)
+      def attempt_line_json(row)
+        a = row.attempt
+        line = { token: a.token, title: a.title, kind: row.kind.to_s, status: attempt_status(a), state: row.status.to_s,
+                 started_at: time_json(a.started_at), finished_at: time_json(a.finished_at),
+                 results_released: a.results_released?, exam: exam_json(a.exam.code), retake: a.retake?,
+                 retake_number: row.retake_number }
+        case row.status
+        when :in_progress
+          answered, total = row.progress
+          line.merge(answered: answered, total: total)
+        when :waiting
+          line.merge(release_at: time_json(row.release_at))
+        when :done
+          s = row.summary
+          rank = row.rank
+          line.merge(marks: s[:marks], max_marks: s[:max_marks], percentage: s[:percentage], correct: s[:correct],
+                     total: s[:total], passed: s[:passed], rank: rank && { rank: rank.first, of: rank.last })
+        else
+          line
+        end
       end
 
       # A question on this student's paper: options under the letters they see (shuffled on strict tests)

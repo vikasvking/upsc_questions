@@ -1,4 +1,5 @@
 class DashboardsController < ApplicationController
+  include ExamListing # paginate, for My Tests
   BLOCKED_MESSAGE = "You were blocked from this test for leaving it. Ask your teacher to reinstate you.".freeze
 
   before_action :ensure_student_access
@@ -72,6 +73,19 @@ class DashboardsController < ApplicationController
     rank = { live: 0, upcoming: 1, closed: 2 }
     @tests = scope.newest_first.to_a.sort_by.with_index { |t, i| [rank[t.window_status], i] }
     load_card_data(@tests)
+  end
+
+  # GET /dashboard/my_tests?kind=all|tests|practice -> every test and practice the student has started, newest first
+  # (each retake is its own line; every line opens its result or carries on where it stopped)
+  MY_TESTS_KINDS = { "all" => "All", "tests" => "Teacher tests", "practice" => "Topic practice" }.freeze
+
+  def my_tests
+    @kind = params[:kind].presence_in(MY_TESTS_KINDS.keys) || "all"
+    scope = Current.user.test_attempts.includes(:test_session)
+    scope = scope.where.not(test_session_id: nil) if @kind == "tests"
+    scope = scope.where(test_session_id: nil) if @kind == "practice"
+    @total = scope.count
+    @rows = AttemptSummary.for(paginate(scope.order(started_at: :desc, id: :desc)))
   end
 
   # GET /dashboard/tests/:id -> rules page for a teacher test
