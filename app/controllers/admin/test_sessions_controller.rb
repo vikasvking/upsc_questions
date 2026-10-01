@@ -8,12 +8,12 @@ class Admin::TestSessionsController < Admin::BaseController
   before_action :set_test_session, only: [:edit, :update, :destroy, :toggle_gift]
   before_action :load_form_data, only: [:new, :edit]
 
+  # One exam at a time (tabs, remembered), one page at a time
   def index
     scope = TestSession.includes(:user, :institution, :audience_grants).newest_first
-    @exam    = Exam.normalize(params[:exam])
+    @exam    = remembered_exam(:admin_tests)
     @kind    = params[:kind].presence_in(KINDS)
     @teacher = params[:teacher].presence
-    scope = scope.where(exam_type: @exam) if @exam
     scope = scope.where("title ILIKE ?", "%#{TestSession.sanitize_sql_like(params[:q].strip)}%") if params[:q].present?
     scope = @teacher == "none" ? scope.where(user_id: nil) : scope.where(user_id: @teacher) if @teacher
     scope =
@@ -25,6 +25,8 @@ class Admin::TestSessionsController < Admin::BaseController
       when "free"      then scope.where(free_sample: true)
       else scope
       end
+    @exam_counts = exam_counts(scope)
+    scope = scope.where(exam_type: @exam) if @exam
 
     @teachers = User.where(id: TestSession.select(:user_id)).order(:email_address)
     @tests = paginate(scope)
@@ -145,20 +147,22 @@ class Admin::TestSessionsController < Admin::BaseController
     @test_session = TestSession.find(params[:id])
   end
 
+  # The question picker loads its library page by page (QuestionLibrariesController), not here
   def load_form_data
-    @questions = Question.in_order
     @owners = User.where(role: [:teacher, :admin]).order(:email_address)
   end
 
   def question_ids_param
-    Array(params.dig(:test_session, :question_ids)).compact_blank
+    Array(params.dig(:test_session, :question_ids)).compact_blank.uniq
   end
 
   def test_params
     keys = [:title, :exam_type, :user_id, :duration_minutes, :pass_mark_percentage,
             :access_type, :starts_at, :ends_at, :strict_mode, :visibility, :institution_id, { question_ids: [] }]
     keys.unshift(:free_sample) if Current.user.admin? # only admins pick the free sample tests
-    params.require(:test_session).permit(*keys)
+    permitted = params.require(:test_session).permit(*keys)
+    permitted[:question_ids] = permitted[:question_ids].compact_blank.uniq if permitted[:question_ids] # a question once per test
+    permitted
   end
 
   def change_details(before, before_questions)

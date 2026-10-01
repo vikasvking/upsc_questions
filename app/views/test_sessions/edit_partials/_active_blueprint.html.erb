@@ -1,18 +1,31 @@
+<%# Questions in the test. After a failed save it shows what was ticked in the form; otherwise the saved questions. %>
+<%
+  ticked = params.dig(:test_session, :question_ids)
+  selected =
+    if ticked
+      ids = Array(ticked).compact_blank.map(&:to_i).uniq
+      Question.where(id: ids).index_by(&:id).values_at(*ids).compact
+    elsif @test_session.persisted?
+      @test_session.ordered_questions.to_a
+    else
+      []
+    end
+%>
 <div class="space-y-4 bg-brand-50/20 dark:bg-brand-950/10 p-5 rounded-2xl border border-brand-100 dark:border-brand-900/30">
   <div>
     <h3 class="text-base font-semibold text-brand-900 dark:text-brand-400 flex items-center gap-x-2">
-      <span>📋</span> In This Test (<span id="active-selected-counter"><%= @test_session.questions.size %></span> selected)
+      <span>📋</span> In This Test (<span id="active-selected-counter"><%= selected.size %></span> selected)
     </h3>
-    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Untick a question to remove it when you save.</p>
+    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Questions appear in this order. Untick a question to remove it when you save.</p>
   </div>
 
   <div id="active-questions-container" class="space-y-3 max-h-[500px] overflow-y-auto pr-2">
-    <% @test_session.ordered_questions.each do |q| %>
-      <label class="flex items-start gap-4 p-4 rounded-xl bg-white dark:bg-slate-900 border border-brand-200/60 dark:border-brand-900/40 cursor-pointer hover:bg-slate-50/50 transition-colors">
+    <% selected.each do |q| %>
+      <label class="flex items-start gap-4 p-4 rounded-xl bg-white dark:bg-slate-900 border border-brand-200/60 dark:border-brand-900/40 cursor-pointer hover:bg-slate-50/50 transition-colors" data-question-id="<%= q.id %>">
         <div class="mt-1">
           <%= check_box_tag "test_session[question_ids][]", q.id, true, id: "active_q_#{q.id}", class: "question-checkbox accent-brand-800 h-4 w-4 rounded" %>
         </div>
-        <div class="space-y-1.5 flex-1">
+        <div class="space-y-1.5 flex-1 min-w-0">
           <div class="flex items-center gap-x-2 flex-wrap gap-y-1">
             <span class="inline-block px-2 py-0.5 rounded text-xs font-semibold bg-brand-100 dark:bg-brand-950 text-brand-800 dark:text-brand-400"><%= exam_name(q.exam_type) %></span>
             <span class="inline-block px-2 py-0.5 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"><%= q.topic %></span>
@@ -22,5 +35,6 @@
         </div>
       </label>
     <% end %>
+    <p id="active-empty-note" class="text-xs text-slate-400 py-6 text-center <%= "hidden" if selected.any? %>">No questions yet. Tick questions in the library.</p>
   </div>
 </div>

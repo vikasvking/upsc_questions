@@ -3,19 +3,21 @@ class Admin::QuestionsController < Admin::BaseController
   self.admin_area = :questions
   before_action :set_question, only: [:edit, :update, :destroy, :toggle_gift]
 
+  # One exam at a time (tabs, remembered), one page at a time
   def index
     scope = Question.includes(:user).in_order
-    @exam    = Exam.normalize(params[:exam])
+    @exam    = remembered_exam(:admin_questions)
     @topic   = params[:topic].presence
     @teacher = params[:teacher].presence
-    scope = scope.where(exam_type: @exam) if @exam
     scope = scope.where(topic: @topic) if @topic
     scope = @teacher == "none" ? scope.where(user_id: nil) : scope.where(user_id: @teacher) if @teacher
     scope = scope.where("content ILIKE ?", "%#{Question.sanitize_sql_like(params[:q].strip)}%") if params[:q].present?
     scope = scope.where(free_sample: true) if params[:free] == "1"
+    @exam_counts = exam_counts(scope)
+    scope = scope.where(exam_type: @exam) if @exam
     @free_count = Question.where(free_sample: true).count
 
-    @topics   = Question.where.not(topic: [nil, ""]).distinct.order(:topic).pluck(:topic)
+    @topics   = topics_for(@exam)
     @teachers = User.where(id: Question.select(:user_id)).order(:email_address)
     @questions = paginate(scope)
     @test_counts = TestQuestion.where(question_id: @questions.map(&:id)).group(:question_id).count
@@ -102,6 +104,12 @@ class Admin::QuestionsController < Admin::BaseController
 
   def set_question
     @question = Question.find(params[:id])
+  end
+
+  # Topics for the filter: only the chosen exam's, so the list stays short
+  def topics_for(exam)
+    scope = exam ? Question.where(exam_type: exam) : Question.all
+    scope.where.not(topic: [nil, ""]).distinct.order(:topic).limit(500).pluck(:topic)
   end
 
   def question_params

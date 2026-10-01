@@ -92,6 +92,9 @@ Rails.application.routes.draw do
     end
   end
 
+  # Question picker in the test form: one exam, 50 at a time, searched on the server (Turbo Frame)
+  get "question_library", to: "question_libraries#show", as: :question_library
+
   resource :profile, only: [:show, :edit, :update]
   patch "profile/exam", to: "profiles#update_exam", as: :profile_exam # exam used for the dashboard rank
   patch "profile/details", to: "profiles#update_details", as: :profile_details # name, exams, subjects... (no password)

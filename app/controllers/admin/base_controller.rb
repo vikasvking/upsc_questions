@@ -1,6 +1,6 @@
 # Admin pages: admins, and sub-admins for the areas an admin gave them. Every change is written to AdminLog.
 class Admin::BaseController < ApplicationController
-  PER_PAGE = 50
+  include ExamListing # paginate (?page, ?per), exam tabs
 
   class_attribute :admin_area, default: nil # nil = any admin or sub-admin; :admin_only = admins only
 
@@ -28,14 +28,6 @@ class Admin::BaseController < ApplicationController
 
   def deny(message = "You do not have access to that admin area. Ask an admin.")
     redirect_to admin_root_path, alert: message
-  end
-
-  # Simple page-by-page lists (?page=2) without extra gems
-  def paginate(scope)
-    @page = [params[:page].to_i, 1].max
-    rows = scope.offset((@page - 1) * PER_PAGE).limit(PER_PAGE + 1).to_a
-    @next_page = rows.size > PER_PAGE ? @page + 1 : nil
-    rows.first(PER_PAGE)
   end
 
   def log!(action, record: nil, label: nil, reason: nil, details: {})

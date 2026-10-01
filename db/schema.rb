@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_30_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_01_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -210,6 +210,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_30_100000) do
     t.string "visibility", default: "public", null: false
     t.bigint "institution_id"
     t.boolean "free_sample", default: false, null: false
+    t.index ["exam_type", "topic"], name: "index_questions_on_exam_type_and_topic"
+    t.index ["exam_type", "year", "id"], name: "index_questions_on_exam_type_and_year_and_id"
     t.index ["free_sample"], name: "index_questions_on_free_sample"
     t.index ["institution_id"], name: "index_questions_on_institution_id"
     t.index ["user_id"], name: "index_questions_on_user_id"
@@ -470,6 +472,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_30_100000) do
     t.boolean "free_sample", default: false, null: false
     t.datetime "new_test_notified_at"
     t.datetime "results_notified_at"
+    t.index ["exam_type", "created_at"], name: "index_test_sessions_on_exam_type_and_created_at"
     t.index ["free_sample"], name: "index_test_sessions_on_free_sample"
     t.index ["institution_id"], name: "index_test_sessions_on_institution_id"
     t.index ["pin_code"], name: "index_test_sessions_on_pin_code", unique: true

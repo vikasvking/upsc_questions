@@ -1,0 +1,19 @@
+<%# Exam tabs for long lists. locals: counts ({ "CBSE_XII" => 70, ... } from ExamListing#exam_counts), current (exam code or nil = all) %>
+<%
+  keep = request.query_parameters.except("page", "exam")
+  total = counts.values.sum
+  shown = Exam.all.select { |e| counts[e.code].to_i.positive? || e.code == current }
+  tab = ->(active) { "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold whitespace-nowrap #{active ? "bg-brand-800 text-white dark:bg-brand-700" : "bg-white text-slate-600 ring-1 ring-inset ring-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-800 dark:hover:bg-slate-800"}" }
+  count_class = ->(active) { "rounded-full px-1.5 text-[11px] #{active ? "bg-white/20" : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"}" }
+%>
+<nav class="flex gap-2 overflow-x-auto pb-1" aria-label="Exams">
+  <%= link_to url_for(keep.merge("exam" => "all")), class: tab.(current.nil?), aria: { current: (current.nil? ? "page" : nil) } do %>
+    All exams <span class="<%= count_class.(current.nil?) %>"><%= number_with_delimiter(total) %></span>
+  <% end %>
+  <% shown.each do |exam| %>
+    <% active = exam.code == current %>
+    <%= link_to url_for(keep.merge("exam" => exam.code)), class: tab.(active), aria: { current: (active ? "page" : nil) } do %>
+      <%= exam.name %> <span class="<%= count_class.(active) %>"><%= number_with_delimiter(counts[exam.code].to_i) %></span>
+    <% end %>
+  <% end %>
+</nav>

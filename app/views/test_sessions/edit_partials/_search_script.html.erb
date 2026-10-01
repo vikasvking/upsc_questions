@@ -1,43 +1,82 @@
 <script>
   (function () {
     const searchField = document.getElementById("library-search-field");
+    const examField = document.getElementById("library-exam-field");
+    const testExamField = document.getElementById("test_session_exam_type");
+    const frame = document.getElementById("question_library");
     const activeContainer = document.getElementById("active-questions-container");
     const masterContainer = document.getElementById("master-library-container");
     const counter = document.getElementById("active-selected-counter");
+    const emptyNote = document.getElementById("active-empty-note");
+    if (!frame || !activeContainer || !masterContainer) return;
 
     const updateCounter = () => {
-      if (!counter || !activeContainer) return;
-      counter.textContent = activeContainer.querySelectorAll(".question-checkbox:checked").length;
+      const ticked = activeContainer.querySelectorAll(".question-checkbox:checked").length;
+      if (counter) counter.textContent = ticked;
+      if (emptyNote) emptyNote.classList.toggle("hidden", activeContainer.querySelector(".question-checkbox") !== null);
     };
 
-    // Filter the library by topic or question text
-    if (searchField && masterContainer) {
-      searchField.addEventListener("input", (e) => {
-        const query = e.target.value.toLowerCase().trim();
-        masterContainer.querySelectorAll(".library-row-item").forEach((row) => {
-          const text = row.querySelector(".filter-topic-token").textContent + " " + row.querySelector(".filter-content-token").textContent;
-          row.classList.toggle("hidden", !text.toLowerCase().includes(query));
-        });
+    // The library is loaded from the server: one exam, 50 at a time, searched there
+    const reloadLibrary = () => {
+      const url = new URL(frame.dataset.url, window.location.origin);
+      url.searchParams.set("exam", examField ? examField.value : "all");
+      const query = searchField ? searchField.value.trim() : "";
+      if (query) url.searchParams.set("q", query);
+      const current = frame.getAttribute("src");
+      if (current && new URL(current, window.location.origin).href === url.href) return; // already showing this list
+      frame.src = url.pathname + url.search;
+    };
+
+    let timer;
+    if (searchField) {
+      searchField.addEventListener("input", () => {
+        clearTimeout(timer);
+        timer = setTimeout(reloadLibrary, 350);
+      });
+      // Enter searches the library instead of submitting the test form
+      searchField.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter") return;
+        e.preventDefault();
+        clearTimeout(timer);
+        reloadLibrary();
       });
     }
+    if (examField) examField.addEventListener("change", reloadLibrary);
+
+    // Changing the test's exam shows that exam's questions
+    if (testExamField && examField) {
+      testExamField.addEventListener("change", () => {
+        examField.value = testExamField.value;
+        reloadLibrary();
+      });
+    }
+
+    // A question already in the test is not offered again (so it cannot be added twice)
+    const hideChosen = () => {
+      const chosen = new Set(Array.from(activeContainer.querySelectorAll(".question-checkbox")).map((box) => box.value));
+      masterContainer.querySelectorAll(".library-row-item").forEach((row) => {
+        if (chosen.has(row.dataset.questionId)) row.remove();
+      });
+    };
+    masterContainer.addEventListener("turbo:frame-load", hideChosen);
+    hideChosen();
 
     // Ticking a library question moves the card itself into the test list.
     // Moving the existing element (instead of building HTML from its text) keeps question text safely escaped.
-    if (masterContainer && activeContainer) {
-      masterContainer.addEventListener("change", (e) => {
-        const box = e.target;
-        if (!box.classList.contains("library-repository-checkbox") || !box.checked) return;
+    masterContainer.addEventListener("change", (e) => {
+      const box = e.target;
+      if (!box.classList.contains("library-repository-checkbox") || !box.checked) return;
 
-        const card = box.closest(".library-row-item");
-        if (!card) return;
+      const card = box.closest(".library-row-item");
+      if (!card) return;
 
-        card.classList.remove("library-row-item", "hidden");
-        box.classList.remove("library-repository-checkbox");
-        activeContainer.appendChild(card);
-        updateCounter();
-      });
+      card.classList.remove("library-row-item", "hidden");
+      box.classList.remove("library-repository-checkbox");
+      box.id = "active_q_" + box.value;
+      activeContainer.insertBefore(card, emptyNote && emptyNote.parentNode === activeContainer ? emptyNote : null);
+      updateCounter();
+    });
 
-      activeContainer.addEventListener("change", updateCounter);
-    }
+    activeContainer.addEventListener("change", updateCounter);
   })();
 </script>

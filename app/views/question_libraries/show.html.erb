@@ -1,0 +1,26 @@
+<%# Page 1 fills the "question_library" frame; each "Load more" fills a nested frame with the next 50. %>
+<% next_url = question_library_path(request.query_parameters.merge("page" => @page + 1)) %>
+<%= turbo_frame_tag(@page == 1 ? "question_library" : "question_library_page_#{@page}") do %>
+  <% if @page == 1 %>
+    <p class="text-xs text-slate-500 dark:text-slate-400 px-1 pb-1">
+      <% if @total.zero? %>
+        No questions<%= " in #{exam_name(@exam)}" if @exam %><%= " match “#{@query}”" if @query.present? %>.
+      <% else %>
+        <%= pluralize(number_with_delimiter(@total), "question") %><%= " in #{exam_name(@exam)}" if @exam %><%= " match “#{@query}”" if @query.present? %>, newest first.
+      <% end %>
+    </p>
+  <% end %>
+
+  <div class="space-y-3">
+    <% @questions.each do |q| %>
+      <%= render "question_libraries/row", q: q %>
+    <% end %>
+  </div>
+
+  <% if @more %>
+    <%= turbo_frame_tag "question_library_page_#{@page + 1}", class: "block pt-3" do %>
+      <%= link_to "Load #{QuestionLibrariesController::PER_PAGE} more", next_url,
+            class: "block w-full text-center rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 py-2 text-xs font-bold text-brand-800 dark:text-brand-300 hover:bg-slate-50 dark:hover:bg-slate-900" %>
+    <% end %>
+  <% end %>
+<% end %>

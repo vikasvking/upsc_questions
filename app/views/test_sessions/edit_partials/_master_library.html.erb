@@ -1,29 +1,29 @@
-<% included_ids = @test_session.question_ids.to_set %>
+<%# The question library: loaded 50 at a time into a Turbo Frame (QuestionLibrariesController), one exam at a time.
+    The search box and exam menu have no name, so they are never sent with the test form. %>
+<%
+  library_exam = Exam.normalize(@test_session.exam_type) || Exam::DEFAULT.code
+  base = { all: (controller_path.start_with?("admin/") ? "1" : nil) }.compact
+  control = "rounded-xl border border-slate-200 dark:border-slate-800 text-xs py-1.5 px-3 bg-white dark:bg-slate-950 text-slate-900 dark:text-white shadow-sm focus:ring-2 focus:ring-brand-800"
+%>
 <div class="space-y-4 bg-slate-50/50 dark:bg-slate-900/50 p-5 rounded-2xl border border-slate-200 dark:border-slate-800">
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+  <div class="space-y-3">
     <div>
       <h3 class="text-base font-semibold text-slate-900 dark:text-white">Question Library</h3>
       <p class="text-xs text-slate-400">Tick a question to move it into the test.</p>
     </div>
-    <input type="text" id="library-search-field" placeholder="🔍 Search library..." class="rounded-xl border border-slate-200 dark:border-slate-800 text-xs py-1.5 px-3 bg-white dark:bg-slate-950 text-slate-900 dark:text-white w-full sm:w-48 shadow-sm focus:ring-2 focus:ring-brand-800" />
+    <div class="flex flex-col sm:flex-row gap-2">
+      <select id="library-exam-field" aria-label="Exam" class="<%= control %> sm:w-44">
+        <option value="all">All exams</option>
+        <%= options_for_select(Exam.options, library_exam) %>
+      </select>
+      <input type="search" id="library-search-field" placeholder="🔍 Search text or topic…" autocomplete="off" aria-label="Search the library" class="<%= control %> flex-1 min-w-0" />
+    </div>
   </div>
 
-  <div id="master-library-container" class="space-y-3 max-h-[500px] overflow-y-auto pr-2">
-    <% @questions.each do |q| %>
-      <% next if included_ids.include?(q.id) %>
-      <label class="library-row-item flex items-start gap-4 p-4 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 cursor-pointer hover:border-brand-800/40 transition-colors">
-        <div class="mt-1">
-          <%= check_box_tag "test_session[question_ids][]", q.id, false, id: "library_q_#{q.id}", class: "question-checkbox library-repository-checkbox accent-brand-800 h-4 w-4 rounded" %>
-        </div>
-        <div class="space-y-1.5 flex-1">
-          <div class="flex items-center gap-x-2 flex-wrap gap-y-1">
-            <span class="inline-block px-2 py-0.5 rounded text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"><%= exam_name(q.exam_type) %></span>
-            <span class="inline-block px-2 py-0.5 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 filter-topic-token"><%= q.topic %></span>
-            <span class="text-xs font-bold font-mono text-slate-400 ml-auto"><%= q.year %></span>
-          </div>
-          <p class="text-xs font-semibold text-slate-900 dark:text-white leading-relaxed filter-content-token"><%= q.content %></p>
-        </div>
-      </label>
+  <div id="master-library-container" class="max-h-[500px] overflow-y-auto pr-2">
+    <%= turbo_frame_tag "question_library", src: question_library_path(base.merge(exam: library_exam)),
+          data: { url: question_library_path(base) } do %>
+      <p class="text-xs text-slate-400 py-8 text-center">Loading questions…</p>
     <% end %>
   </div>
 </div>

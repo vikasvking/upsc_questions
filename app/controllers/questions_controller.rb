@@ -1,22 +1,28 @@
 # app/controllers/questions_controller.rb
 class QuestionsController < ApplicationController
   include AudienceAssignment
+  include ExamListing
   before_action :ensure_teacher_or_admin_access
   before_action :set_question, only: [:edit, :update]
   before_action :ensure_modification_permission, only: [:edit, :update]
 
-  # Questions this teacher may use, filtered by exam, subject (topic) and who can see them
+  # Questions this teacher may use, one exam at a time (tabs, remembered) and one page at a time,
+  # filtered by subject (topic) and who can see them
   def index
     scope = Question.visible_to(Current.user).includes(:user, :institution, :audience_grants).in_order
-    @exam = Exam.normalize(params[:exam])
+    @exam = remembered_exam(:question_bank)
     @topic = params[:topic].presence
     @visibility = params[:visibility].presence_in(Audience::VISIBILITIES.keys)
-    scope = scope.where(exam_type: @exam) if @exam
     scope = scope.where(topic: @topic) if @topic
     scope = scope.where(visibility: @visibility) if @visibility
     scope = scope.where(user_id: Current.user.id) if params[:mine] == "1"
-    @topics = Question.visible_to(Current.user).where.not(topic: [nil, ""]).distinct.order(:topic).pluck(:topic)
-    @questions = scope
+    @exam_counts = exam_counts(scope)
+    scope = scope.where(exam_type: @exam) if @exam
+
+    topics = Question.visible_to(Current.user)
+    topics = topics.where(exam_type: @exam) if @exam
+    @topics = topics.where.not(topic: [nil, ""]).distinct.order(:topic).limit(500).pluck(:topic)
+    @questions = paginate(scope)
   end
 
   def upload_form

@@ -1,5 +1,6 @@
 class TestSessionsController < ApplicationController
   include AudienceAssignment
+  include ExamListing
   FACULTY_ACTIONS = [:index, :new, :create, :show, :edit, :update, :reinstate, :live, :upload_form, :import, :download_template].freeze
   ONLINE_WITHIN = TestSession::ONLINE_WITHIN # two missed heartbeats = "no signal"
   LiveRow = TestSession::LiveRow
@@ -8,7 +9,6 @@ class TestSessionsController < ApplicationController
   before_action :set_test_session, only: [:show, :edit, :update, :reinstate, :live]
   before_action :ensure_test_ownership, only: [:show, :edit, :update, :reinstate, :live]
   before_action :ensure_editable, only: [:edit, :update]
-  before_action :load_question_library, only: [:new, :edit]
 
   rate_limit to: 10, within: 5.minutes, only: :verify_pin,
              with: -> { redirect_to join_test_sessions_path, alert: "Too many attempts. Try again in a few minutes." }
@@ -20,7 +20,10 @@ class TestSessionsController < ApplicationController
     end
 
     scope = Current.user.admin? ? TestSession.all : Current.user.test_sessions
-    @test_sessions = scope.includes(:user, :institution, :audience_grants).newest_first
+    @exam = remembered_exam(:my_tests)
+    @exam_counts = exam_counts(scope)
+    scope = scope.where(exam_type: @exam) if @exam
+    @test_sessions = paginate(scope.includes(:user, :institution, :audience_grants).newest_first)
     @question_counts = TestQuestion.where(test_session_id: @test_sessions.map(&:id)).group(:test_session_id).count
     render :teacher_index
   end
@@ -50,7 +53,6 @@ class TestSessionsController < ApplicationController
     selected_ids = Array(params.dig(:test_session, :question_ids)).compact_blank
 
     if selected_ids.empty?
-      load_question_library
       flash.now[:alert] = "Pick at least one question for this test."
       render :new, status: :unprocessable_entity
       return
@@ -61,7 +63,6 @@ class TestSessionsController < ApplicationController
       message = @test_session.open_access? ? "Test created (#{@test_session.audience_label.downcase})." : "Test created. Share PIN: #{@test_session.pin_code}"
       redirect_to test_sessions_path, notice: message
     else
-      load_question_library
       render :new, status: :unprocessable_entity
     end
   end
@@ -71,7 +72,6 @@ class TestSessionsController < ApplicationController
 
   def update
     if Array(params.dig(:test_session, :question_ids)).compact_blank.empty?
-      load_question_library
       flash.now[:alert] = "A test cannot be left empty. Keep at least one question."
       render :edit, status: :unprocessable_entity
       return
@@ -82,7 +82,6 @@ class TestSessionsController < ApplicationController
       apply_audience!(@test_session)
       redirect_to test_sessions_path, notice: "Test updated."
     else
-      load_question_library
       render :edit, status: :unprocessable_entity
     end
   end
@@ -164,10 +163,6 @@ class TestSessionsController < ApplicationController
     @test_session = TestSession.find(params[:id])
   end
 
-  def load_question_library
-    @questions = Question.visible_to(Current.user).in_order # questions this teacher may use
-  end
-
   def ensure_test_ownership
     unless @test_session.user_id == Current.user.id || Current.user.admin?
       redirect_to test_sessions_path, alert: "You can only open tests you created."
@@ -189,8 +184,11 @@ class TestSessionsController < ApplicationController
     end
   end
 
+  # The question picker (test form) loads its library from QuestionLibrariesController, 50 at a time
   def test_session_params
-    params.require(:test_session).permit(:title, :exam_type, :duration_minutes, :pass_mark_percentage,
-                                         :access_type, :starts_at, :ends_at, :strict_mode, :visibility, :institution_id, question_ids: [])
+    permitted = params.require(:test_session).permit(:title, :exam_type, :duration_minutes, :pass_mark_percentage,
+                                                     :access_type, :starts_at, :ends_at, :strict_mode, :visibility, :institution_id, question_ids: [])
+    permitted[:question_ids] = permitted[:question_ids].compact_blank.uniq if permitted[:question_ids] # a question once per test
+    permitted
   end
 end
