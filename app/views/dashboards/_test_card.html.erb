@@ -1,50 +1,51 @@
-<%# locals: test, mine (the student's attempt or nil), subjects (array of topic names) %>
-<% label, label_class = window_badge_for(test) %>
-<% style = style_for_test(test) %>
-<%# locked: shown to the student, but outside their tier (Free: all but the 🎁 samples; Plus: other exams) %>
-<% locked = !mine && @locked_test_ids&.include?(test.id) %>
-<div class="bg-white dark:bg-slate-900 rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 shadow-[0_1px_2px_rgba(15,23,42,0.04)] p-5 flex flex-col justify-between gap-4 <%= style[:stripe] %>">
-  <div class="min-w-0">
-    <div class="flex flex-wrap gap-1.5">
-      <%= kind_badge_for(test) %>
-      <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium <%= label_class %>"><%= label %></span>
-      <%= audience_chip(test) %>
-      <% if locked %><span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300">🔒 <%= Current.user.free_tier? ? "Plus / Warrior" : "Warrior" %></span><% end %>
-    </div>
-    <h3 class="mt-2 font-semibold text-slate-900 dark:text-white truncate" title="<%= test.title %>"><%= test.title %></h3>
-    <div class="mt-1.5 flex flex-wrap items-center gap-1.5 text-sm text-slate-500">
-      <%= exam_chip(test.exam_type) %>
-      <span class="truncate"><%= [subjects.presence&.join(", "), "#{test.duration_minutes} min"].compact.join(" · ") %></span>
-    </div>
-    <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
-      <p class="text-xs text-slate-400">by <%= test.user&.teacher? && test.user.approved? ? link_to(test.author_name, teacher_path(test.user), class: "hover:underline text-slate-500") : test.author_name %></p>
-      <% if @rating_summaries && (rs = @rating_summaries[test.id]) %><%= render "ratings/summary", summary: rs %><% end %>
-    </div>
-  </div>
+<%# A compact test card: the whole card opens the test (or its result once submitted).
+    locals: test, mine (the student's latest attempt or nil), questions (how many questions the test has) %>
+<%
+  locked = !mine && @locked_test_ids&.include?(test.id) # listed, but outside the student's tier
+  rank, of = @ranks_by_test && @ranks_by_test[test.id]
+  done = mine && !mine.blocked? && (mine.finished? || mine.expired?)
+  href = done ? test_results_dashboard_path(token: mine.token) : test_intro_dashboard_path(test)
+  short = "%-d %b, %H:%M" # 5 Oct, 10:00
 
-  <% primary = "self-start rounded-lg px-3.5 py-2 text-sm font-medium #{style[:button]}" %>
-  <% secondary = "self-start rounded-lg px-3.5 py-2 text-sm font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200" %>
-  <% if mine&.blocked? %>
-    <span class="text-sm font-medium text-red-700 dark:text-red-400">🚫 Blocked — ask your teacher</span>
-  <% elsif mine&.finished? || (mine && mine.expired?) %>
-    <% rank, of = @ranks_by_test && @ranks_by_test[test.id] %>
-    <div class="flex flex-wrap items-center gap-3">
-      <%= link_to (mine.results_released? ? "See result" : "Submitted"), test_results_dashboard_path(token: mine.token), class: secondary %>
-      <% if mine.retake_allowed? %><%= link_to "↻ Retake", test_intro_dashboard_path(test), class: primary %><% end %>
-      <% if rank %><span class="text-sm text-slate-500">Rank <span class="font-semibold text-slate-900 dark:text-white">#<%= rank %></span> of <%= of %></span><% end %>
+  # Where the student stands with this test, coloured, on every card (so the lines of a row stay level)
+  state, tone =
+    if mine&.blocked? then ["Blocked, ask your teacher", "text-red-700 dark:text-red-400"]
+    elsif done && rank then ["Rank #{rank} of #{of}", "text-emerald-700 dark:text-emerald-400"]
+    elsif done && mine.results_released? then ["Result ready", "text-emerald-700 dark:text-emerald-400"]
+    elsif done then ["Submitted", "text-slate-700 dark:text-slate-300"]
+    elsif mine then ["In progress", "text-amber-700 dark:text-amber-400"]
+    elsif locked then ["🔒 Upgrade to unlock", "text-amber-700 dark:text-amber-400"]
+    else
+      case test.window_status
+      when :upcoming then ["Opens #{l(test.starts_at, format: short)}", "text-amber-700 dark:text-amber-400"]
+      when :closed   then ["Closed", "text-slate-500 dark:text-slate-400"]
+      else test.ends_at ? ["Closes #{l(test.ends_at, format: short)}", "text-emerald-700 dark:text-emerald-400"] : ["Start test", "text-brand-700 dark:text-brand-300"]
+      end
+    end
+  pill = "ml-1.5 inline-block rounded-md px-1.5 py-px align-[2px] text-xs font-medium"
+%>
+<%= link_to href, class: "group flex flex-col justify-between gap-2.5 rounded-xl bg-white dark:bg-slate-900 px-4 py-3.5 ring-1 ring-slate-200/80 dark:ring-slate-800 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-shadow hover:ring-2 hover:ring-brand-600 dark:hover:ring-brand-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600" do %>
+  <div class="flex items-start gap-2">
+    <%# title and its labels flow together, two lines at most %>
+    <div class="min-w-0 flex-1 line-clamp-2 leading-snug">
+      <h3 class="inline text-base font-semibold text-slate-900 dark:text-white"><%= test.title %></h3>
+      <% if test.strict_mode? %>
+        <span class="<%= pill %> bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300">Strict</span>
+      <% elsif test.pin_required? %>
+        <span class="<%= pill %> bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">PIN</span>
+      <% end %>
+      <% if test.free_sample? %>
+        <span class="<%= pill %> bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">Free</span>
+      <% end %>
     </div>
-  <% elsif mine %>
-    <%= link_to "Resume test", test_intro_dashboard_path(test), class: primary %>
-  <% elsif locked && test.window_status == :closed %>
-    <span class="text-sm text-slate-400">Closed</span>
-  <% elsif locked %>
-    <%= link_to "🔒 Upgrade to unlock", test_intro_dashboard_path(test),
-          class: "self-start rounded-lg px-3.5 py-2 text-sm font-medium bg-amber-100 text-amber-900 hover:bg-amber-200 dark:bg-amber-900/40 dark:text-amber-200 dark:hover:bg-amber-900/60" %>
-  <% elsif test.window_status == :closed %>
-    <span class="text-sm text-slate-400">Missed</span>
-  <% elsif test.open_access? %>
-    <%= link_to (test.window_status == :live ? "Start test" : "View details"), test_intro_dashboard_path(test), class: (test.window_status == :live ? primary : secondary) %>
-  <% else %>
-    <%= link_to "#{style[:icon]} Enter PIN", join_test_sessions_path, class: (test.window_status == :live ? primary : secondary) %>
-  <% end %>
-</div>
+    <svg class="mt-0.5 h-4 w-4 shrink-0 text-slate-400 group-hover:text-brand-700 dark:group-hover:text-brand-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+  </div>
+  <div class="space-y-1 text-[13px]">
+    <p class="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-slate-600 dark:text-slate-400">
+      <span class="rounded-md bg-slate-100 dark:bg-slate-800 px-1.5 py-px text-slate-600 dark:text-slate-300"><%= exam_name(test.exam_type) %></span>
+      <span><strong class="font-semibold text-slate-900 dark:text-white"><%= questions %></strong> <%= questions == 1 ? "question" : "questions" %></span>
+      <span><strong class="font-semibold text-slate-900 dark:text-white"><%= test.duration_minutes %></strong> min</span>
+    </p>
+    <p class="font-semibold <%= tone %>"><%= state %></p>
+  </div>
+<% end %>

@@ -77,7 +77,10 @@
       <%= f.check_box :strict_mode, class: "mt-0.5 accent-red-600 h-4 w-4" %>
       <span>
         <span class="block text-sm font-bold text-slate-900 dark:text-white">🛡️ Strict mode</span>
-        <span class="block text-xs text-slate-500">Students must stay on the test page. Leaving once gives a warning; leaving again blocks them until you reinstate them from the Results page. Marks, ranks and answers are shown only after the closing time. Needs <strong>PIN required</strong> and a <strong>Closes at</strong> time.</span>
+        <span class="block text-xs text-slate-500">Students must stay on the test page; switching to another tab or app, or opening another page, counts as leaving.</span>
+        <span class="block text-xs text-slate-500 mt-1"><strong>PIN tests:</strong> leaving once gives a warning; leaving again blocks the student until you reinstate them from the Results page.</span>
+        <span class="block text-xs text-slate-500 mt-1"><strong>Open tests:</strong> leaving ends the test at once. What the student answered is submitted and marked, and they are told why it ended.</span>
+        <span class="block text-xs text-slate-500 mt-1">With a <strong>Closes at</strong> time, marks, ranks and answers are shown after it; without one, as soon as each student submits.</span>
       </span>
     </label>
   </div>

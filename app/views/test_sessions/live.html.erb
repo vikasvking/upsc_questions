@@ -56,6 +56,9 @@
                   <span class="block text-slate-400 mt-0.5"><%= r.attempt.block_reason %></span>
                 <% elsif r.status == :submitted && r.attempt.finished_at %>
                   <span class="text-slate-400">at <%= l(r.attempt.finished_at, format: "%H:%M") %></span>
+                  <% if r.attempt.ended_early? %>
+                    <span class="block mt-0.5 font-semibold text-red-700 dark:text-red-400">Ended early: <%= r.attempt.ended_reason %></span>
+                  <% end %>
                 <% end %>
               </td>
               <td class="px-3 py-3 text-center font-mono"><%= r.answered %> / <%= @total_questions %></td>

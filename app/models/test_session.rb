@@ -27,7 +27,6 @@ class TestSession < ApplicationRecord
   validates :duration_minutes, numericality: { only_integer: true, greater_than: 0 }
   validates :pass_mark_percentage, numericality: { only_integer: true, in: 0..100 }
   validate  :window_is_valid
-  validate  :strict_mode_is_valid
   validate  :not_locked, on: :update
   validate  :free_sample_rules
 
@@ -100,6 +99,11 @@ class TestSession < ApplicationRecord
     starts_at && starts_at - EDIT_LOCK_BEFORE
   end
 
+  # Strict tests need neither a PIN nor a closing time. What leaving the test page does:
+  #   PIN tests  -> a warning, then the student is blocked until the teacher reinstates them
+  #   open tests -> the test ends at once with the answers so far (nobody is there to reinstate the student)
+  def ends_on_leave? = strict_mode? && !pin_required?
+
   # Strict tests only, while the test has not closed: the teacher's live panel
   def live_view?(now = Time.current)
     strict_mode? && window_status(now) != :closed
@@ -114,7 +118,8 @@ class TestSession < ApplicationRecord
 
   def available_now? = window_status == :live
 
-  # Students see marks, rank and answers only after a strict test closes. Teachers always see them.
+  # Students see marks, rank and answers only after a strict test closes (a strict test without a closing time:
+  # as soon as they submit). Teachers always see them.
   def results_released?(now = Time.current)
     !strict_mode? || ends_at.nil? || now >= ends_at
   end
@@ -472,12 +477,6 @@ class TestSession < ApplicationRecord
       limits = [a.started_at + duration_minutes.to_i.minutes, (ends_at unless a.retake?)].compact
       a.update_column(:deadline_at, limits.min)
     end
-  end
-
-  def strict_mode_is_valid
-    return unless strict_mode?
-    errors.add(:strict_mode, "needs PIN access") unless pin_required?
-    errors.add(:strict_mode, "needs a closing time (results are shown after it)") if ends_at.blank?
   end
 
   def window_is_valid

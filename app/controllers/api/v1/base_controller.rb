@@ -136,6 +136,7 @@ module Api
           pass_mark_percentage: test.pass_mark_percentage,
           access: test.access_type,
           strict: test.strict_mode?,
+          strict_ends_on_leave: test.ends_on_leave?, # strict open test: leaving ends it (PIN tests warn, then block)
           starts_at: time_json(test.starts_at),
           ends_at: time_json(test.ends_at),
           window: test.window_status.to_s,

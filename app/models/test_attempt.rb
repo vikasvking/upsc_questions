@@ -101,17 +101,32 @@ class TestAttempt < ApplicationRecord
 
   def finished? = finished_at.present?
   def timed?    = deadline_at.present?
-  # Retakes happen after a strict test has closed, so nobody watches them
+  # Retakes are practice, so nobody watches them
   def strict?   = !retake? && (test_session&.strict_mode? || false)
   def blocked?  = blocked_at.present?
 
   # A submitted attempt at a teacher test can be followed by practice retakes, as many as the student likes.
-  # Tests with a closing time (every strict test has one) allow them only once they have closed.
+  # Tests with a closing time allow them only once they have closed.
   def retake_allowed?(now = Time.current)
     test_session.present? && !blocked? && (finished? || expired?(now)) && test_session.retakes_open?(now)
   end
 
   # ---------- strict mode ----------
+  #
+  # PIN tests warn once, then block the student until the teacher reinstates them.
+  # Open tests have nobody to reinstate the student, so leaving ends the attempt at once: the answers so far are
+  # submitted and marked, and ended_reason says why (see TestSession#ends_on_leave?).
+
+  def ends_on_leave? = strict? && test_session.ends_on_leave?
+  def ended_early?   = ended_reason.present?
+
+  # What the student is told on their result: when and why the test ended, and what was kept
+  def ended_message
+    return nil unless ended_early?
+    answered = user_responses.where(question_id: questions.select(:id)).distinct.count(:question_id)
+    kept = answered.zero? ? "No questions had been answered." : "Your #{answered} answered #{answered == 1 ? "question was" : "questions were"} submitted and marked."
+    "Your test ended at #{I18n.l(finished_at, format: :short)} because you #{ended_reason}. #{kept}"
+  end
 
   # True while the student can still get into trouble for leaving
   def watched?(now = Time.current)
@@ -123,18 +138,29 @@ class TestAttempt < ApplicationRecord
     update_column(:last_seen_at, now)
   end
 
-  # Blocks the student if the test page has been silent for too long.
+  # Blocks the student (open tests: ends the attempt) if the test page has been silent for too long.
   # Runs whenever the attempt is touched, so no background job is needed.
   def enforce_presence!(now = Time.current)
-    return unless watched?(now) && last_seen_at
-    block!("No connection from the test page for over #{LEAVE_TIMEOUT.in_minutes.round(1)} minutes", now) if now - last_seen_at > LEAVE_TIMEOUT
+    return unless watched?(now) && last_seen_at && now - last_seen_at > LEAVE_TIMEOUT
+
+    if ends_on_leave?
+      # it ends when the page was last heard from: nothing could be answered after that
+      end_early!("closed the test page or lost connection for over #{LEAVE_TIMEOUT.in_minutes.round(1)} minutes", last_seen_at)
+    else
+      block!("No connection from the test page for over #{LEAVE_TIMEOUT.in_minutes.round(1)} minutes", now)
+    end
   end
 
-  # The test page reported that the student left. Returns :warned, :blocked or :ignored.
-  def record_violation!(reason, now = Time.current)
+  # The test page reported that the student left. Returns :warned, :blocked, :ended or :ignored.
+  # `reason` reads after "you" ("switched to another tab or app for 12s"); `left_at`: when they left.
+  def record_violation!(reason, now = Time.current, left_at: now)
     with_lock do
       if !watched?(now)
         :ignored
+      elsif ends_on_leave?
+        self.leave_count += 1
+        end_early!(reason, left_at)
+        :ended
       elsif leave_count + 1 > WARNINGS_ALLOWED
         self.leave_count += 1
         block!(reason, now)
@@ -153,6 +179,12 @@ class TestAttempt < ApplicationRecord
 
   def block!(reason, now = Time.current)
     update!(blocked_at: now, block_reason: reason.to_s.truncate(250))
+  end
+
+  # Open strict tests: submit the attempt as it stands, at the moment the student left (never after the deadline)
+  def end_early!(reason, at = Time.current)
+    ended = [[at, started_at].max, deadline_at].compact.min
+    update!(finished_at: ended, ended_reason: reason.to_s.truncate(250))
   end
 
   # Teacher lets the student continue. The time spent blocked is given back,

@@ -22,7 +22,11 @@
       </span>
     </div>
 
-    <% if strict %>
+    <% if strict && @attempt.ends_on_leave? %>
+      <div class="rounded-xl p-3 border text-xs font-bold bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-900/40 text-red-800 dark:text-red-300">
+        🛡️ Strict test: stay on this page until you submit. Switching to another tab or app, or opening another page, ends your test straight away and submits the questions you have answered.
+      </div>
+    <% elsif strict %>
       <div class="rounded-xl p-3 border text-xs font-bold <%= @attempt.leave_count.zero? ? "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/40 text-amber-800 dark:text-amber-300" : "bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-900/40 text-red-800 dark:text-red-300" %>"
            data-strict-mode-target="banner">
         <% if @attempt.leave_count.zero? %>

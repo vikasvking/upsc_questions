@@ -130,7 +130,12 @@
               <% @results.each do |r| %>
                 <tr>
                   <td class="px-4 py-3.5 font-bold font-mono text-slate-900 dark:text-white"><%= r.rank <= 3 ? %w[🥇 🥈 🥉][r.rank - 1] : "##{r.rank}" %></td>
-                  <td class="px-4 py-3.5 font-semibold text-slate-800 dark:text-slate-200" title="<%= r.user.email_address %>"><%= r.user.display_name %></td>
+                  <td class="px-4 py-3.5 font-semibold text-slate-800 dark:text-slate-200" title="<%= r.user.email_address %>">
+                    <%= r.user.display_name %>
+                    <% if r.attempt.ended_early? %>
+                      <span class="block mt-0.5 text-[11px] font-semibold text-red-700 dark:text-red-400">Ended early: <%= r.attempt.ended_reason %></span>
+                    <% end %>
+                  </td>
                   <td class="px-3 py-3.5 text-center font-mono"><%= r.correct %> / <%= r.wrong %> / <%= r.skipped + r.unattempted %></td>
                   <td class="px-3 py-3.5 text-center font-semibold text-slate-900 dark:text-white font-mono"><%= marks_text(r.marks) %> / <%= marks_text(r.max_marks) %></td>
                   <td class="px-3 py-3.5 text-center font-mono"><%= duration_text(r.time_taken) %></td>

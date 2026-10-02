@@ -22,7 +22,7 @@ class TestResultsCsv
       @results.each do |r|
         csv << safe([r.rank, r.user.display_name, r.user.email_address, r.correct, r.wrong, r.skipped, r.unattempted,
                      r.marks, r.max_marks, r.percentage, (r.passed ? "Passed" : "Failed"), clock(r.time_taken),
-                     time(r.attempt.finished_at), "Ranked"])
+                     time(r.attempt.finished_at), r.attempt.ended_early? ? "Ranked, ended early: #{r.attempt.ended_reason}" : "Ranked"])
       end
       @test_session.test_attempts.first_tries.blocked.includes(:user).order(:blocked_at).each do |a|
         csv << safe([nil, a.user.display_name, a.user.email_address, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,

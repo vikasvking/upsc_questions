@@ -7,12 +7,43 @@ class StrictModeTest < ActiveSupport::TestCase
     @attempt = users(:one).test_attempts.create!(test_session: @test)
   end
 
-  test "strict mode needs PIN access and a closing time" do
-    t = test_sessions(:one) # open test
+  test "strict mode needs neither a PIN nor a closing time; open strict tests end on leaving" do
+    t = test_sessions(:one) # open test, no closing time
     t.strict_mode = true
-    assert_not t.valid?
-    assert_includes t.errors[:strict_mode], "needs PIN access"
-    assert_includes t.errors[:strict_mode], "needs a closing time (results are shown after it)"
+    assert t.valid?
+    assert t.ends_on_leave?
+    assert_not @test.ends_on_leave? # PIN tests warn, then block
+    assert t.results_released?      # no closing time: results as soon as a student submits
+  end
+
+  test "open strict tests: leaving ends the test with the answers so far, and says why" do
+    open = test_sessions(:one)
+    open.update!(strict_mode: true)
+    attempt = users(:two).test_attempts.create!(test_session: open, started_at: 5.minutes.ago)
+    users(:two).user_responses.create!(question: questions(:one), chosen_option: "A", is_correct: true, test_session_token: attempt.token)
+
+    assert_equal :ended, attempt.record_violation!("switched to another tab or app for 12s", left_at: 12.seconds.ago)
+    attempt.reload
+    assert attempt.finished?
+    assert_not attempt.blocked?
+    assert_in_delta 12.seconds.ago, attempt.finished_at, 2
+    assert_match "because you switched to another tab or app for 12s", attempt.ended_message
+    assert_match "Your 1 answered question was submitted and marked.", attempt.ended_message
+    assert_equal [attempt], open.rankings.map(&:attempt) # ranked on what was answered
+    assert_equal :ignored, attempt.record_violation!("left again")
+  end
+
+  test "open strict tests: a silent page ends the test at the moment it was last heard from" do
+    open = test_sessions(:one)
+    open.update!(strict_mode: true)
+    attempt = users(:two).test_attempts.create!(test_session: open, started_at: 10.minutes.ago)
+    attempt.record_presence!(3.minutes.ago)
+    attempt.enforce_presence!
+    attempt.reload
+    assert attempt.finished?
+    assert_not attempt.blocked?
+    assert attempt.ended_early?
+    assert_in_delta 3.minutes.ago, attempt.finished_at, 2
   end
 
   test "first leave warns, second leave blocks" do

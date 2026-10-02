@@ -5,10 +5,12 @@
   </div>
 
   <% if @latest_tests.any? %>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <% @latest_tests.each do |test| %>
-        <%= render "dashboards/test_card", test: test, mine: @my_attempts_by_test[test.id], subjects: @subjects_by_test[test.id] %>
-      <% end %>
+    <div class="@container">
+      <div class="grid gap-3 @xl:grid-cols-2 @4xl:grid-cols-3">
+        <% @latest_tests.each do |test| %>
+          <%= render "dashboards/test_card", test: test, mine: @my_attempts_by_test[test.id], questions: @question_counts[test.id].to_i %>
+        <% end %>
+      </div>
     </div>
   <% else %>
     <div class="rounded-2xl bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 px-6 py-10 text-center">

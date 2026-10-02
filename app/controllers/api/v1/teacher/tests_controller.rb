@@ -117,7 +117,8 @@ module Api
               { attempt_id: r.attempt.id, rank: r.rank, name: r.user.display_name, email_address: r.user.email_address,
                 marks: r.marks, max_marks: r.max_marks, percentage: r.percentage, passed: r.passed,
                 correct: r.correct, wrong: r.wrong, skipped: r.skipped, unattempted: r.unattempted, total: r.total,
-                time_taken: r.time_taken, finished_at: time_json(r.attempt.finished_at) }
+                time_taken: r.time_taken, finished_at: time_json(r.attempt.finished_at),
+                ended_reason: r.attempt.ended_reason } # strict open tests: why the test ended early
             end,
             blocked: blocked.map { |a| blocked_json(a) },
             questions: question_stats.map { |st| question_stat_json(st) },
@@ -137,7 +138,7 @@ module Api
             { attempt_id: a.id, name: r.user.display_name, email_address: r.user.email_address, status: r.status.to_s,
               answered: r.answered, leave_count: a.leave_count, block_reason: a.block_reason,
               seconds_silent: r.seconds_silent, seconds_left: a.seconds_left(now),
-              finished_at: time_json(a.finished_at) }
+              finished_at: time_json(a.finished_at), ended_reason: a.ended_reason }
           end
 
           render json: {
@@ -187,6 +188,7 @@ module Api
             access: test.access_type,
             pin_code: test.pin_required? ? test.pin_code : nil,
             strict: test.strict_mode?,
+            ends_on_leave: test.ends_on_leave?,
             starts_at: time_json(test.starts_at),
             ends_at: time_json(test.ends_at),
             window: test.window_status.to_s,

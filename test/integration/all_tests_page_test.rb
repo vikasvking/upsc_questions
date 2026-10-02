@@ -38,6 +38,26 @@ class AllTestsPageTest < ActionDispatch::IntegrationTest
     assert_select "h3", text: "PIN Physics Test", count: 0
   end
 
+  test "compact cards: grouped by status, with the question count; a submitted test opens its result" do
+    test_sessions(:two).update!(starts_at: 2.days.ago, ends_at: 1.day.ago) # closed
+    attempt = users(:one).test_attempts.create!(test_session: test_sessions(:one), started_at: 1.hour.ago)
+    attempt.update!(finished_at: 30.minutes.ago)
+
+    get all_tests_dashboard_path
+    assert_select "h2", text: "Open now"
+    assert_select "h2", text: "Closed"
+    assert_select "a[href=?]", test_results_dashboard_path(token: attempt.token), text: /2 questions.*Rank 1 of 1/m
+    assert_select "a[href=?]", test_intro_dashboard_path(test_sessions(:two)), text: /1 question\b.*Closed/m
+  end
+
+  test "the test page shows who made it and its subjects" do
+    get test_intro_dashboard_path(test_sessions(:one))
+    assert_response :success
+    assert_match "by", response.body
+    assert_match users(:teacher).display_name, response.body
+    assert_match "Physics", response.body
+  end
+
   test "teachers are sent to their own test manager" do
     sign_in_as users(:teacher)
     get all_tests_dashboard_path

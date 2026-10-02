@@ -172,7 +172,9 @@ module Api
         seconds = params[:seconds].to_i
         if seconds >= TestAttempt::AWAY_GRACE.to_i
           where = params[:kind] == "other_app_on_screen" ? "used another app on the screen" : "switched to another app"
-          @attempt.record_violation!("Left the test (#{where}) for #{seconds}s")
+          # open strict tests end here, and the student reads "…because you switched to another app for 12s"
+          reason = @attempt.ends_on_leave? ? "#{where} for #{seconds}s" : "Left the test (#{where}) for #{seconds}s"
+          @attempt.record_violation!(reason, left_at: seconds.seconds.ago)
         end
         render json: strict_state(present: true)
       end
@@ -189,7 +191,7 @@ module Api
         line = { token: a.token, title: a.title, kind: row.kind.to_s, status: attempt_status(a), state: row.status.to_s,
                  started_at: time_json(a.started_at), finished_at: time_json(a.finished_at),
                  results_released: a.results_released?, exam: exam_json(a.exam.code), retake: a.retake?,
-                 retake_number: row.retake_number }
+                 retake_number: row.retake_number, ended_reason: a.ended_reason }
         case row.status
         when :in_progress
           answered, total = row.progress
@@ -221,7 +223,7 @@ module Api
       def stop_if_closed
         return if performed?
         if @attempt.finished?
-          render_error("finished", "This test has already been submitted.", status: :conflict)
+          render_error("finished", @attempt.ended_message || "This test has already been submitted.", status: :conflict)
         elsif @attempt.expired?
           @attempt.finish!
           render_error("finished", "Time is up. Your test was submitted automatically.", status: :conflict)
@@ -239,6 +241,10 @@ module Api
           status: attempt_status(attempt),
           retake: attempt.retake?,
           strict: attempt.strict?,
+          # strict open tests: leaving ends the test (no warning); strict PIN tests warn, then block
+          ends_on_leave: attempt.ends_on_leave?,
+          ended_early: attempt.ended_early?,
+          ended_message: attempt.ended_message,
           submits_when_all_answered: attempt.submits_when_all_answered?,
           started_at: time_json(attempt.started_at),
           deadline_at: time_json(attempt.deadline_at),
@@ -254,7 +260,7 @@ module Api
         if @attempt.blocked?
           { status: "blocked", message: BLOCKED_MESSAGE }
         elsif @attempt.finished? || @attempt.expired?
-          { status: "finished" }
+          { status: "finished", message: @attempt.ended_message }.compact
         else
           @attempt.record_presence! if present && @attempt.strict?
           { status: "ok", leave_count: @attempt.leave_count, warnings_left: @attempt.warnings_left }

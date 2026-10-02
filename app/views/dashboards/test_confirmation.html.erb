@@ -15,6 +15,13 @@
 
     <div class="space-y-2">
       <h1 class="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white"><%= test ? test.title : "#{@topic} Practice" %></h1>
+      <% if test %>
+        <p class="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-sm text-slate-500 dark:text-slate-400">
+          <span>by <%= test.user&.teacher? && test.user.approved? ? link_to(test.author_name, teacher_path(test.user), class: "hover:underline text-slate-700 dark:text-slate-300") : test.author_name %></span>
+          <% if @subjects.present? %><span><%= @subjects.join(", ") %></span><% end %>
+          <% if @rating_summary %><%= render "ratings/summary", summary: @rating_summary %><% end %>
+        </p>
+      <% end %>
       <p class="text-sm text-slate-500 dark:text-slate-400"><%= @locked ? "🔒 Upgrade your membership to take this test." : "Read the rules before you start." %></p>
     </div>
 
@@ -31,9 +38,13 @@
           <div class="flex gap-x-2"><span>•</span> <span>Closes: <strong><%= l(test.ends_at, format: :long) %></strong>. If you start late, you only get the time left until then.</span></div>
         <% end %>
         <div class="flex gap-x-2"><span>•</span> <span>Pass mark: <strong><%= test.pass_mark_percentage %>%</strong>. You can take this test once.</span></div>
-        <% if test.strict_mode? %>
+        <% if test.strict_mode? && test.ends_on_leave? %>
+          <div class="flex gap-x-2 text-red-700 dark:text-red-400"><span>•</span> <span><strong>🛡️ Strict test.</strong> Stay on the test page until you submit. Switching to another tab or app, opening another page, or closing the page <strong>ends your test</strong> straight away: the questions you have answered are submitted and marked.</span></div>
+        <% elsif test.strict_mode? %>
           <div class="flex gap-x-2 text-red-700 dark:text-red-400"><span>•</span> <span><strong>🛡️ Strict test.</strong> Stay on the test page until you submit. Switching to another tab or app, opening another page, or closing the page counts as leaving. The first time is a warning; the second time you are <strong>blocked</strong> and only your teacher can let you continue.</span></div>
-          <div class="flex gap-x-2"><span>•</span> <span>Marks, rank and answers are shown after the test closes<%= " at #{l(test.ends_at, format: :long)}" if test.ends_at %>.</span></div>
+        <% end %>
+        <% if test.strict_mode? && test.ends_at %>
+          <div class="flex gap-x-2"><span>•</span> <span>Marks, rank and answers are shown after the test closes at <%= l(test.ends_at, format: :long) %>.</span></div>
         <% end %>
       <% else %>
         <div class="flex gap-x-2"><span>•</span> <span>No time limit. A stopwatch shows how long you have been practising.</span></div>

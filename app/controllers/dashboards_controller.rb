@@ -94,6 +94,9 @@ class DashboardsController < ApplicationController
     @test_session = TestSession.visible_to(Current.user).find_by(id: params[:id])
     return redirect_to(all_tests_dashboard_path, alert: "That test is not available to you.") unless @test_session
     @total_q_count = @test_session.questions.count
+    # the details the compact test cards leave out: subjects and the students' rating
+    @subjects = @test_session.questions.where.not(topic: [nil, ""]).distinct.order(:topic).pluck(:topic)
+    @rating_summary = Rating.summary_for(@test_session)
     @locked = !TestSession.available_to(Current.user).exists?(@test_session.id)
     return render(:test_confirmation) if @locked
 
@@ -223,7 +226,9 @@ class DashboardsController < ApplicationController
     if seconds >= TestAttempt::AWAY_GRACE.to_i
       where = { "navigated" => "opened another page", "reloaded" => "closed or left the page" }
                 .fetch(params[:kind].to_s, "switched to another tab or app")
-      @attempt.record_violation!("Left the test (#{where}) for #{seconds}s")
+      # open strict tests end here, and the student reads "…because you switched to another tab or app for 12s"
+      reason = @attempt.ends_on_leave? ? "#{where} for #{seconds}s" : "Left the test (#{where}) for #{seconds}s"
+      @attempt.record_violation!(reason, left_at: seconds.seconds.ago)
     end
     render json: strict_state(present: params[:kind] != "navigated")
   end
@@ -234,7 +239,7 @@ class DashboardsController < ApplicationController
     if @attempt.blocked?
       { status: "blocked", message: BLOCKED_MESSAGE, redirect_to: test_intro_dashboard_path(@attempt.test_session) }
     elsif @attempt.finished? || @attempt.expired?
-      { status: "finished", redirect_to: test_results_dashboard_path(token: @attempt.token) }
+      { status: "finished", message: @attempt.ended_message, redirect_to: test_results_dashboard_path(token: @attempt.token) }.compact
     else
       @attempt.record_presence! if present && @attempt.strict?
       { status: "ok", leave_count: @attempt.leave_count, warnings_left: @attempt.warnings_left }
@@ -251,7 +256,7 @@ class DashboardsController < ApplicationController
     end
   end
 
-  # Attempts, subject names and 🔒 locks for a list of test cards
+  # Attempts, ranks, question counts and 🔒 locks for a list of test cards
   def load_card_data(tests)
     ids = tests.map(&:id)
     # tests shown but not included in the student's tier (Free: all but the samples; Plus: other exams)
@@ -259,7 +264,7 @@ class DashboardsController < ApplicationController
     # the latest attempt per test (a retake once the student has retaken it); ranks come from the first attempt
     @my_attempts_by_test = Current.user.test_attempts.where(test_session_id: ids).order(:id).index_by(&:test_session_id)
     first_tries = Current.user.test_attempts.first_tries.where(test_session_id: ids).index_by(&:test_session_id)
-    @rating_summaries = Rating.summaries("TestSession", ids)
+    @question_counts = TestQuestion.where(test_session_id: ids).group(:test_session_id).count
 
     # My rank on each test I have submitted: { test_id => [rank, number of students] }
     @ranks_by_test = {}
@@ -271,12 +276,6 @@ class DashboardsController < ApplicationController
       me = ranking.find { |r| r.attempt.id == mine.id }
       @ranks_by_test[t.id] = [me.rank, ranking.size] if me
     end
-    @subjects_by_test = TestQuestion.joins(:question)
-                                    .where(test_session_id: ids)
-                                    .distinct
-                                    .order("questions.topic")
-                                    .pluck(:test_session_id, "questions.topic")
-                                    .each_with_object(Hash.new { |h, k| h[k] = [] }) { |(id, topic), h| h[id] << topic if topic.present? }
   end
 
   # ---------- starting ----------
@@ -384,7 +383,9 @@ class DashboardsController < ApplicationController
   end
 
   def close_if_time_up
-    if @attempt.finished?
+    if @attempt.finished? && @attempt.ended_early?
+      redirect_to test_results_dashboard_path(token: @attempt.token), alert: @attempt.ended_message
+    elsif @attempt.finished?
       redirect_to test_results_dashboard_path(token: @attempt.token), notice: "This test has already been submitted."
     elsif @attempt.expired?
       @attempt.finish!

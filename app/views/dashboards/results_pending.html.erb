@@ -7,8 +7,14 @@
     <% if notice %>
       <div class="rounded-xl bg-emerald-50 dark:bg-emerald-950/40 p-3 border border-emerald-200 dark:border-emerald-900/40 text-xs text-emerald-800 dark:text-emerald-300 font-bold"><%= notice %></div>
     <% end %>
-    <% if alert %>
+    <% if alert && alert != @attempt.ended_message %>
       <div class="rounded-xl bg-red-50 dark:bg-red-950/40 p-3 border border-red-200 dark:border-red-900/40 text-xs text-red-800 dark:text-red-300 font-bold"><%= alert %></div>
+    <% end %>
+    <% if @attempt.ended_early? %>
+      <div class="text-left rounded-xl bg-red-50 dark:bg-red-950/40 p-4 border border-red-200 dark:border-red-900/40 text-sm text-red-800 dark:text-red-300" role="status">
+        <p class="font-bold">🛡️ This strict test ended early</p>
+        <p class="mt-1"><%= @attempt.ended_message %></p>
+      </div>
     <% end %>
 
     <div class="space-y-2">
