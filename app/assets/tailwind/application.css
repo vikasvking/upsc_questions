@@ -55,8 +55,9 @@
 }
 
 @layer base {
+  body { font-size: var(--text-base); }
   h1, h2, h3 { letter-spacing: -0.01em; }
-  input, select, textarea { font-size: 0.875rem; }
+  input, select, textarea { font-size: calc(0.875rem - 2px); }
 }
 
 /* ---- Home page headings: Archivo, narrowed like a printed exam paper (homes/index loads the font) ---- */

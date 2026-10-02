@@ -25,67 +25,86 @@
 
     <%= render "shared/exam_tabs", counts: @exam_counts, current: @exam %>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <% if @test_sessions.any? %>
-        <% @test_sessions.each do |test| %>
-          <%
-            status = test.window_status
-            status_label, status_class =
-              case status
-              when :upcoming then ["⏰ Opens #{l(test.starts_at, format: :short)}", "bg-amber-50 text-amber-800 ring-1 ring-inset ring-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900/60"]
-              when :closed   then ["Closed #{l(test.ends_at, format: :short)}", "bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400"]
-              else test.ends_at ? ["⏰ Live until #{l(test.ends_at, format: :short)}", "bg-amber-50 text-amber-800 ring-1 ring-inset ring-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900/60"] : ["Live (no time window)", "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"]
-              end
-          %>
-          <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 flex justify-between items-center gap-4 shadow-sm hover:border-brand-800/40 transition-all <%= style_for_test(test)[:stripe] %>">
-            <div class="space-y-3 min-w-0">
-              <div>
-                <div class="flex flex-wrap gap-1.5">
-                  <%= exam_chip(test.exam_type) %>
-                  <%= kind_badge_for(test) %>
-                  <span class="inline-block px-2 py-0.5 rounded text-xs font-semibold <%= status_class %>"><%= status_label %></span>
-                  <%= audience_chip(test) %>
-                </div>
-                <h4 class="text-base font-semibold text-slate-900 dark:text-white mt-1 truncate"><%= test.title %></h4>
-                <p class="text-xs text-slate-400 mt-0.5">
-                  <strong class="text-brand-800 dark:text-brand-400"><%= @question_counts[test.id].to_i %> questions</strong> · <%= test.duration_minutes %> min · pass <%= test.pass_mark_percentage %>%
-                  <% if Current.user.admin? %> · by <%= test.user&.email_address || "#{exam_name(test.exam_type)} (teacher account deleted)" %><% end %>
-                </p>
-              </div>
-              <div class="flex items-center gap-x-3 text-xs font-semibold pt-1">
-                <%= link_to (test.live_view? && status == :live ? "🔴 Live view" : "Results 📊"), test_session_path(test), class: "text-brand-800 dark:text-brand-400 hover:text-brand-900" %>
-                <span class="text-slate-300 dark:text-slate-700">|</span>
-                <% if test.editing_locked? %>
-                  <span class="text-slate-400 dark:text-slate-500" title="Tests with a time window or strict mode lock 10 minutes before they open, once a student starts, and after they close.">🔒 Locked</span>
-                <% else %>
-                  <%= link_to "Edit ⚙️", edit_test_session_path(test), class: "text-slate-500 dark:text-slate-400 hover:text-brand-800" %>
-                  <% if (lock_at = test.edit_lock_at) %>
-                    <span class="font-normal text-slate-400">· editable until <%= l(lock_at, format: :short) %></span>
+        <div class="overflow-x-auto">
+          <table class="w-full min-w-[1050px] table-fixed text-left text-sm">
+            <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-950/70 dark:text-slate-400">
+              <tr>
+                <th scope="col" class="w-[26%] px-4 py-3 font-semibold">Test</th>
+                <% if Current.user.admin? %><th scope="col" class="w-[18%] px-4 py-3 font-semibold">Teacher</th><% end %>
+                <th scope="col" class="w-[16%] px-4 py-3 font-semibold">Format</th>
+                <th scope="col" class="w-[18%] px-4 py-3 font-semibold">Schedule</th>
+                <th scope="col" class="w-[12%] px-4 py-3 font-semibold">Access</th>
+                <th scope="col" class="w-[10%] px-4 py-3 text-right font-semibold">Manage</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+              <% @test_sessions.each do |test| %>
+                <% status = test.window_status %>
+                <% status_label, status_class =
+                  case status
+                  when :upcoming then ["Opens #{l(test.starts_at, format: :short)}", "bg-amber-50 text-amber-800 ring-1 ring-inset ring-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900/60"]
+                  when :closed then ["Closed #{l(test.ends_at, format: :short)}", "bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400"]
+                  else test.ends_at ? ["Live until #{l(test.ends_at, format: :short)}", "bg-amber-50 text-amber-800 ring-1 ring-inset ring-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900/60"] : ["Live · no time window", "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"]
+                  end %>
+                <tr class="align-top transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/40 <%= style_for_test(test)[:stripe] %>">
+                  <td class="px-4 py-4">
+                    <div class="flex flex-wrap items-center gap-1.5">
+                      <%= exam_chip(test.exam_type) %>
+                      <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold <%= status_class %>"><%= status_label %></span>
+                      <%= audience_chip(test) %>
+                    </div>
+                    <p class="mt-2 truncate font-semibold text-slate-900 dark:text-white" title="<%= test.title %>"><%= test.title %></p>
+                    <% if test.editing_locked? %><p class="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">🔒 Editing locked</p><% elsif (lock_at = test.edit_lock_at) %><p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Editable until <%= l(lock_at, format: :short) %></p><% end %>
+                  </td>
+                  <% if Current.user.admin? %>
+                    <td class="break-all px-4 py-4 text-slate-700 dark:text-slate-300"><%= test.user&.email_address || "#{exam_name(test.exam_type)} (teacher deleted)" %></td>
                   <% end %>
-                <% end %>
-              </div>
-            </div>
-
-            <div class="shrink-0 text-right flex flex-col justify-center pl-4 border-l border-slate-200/60 dark:border-slate-800">
-              <% if test.pin_required? %>
-                <span class="text-xs font-bold text-slate-400 block">PIN</span>
-                <span class="text-lg font-black text-brand-800 dark:text-brand-400 font-mono bg-white dark:bg-slate-950 px-3 py-1 rounded-xl mt-1.5 inline-block shadow-sm border border-dashed border-brand-800/30 select-all"><%= test.pin_code %></span>
-              <% else %>
-                <span class="text-xs font-bold text-slate-400 block">Access</span>
-                <span class="text-sm font-semibold text-emerald-700 dark:text-emerald-400 mt-1.5">No PIN needed</span>
+                  <td class="px-4 py-4 text-slate-600 dark:text-slate-300">
+                    <p><%= kind_badge_for(test) %></p>
+                    <p class="mt-2"><span class="font-semibold text-slate-900 dark:text-white"><%= @question_counts[test.id].to_i %></span> questions</p>
+                    <p class="mt-1"><%= test.duration_minutes %> min · pass <%= test.pass_mark_percentage %>%</p>
+                    <% if test.strict_mode? %><p class="mt-1 text-xs font-medium text-amber-700 dark:text-amber-300">Strict mode</p><% end %>
+                  </td>
+                  <td class="px-4 py-4 text-slate-600 dark:text-slate-300">
+                    <% if test.starts_at || test.ends_at %>
+                      <p><span class="text-slate-400">From</span> <%= test.starts_at ? l(test.starts_at, format: :short) : "Now" %></p>
+                      <p class="mt-1"><span class="text-slate-400">Until</span> <%= test.ends_at ? l(test.ends_at, format: :short) : "No end" %></p>
+                    <% else %>
+                      <p>Available anytime</p>
+                    <% end %>
+                  </td>
+                  <td class="px-4 py-4">
+                    <% if test.pin_required? %>
+                      <p class="text-xs text-slate-500 dark:text-slate-400">PIN</p>
+                      <p class="mt-1 inline-block rounded-lg border border-dashed border-brand-800/30 bg-slate-50 px-2.5 py-1 font-mono font-bold text-brand-800 select-all dark:bg-slate-950 dark:text-brand-300"><%= test.pin_code %></p>
+                    <% else %>
+                      <span class="text-sm font-semibold text-emerald-700 dark:text-emerald-400">Open access</span>
+                    <% end %>
+                  </td>
+                  <td class="px-4 py-4">
+                    <div class="flex flex-col items-end gap-2 whitespace-nowrap text-xs font-semibold">
+                      <%= link_to (test.live_view? && status == :live ? "Live view" : "Results"), test_session_path(test), class: "text-brand-800 hover:underline dark:text-brand-300" %>
+                      <% if test.editing_locked? %>
+                        <span class="text-slate-400 dark:text-slate-500" title="Locked tests cannot be edited from this page">Edit locked</span>
+                      <% else %>
+                        <%= link_to "Edit test", edit_test_session_path(test), class: "text-slate-600 hover:underline dark:text-slate-300" %>
+                      <% end %>
+                    </div>
+                  </td>
+                </tr>
               <% end %>
-            </div>
-          </div>
-        <% end %>
+            </tbody>
+          </table>
+        </div>
       <% else %>
-        <div class="md:col-span-2 text-center py-16 text-slate-400 font-medium bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
-          <div class="text-3xl mb-2">🔐</div>
-          <p class="text-sm font-bold text-slate-700 dark:text-slate-300">No tests<%= " for #{exam_name(@exam)}" if @exam %> yet</p>
-          <p class="text-xs text-slate-400 mt-1">Create a test or bulk-import one from Excel.</p>
+        <div class="px-6 py-16 text-center">
+          <p class="text-sm font-semibold text-slate-700 dark:text-slate-300">No tests<%= " for #{exam_name(@exam)}" if @exam %> yet</p>
+          <p class="mt-1 text-xs text-slate-500">Create a test or bulk-import one from Excel.</p>
         </div>
       <% end %>
     </div>
-
     <%= render "shared/list_pager", total: (@exam ? @exam_counts[@exam] : @exam_counts.values.sum), noun: "test" %>
 
   </div>
