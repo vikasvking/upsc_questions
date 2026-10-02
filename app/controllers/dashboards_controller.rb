@@ -36,8 +36,10 @@ class DashboardsController < ApplicationController
     load_card_data(@latest_tests)
   end
 
-  # GET /dashboard/all_tests?exam=mine|all|UPSC_PRELIMS&subject=Physics&institution=3&teacher=7
-  # Lists every test the student can see; ones their tier does not include show 🔒 Upgrade (see load_card_data)
+  # GET /dashboard/all_tests?exam=mine|all|UPSC_PRELIMS&subject=Physics&institution=3&teacher=7&attempted=1
+  # Lists every test the student can see; ones their tier does not include show 🔒 Upgrade (see load_card_data).
+  # Tests the student has already attempted (submitted, or blocked from) are left out unless attempted=1;
+  # a test they are still writing stays, so they can carry on.
   def all_tests
     visible = TestSession.visible_to(Current.user)
     my_exams = Current.user.exam_codes
@@ -46,6 +48,7 @@ class DashboardsController < ApplicationController
     @subject = params[:subject].presence
     @institution = Current.user.institutions.find_by(id: params[:institution]) if params[:institution].present?
     @teacher_id = params[:teacher].presence&.to_i
+    @show_attempted = params[:attempted] == "1"
 
     used = visible.distinct.pluck(:exam_type)
     @exam_options    = Exam.options.select { |_, code| used.include?(code) }
@@ -72,6 +75,10 @@ class DashboardsController < ApplicationController
     # Live first, then opening soon, then closed; newest first inside each group
     rank = { live: 0, upcoming: 1, closed: 2 }
     @tests = scope.newest_first.to_a.sort_by.with_index { |t, i| [rank[t.window_status], i] }
+
+    attempted = attempted_test_ids
+    @hidden_attempted = @show_attempted ? 0 : @tests.count { |t| attempted.include?(t.id) }
+    @tests.reject! { |t| attempted.include?(t.id) } unless @show_attempted
     load_card_data(@tests)
   end
 
@@ -254,6 +261,13 @@ class DashboardsController < ApplicationController
     when "plus" then "This test is for an exam outside your school's plan. Become a Warrior to take every exam."
     else "That test is not available to you."
     end
+  end
+
+  # Teacher tests the student has attempted: submitted (or out of time), or blocked from
+  def attempted_test_ids
+    Current.user.test_attempts.where.not(test_session_id: nil)
+           .where("finished_at IS NOT NULL OR blocked_at IS NOT NULL OR deadline_at < ?", Time.current - TestAttempt::GRACE_PERIOD)
+           .distinct.pluck(:test_session_id).to_set
   end
 
   # Attempts, ranks, question counts and 🔒 locks for a list of test cards

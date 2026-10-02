@@ -43,11 +43,30 @@ class AllTestsPageTest < ActionDispatch::IntegrationTest
     attempt = users(:one).test_attempts.create!(test_session: test_sessions(:one), started_at: 1.hour.ago)
     attempt.update!(finished_at: 30.minutes.ago)
 
-    get all_tests_dashboard_path
+    get all_tests_dashboard_path, params: { attempted: "1" }
     assert_select "h2", text: "Open now"
     assert_select "h2", text: "Closed"
     assert_select "a[href=?]", test_results_dashboard_path(token: attempt.token), text: /2 questions.*Rank 1 of 1/m
     assert_select "a[href=?]", test_intro_dashboard_path(test_sessions(:two)), text: /1 question\b.*Closed/m
+  end
+
+  test "tests already attempted are hidden until the student asks for them; one still being written stays" do
+    done = users(:one).test_attempts.create!(test_session: test_sessions(:one), started_at: 1.hour.ago)
+    done.update!(finished_at: 30.minutes.ago)
+
+    get all_tests_dashboard_path
+    assert_select "h3", text: "Open Physics Test", count: 0
+    assert_select "h3", text: "PIN Physics Test"
+    assert_match "1 test you've attempted is hidden.", response.body.gsub("&#39;", "'")
+    assert_select "input[type=checkbox][name=attempted]:not([checked])"
+
+    get all_tests_dashboard_path, params: { attempted: "1" }
+    assert_select "h3", text: "Open Physics Test"
+    assert_select "input[type=checkbox][name=attempted][checked]"
+
+    users(:one).test_attempts.create!(test_session: test_sessions(:two)) # started, not submitted
+    get all_tests_dashboard_path
+    assert_select "h3", text: "PIN Physics Test"
   end
 
   test "the test page shows who made it and its subjects" do
