@@ -11,7 +11,7 @@ module Api
         user = User.authenticate_by(email_address: params[:email_address].to_s.strip, password: params[:password].to_s)
         return render_error("invalid_login", "Try another email address or password.", status: :unauthorized) unless user
 
-        api_session = user.sessions.create!(user_agent: "Rankwise app · #{request.user_agent}".truncate(250), ip_address: request.remote_ip)
+        api_session = user.sessions.create!(user_agent: "Lakshyank app · #{request.user_agent}".truncate(250), ip_address: request.remote_ip)
         render json: { token: api_session.signed_id(purpose: TOKEN_PURPOSE), user: user_json(user) }, status: :created
       end
 

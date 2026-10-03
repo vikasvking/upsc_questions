@@ -1,4 +1,4 @@
-<% content_for :title, "Pay · Rankwise" %>
+<% content_for :title, "Pay · Lakshyank" %>
 <%
   card  = "bg-white dark:bg-slate-900 rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-6"
   plan  = @payment.plan
@@ -121,7 +121,7 @@
                 modal: { ondismiss: () => { button.disabled = false; } }
               }).open();
             } catch (e) {
-              showError("Could not reach Rankwise. Please try again.");
+              showError("Could not reach Lakshyank. Please try again.");
             }
           });
         })();
@@ -129,7 +129,7 @@
 
     <% elsif can_pay && @setting.qr_ready? %>
       <%# UPI QR + transaction ID, checked by an admin %>
-      <% uri = @setting.upi_uri(@payment.amount_inr, "Rankwise #{plan.name} #{Current.user.id}") %>
+      <% uri = @setting.upi_uri(@payment.amount_inr, "Lakshyank #{plan.name} #{Current.user.id}") %>
       <section class="<%= card %> grid sm:grid-cols-[auto_1fr] gap-6 items-start">
         <div class="mx-auto rounded-2xl bg-white p-3 ring-1 ring-slate-200"><%= upi_qr_svg(uri) %></div>
         <div class="space-y-3">
@@ -163,7 +163,7 @@
 
     <% elsif can_pay %>
       <section class="<%= card %>">
-        <p class="text-sm text-slate-700 dark:text-slate-300">Payments are not set up yet. Please contact the Rankwise team to pay for <%= @payment.what %>.</p>
+        <p class="text-sm text-slate-700 dark:text-slate-300">Payments are not set up yet. Please contact the Lakshyank team to pay for <%= @payment.what %>.</p>
       </section>
     <% end %>
   </div>

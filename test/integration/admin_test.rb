@@ -27,7 +27,7 @@ class AdminTest < ActionDispatch::IntegrationTest
     assert question.reload.free_sample?
 
     get admin_test_sessions_path
-    assert_select "button", text: "🎁 Gift"
+    assert_select "button", text: "🎁 Make sample"
     assert_match "free sample tests chosen", response.body
   end
 

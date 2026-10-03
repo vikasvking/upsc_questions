@@ -2,7 +2,7 @@
 Rails.application.routes.draw do
   root "homes#index"
 
-  # JSON API for the Rankwise mobile app. Sign in with POST /api/v1/session, then send
+  # JSON API for the Lakshyank mobile app. Sign in with POST /api/v1/session, then send
   # "Authorization: Bearer <token>" with every request (see Api::V1::BaseController).
   namespace :api, defaults: { format: :json } do
     namespace :v1 do

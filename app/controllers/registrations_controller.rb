@@ -30,7 +30,7 @@ class RegistrationsController < ApplicationController
     if user.teacher?
       redirect_to pending_approval_path, notice: "Welcome! An admin will approve your teacher account soon."
     else
-      redirect_to dashboard_path, notice: "Welcome to Rankwise, #{user.display_name}!"
+      redirect_to dashboard_path, notice: "Welcome to Lakshyank, #{user.display_name}!"
     end
   end
 

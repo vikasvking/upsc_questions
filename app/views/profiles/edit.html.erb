@@ -32,7 +32,7 @@
         <div>
           <%= f.label :date_of_birth, "Date of birth", class: label %>
           <% if @user.date_of_birth_in_database.present? %>
-            <p class="mt-1.5 text-sm text-slate-700 dark:text-slate-300"><%= l(@user.date_of_birth_in_database, format: :long) %> <span class="text-xs text-slate-500">· to correct it, ask the Rankwise admin</span></p>
+            <p class="mt-1.5 text-sm text-slate-700 dark:text-slate-300"><%= l(@user.date_of_birth_in_database, format: :long) %> <span class="text-xs text-slate-500">· to correct it, ask the Lakshyank admin</span></p>
           <% else %>
             <%= f.date_field :date_of_birth, required: true, max: Date.current - 5.years, class: input %>
             <p class="mt-1 text-xs text-slate-500">Students under 18 need a parent's consent (a code is emailed to the parent).</p>

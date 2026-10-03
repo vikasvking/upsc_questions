@@ -1,5 +1,5 @@
 # app/models/exam.rb
-# The exams Rankwise supports, with each exam's marking scheme for single-correct MCQs.
+# The exams Lakshyank supports, with each exam's marking scheme for single-correct MCQs.
 # exam_type columns (questions, test_sessions, users.target_exam) store the code.
 #
 # Marking (checked Sep 2026 against published 2026 exam patterns):

@@ -70,11 +70,11 @@
 
         <div aria-live="polite">
           <div data-answer-sheet-target="right" hidden class="mt-4 rounded-md bg-emerald-50 dark:bg-emerald-950/40 px-4 py-3.5 text-emerald-900 dark:text-emerald-200">
-            <p class="font-bold">Correct.<% if q.show_stats? %> Rankwise students get this right <%= q.right_pct %>% of the time.<% end %></p>
+            <p class="font-bold">Correct.<% if q.show_stats? %> Lakshyank students get this right <%= q.right_pct %>% of the time.<% end %></p>
             <% if q.explanation.present? %><p class="mt-1.5 text-sm leading-relaxed"><%= q.explanation %></p><% end %>
           </div>
           <div data-answer-sheet-target="wrong" hidden class="mt-4 rounded-md bg-red-50 dark:bg-red-950/40 px-4 py-3.5 text-red-900 dark:text-red-200">
-            <p class="font-bold">Not this one. The answer is <%= q.correct_answer %>, <%= q.correct_text %>.<% if q.show_stats? %> Rankwise students get it right <%= q.right_pct %>% of the time.<% end %></p>
+            <p class="font-bold">Not this one. The answer is <%= q.correct_answer %>, <%= q.correct_text %>.<% if q.show_stats? %> Lakshyank students get it right <%= q.right_pct %>% of the time.<% end %></p>
             <% if q.explanation.present? %><p class="mt-1.5 text-sm leading-relaxed"><%= q.explanation %></p><% end %>
           </div>
           <div data-answer-sheet-target="after" hidden class="mt-3.5 flex flex-wrap items-center gap-4 text-sm">

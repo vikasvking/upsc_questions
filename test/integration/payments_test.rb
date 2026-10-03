@@ -12,7 +12,7 @@ class PaymentsTest < ActionDispatch::IntegrationTest
     @student.replace_exams!(["UPSC_PRELIMS"])
     @school = Institution.create!(name: "Sunrise Academy", kind: "school")
     Membership.create!(user: users(:teacher), institution: @school, status: "approved")
-    PaymentSetting.current.update!(upi_id: "rankwise@okhdfcbank", payee_name: "Rankwise")
+    PaymentSetting.current.update!(upi_id: "lakshyank@okhdfcbank", payee_name: "Lakshyank")
   end
 
   # Replaces the real Razorpay call for one block (no network in tests)
@@ -32,8 +32,8 @@ class PaymentsTest < ActionDispatch::IntegrationTest
     get new_payment_path(plan_id: @warrior.id, period: "year")
     assert_response :success
     assert_select "svg[aria-label='UPI QR code']"
-    assert_match "rankwise@okhdfcbank", response.body
-    assert_select "a[href^='upi://pay?pa=rankwise%40okhdfcbank']" # opens the UPI app with the amount filled in
+    assert_match "lakshyank@okhdfcbank", response.body
+    assert_select "a[href^='upi://pay?pa=lakshyank%40okhdfcbank']" # opens the UPI app with the amount filled in
     assert_match "am=399.00", response.body
 
     assert_difference -> { Payment.pending.count }, 1 do

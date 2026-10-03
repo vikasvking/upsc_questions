@@ -16,7 +16,7 @@
       <div class="mx-auto max-w-6xl px-6 py-14 grid lg:grid-cols-[2fr_3fr] gap-10">
         <div>
           <h2 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">Contact us</h2>
-          <p class="mt-3 text-slate-600 dark:text-slate-400">Want a custom plan for your school or coaching, or have a question? Write to us and the Rankwise team will reply by email.</p>
+          <p class="mt-3 text-slate-600 dark:text-slate-400">Want a custom plan for your school or coaching, or have a question? Write to us and the Lakshyank team will reply by email.</p>
         </div>
 
         <%= form_with model: @contact_message, url: contact_messages_path, class: "grid sm:grid-cols-2 gap-4" do |f| %>
@@ -71,10 +71,9 @@
   <div class="border-t border-slate-200/70 dark:border-slate-800">
     <div class="mx-auto max-w-6xl px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-500">
       <div class="flex items-center gap-2">
-        <span class="h-6 w-6 rounded-md bg-brand-700 text-white grid place-items-center text-xs font-semibold">R</span>
-        <span class="font-semibold text-slate-900 dark:text-white">Rankwise</span>
+        <%= render "layouts/logo", tile: "h-6 w-6 rounded-md" %>
       </div>
-      <p>&copy; <%= Time.current.year %> Rankwise. Practice for UPSC, JEE, NEET, SSC, Banking and CBSE.</p>
+      <p>&copy; <%= Time.current.year %> Lakshyank. Practice for UPSC, JEE, NEET, SSC, Banking and CBSE.</p>
     </div>
   </div>
 </footer>

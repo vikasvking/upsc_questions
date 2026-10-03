@@ -34,7 +34,7 @@ class PaymentSetting < ApplicationRecord
 
   # What the UPI QR / "Open UPI app" link contains: the exact amount is filled in for the payer
   def upi_uri(amount_inr, note)
-    "upi://pay?" + URI.encode_www_form(pa: upi_id, pn: payee_name.presence || "Rankwise", am: format("%.2f", amount_inr),
+    "upi://pay?" + URI.encode_www_form(pa: upi_id, pn: payee_name.presence || "Lakshyank", am: format("%.2f", amount_inr),
                                        cu: "INR", tn: note.to_s.first(50))
   end
 

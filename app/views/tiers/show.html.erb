@@ -38,7 +38,7 @@
       <section class="<%= card %>">
         <h2 class="font-semibold text-slate-900 dark:text-white">Your free trial</h2>
         <p class="text-sm text-slate-700 dark:text-slate-300">Sample tests taken: <strong><%= @taken_samples %> of <%= @sample_tests.size %></strong> · Sample questions answered: <strong><%= @answered_samples %> of <%= Question.where(free_sample: true).count %></strong></p>
-        <p class="text-sm text-slate-500">If your school or coaching uses Rankwise, join it from <%= link_to "your profile", profile_path, class: "text-brand-700 dark:text-brand-300" %> to become Plus.</p>
+        <p class="text-sm text-slate-500">If your school or coaching uses Lakshyank, join it from <%= link_to "your profile", profile_path, class: "text-brand-700 dark:text-brand-300" %> to become Plus.</p>
       </section>
     <% elsif @tier == "plus" %>
       <section class="<%= card %>">

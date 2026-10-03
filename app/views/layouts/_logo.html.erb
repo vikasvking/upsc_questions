@@ -1,0 +1,10 @@
+<%# Lakshyank logo: the Lakshya mark (arrow lodged in the bullseye) in the brand-coloured tile, the name,
+    and लक्ष्यांक beside it. The tile follows the role colour (burgundy, indigo for teachers, green for admins).
+    locals: tile (size and corner classes, default "h-8 w-8 rounded-lg"), hindi (show लक्ष्यांक, default true) %>
+<span class="<%= local_assigns.fetch(:tile, "h-8 w-8 rounded-lg") %> bg-brand-700 text-white grid place-items-center shrink-0" aria-hidden="true">
+  <svg class="h-[72%] w-[72%]" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><circle cx="29" cy="35" r="24"/><circle cx="29" cy="35" r="11"/><path d="M29 35 L57 7"/><path d="M52 2.5 L51 12 L61.5 11"/></svg>
+</span>
+<span class="flex items-baseline gap-1.5 whitespace-nowrap">
+  <span class="font-semibold text-slate-900 dark:text-white">Lakshyank</span>
+  <% if local_assigns.fetch(:hindi, true) %><span lang="hi" class="text-xs font-medium text-slate-500 dark:text-slate-400">लक्ष्यांक</span><% end %>
+</span>

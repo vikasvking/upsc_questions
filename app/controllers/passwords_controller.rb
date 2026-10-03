@@ -9,7 +9,7 @@ class PasswordsController < ApplicationController
 
   def create
     unless Mailing.enabled?
-      redirect_to new_session_path, alert: "Email is not set up yet, so we cannot send a reset link. Please ask the Rankwise admin to reset your password."
+      redirect_to new_session_path, alert: "Email is not set up yet, so we cannot send a reset link. Please ask the Lakshyank admin to reset your password."
       return
     end
 

@@ -7,6 +7,6 @@ class ContactMailer < ApplicationMailer
     return if admins.empty?
 
     mail to: admins, reply_to: @message.email,
-         subject: "Rankwise contact: #{@message.topic_label} from #{@message.name}"
+         subject: "Lakshyank contact: #{@message.topic_label} from #{@message.name}"
   end
 end

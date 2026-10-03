@@ -5,6 +5,6 @@ class ConsentMailer < ApplicationMailer
     @student_name = pending_signup.data["name"].presence || "your child"
     @student_email = pending_signup.email_address
     @minutes = PendingSignup::CODE_TTL.in_minutes.to_i
-    mail subject: "Consent code for #{@student_name}'s Rankwise account", to: pending_signup.parent_email
+    mail subject: "Consent code for #{@student_name}'s Lakshyank account", to: pending_signup.parent_email
   end
 end

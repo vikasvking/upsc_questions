@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title><%= content_for(:title) || "Rankwise" %></title>
+    <title><%= content_for(:title) || "Lakshyank" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="Rankwise">
+    <meta name="application-name" content="Lakshyank">
     <meta name="mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
@@ -14,9 +14,9 @@
     <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
     <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
 
-    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/icon.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
     <%# Includes all stylesheet files in app/assets/stylesheets %>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -97,8 +97,7 @@
        <button type="button" id="sidebar-open" aria-label="Open menu" aria-controls="app-sidebar" aria-expanded="false" class="p-2 -ml-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">
          <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
        </button>
-       <span class="h-7 w-7 rounded-lg bg-brand-700 text-white grid place-items-center text-xs font-semibold">R</span>
-       <span class="font-semibold text-slate-900 dark:text-white">Rankwise</span>
+       <%= render "layouts/logo", tile: "h-7 w-7 rounded-lg" %>
        <span class="ml-auto text-xs font-medium rounded-full px-2.5 py-0.5 bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-200"><%= Current.user.role.humanize %></span>
      </div>
      <div id="sidebar-backdrop" class="hidden lg:hidden fixed inset-0 z-30 bg-slate-900/50"></div>

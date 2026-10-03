@@ -5,11 +5,11 @@ class GuardianConsent < ApplicationRecord
 
   # Shown on the signup page and in the email to the parent. Update VERSION whenever this text changes.
   TEXT = <<~TEXT.freeze
-    Rankwise is an online practice and test platform. To create an account for a student under 18, we need a parent's or guardian's consent.
+    Lakshyank is an online practice and test platform. To create an account for a student under 18, we need a parent's or guardian's consent.
     We will store the student's name, email address, date of birth, the exams they prepare for, their school or coaching (if they add one), and their answers, marks and ranks.
     We store the parent's email and phone number only to confirm this consent and to contact the parent about the account.
     The student's answers and results are visible to their teachers. We do not sell this data or show advertising based on it.
-    A parent can ask for the account and its data to be deleted at any time by writing to the Rankwise admin.
+    A parent can ask for the account and its data to be deleted at any time by writing to the Lakshyank admin.
   TEXT
 
   belongs_to :user

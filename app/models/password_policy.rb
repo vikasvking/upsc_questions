@@ -9,7 +9,7 @@ module PasswordPolicy
     asdfghjkl zxcvbnm abc123 abcd1234 abcdef123 iloveyou iloveyou1 welcome welcome1 welcome123
     admin admin123 administrator letmein monkey dragon sunshine princess football cricket
     india india123 india@123 bharat123 hello123 test1234 test12345 changeme secret123
-    upsc12345 upsc@1234 rankwise rankwise123 student123 teacher123
+    upsc12345 upsc@1234 rankwise rankwise123 lakshyank lakshyank123 student123 teacher123
   ].to_set.freeze
 
   # Messages explaining what is wrong (empty when the password is fine)

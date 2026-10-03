@@ -1,12 +1,11 @@
 <header class="fixed inset-x-0 top-0 z-30 h-16 bg-white/85 dark:bg-slate-950/85 backdrop-blur border-b border-slate-200/70 dark:border-slate-800">
   <nav class="mx-auto max-w-6xl h-full px-6 flex items-center justify-between gap-4" aria-label="Main">
     <a href="<%= root_path %>" class="flex items-center gap-2">
-      <span class="h-8 w-8 rounded-lg bg-brand-700 text-white grid place-items-center text-sm font-semibold">R</span>
-      <span class="font-semibold text-slate-900 dark:text-white">Rankwise</span>
+      <%= render "layouts/logo" %>
     </a>
 
     <div class="hidden md:flex items-center gap-6 text-sm text-slate-600 dark:text-slate-400">
-      <a href="<%= root_path %>#features" class="hover:text-slate-900 dark:hover:text-white">Why Rankwise</a>
+      <a href="<%= root_path %>#features" class="hover:text-slate-900 dark:hover:text-white">Why Lakshyank</a>
       <a href="<%= root_path %>#teachers" class="hover:text-slate-900 dark:hover:text-white">For teachers</a>
       <a href="<%= root_path %>#pricing" class="hover:text-slate-900 dark:hover:text-white">Pricing</a>
     </div>

@@ -15,8 +15,8 @@
           <h2 class="font-semibold text-slate-900 dark:text-white">UPI QR (used while online payment is off)</h2>
           <p class="text-xs text-slate-500 mt-1">Each Pay page shows a QR for this UPI ID with the exact amount filled in. Payers then send their transaction ID.</p>
         </div>
-        <div><%= f.label :upi_id, "Your UPI ID", class: label %><%= f.text_field :upi_id, placeholder: "rankwise@okhdfcbank", autocomplete: "off", class: "font-mono #{input}" %></div>
-        <div><%= f.label :payee_name, "Name shown in the UPI app", class: label %><%= f.text_field :payee_name, placeholder: "Rankwise", maxlength: 60, class: input %></div>
+        <div><%= f.label :upi_id, "Your UPI ID", class: label %><%= f.text_field :upi_id, placeholder: "lakshyank@okhdfcbank", autocomplete: "off", class: "font-mono #{input}" %></div>
+        <div><%= f.label :payee_name, "Name shown in the UPI app", class: label %><%= f.text_field :payee_name, placeholder: "Lakshyank", maxlength: 60, class: input %></div>
         <div class="sm:col-span-2">
           <%= f.label :instructions, "Extra note on the Pay page (optional)", class: label %>
           <%= f.text_area :instructions, rows: 2, maxlength: 1000, placeholder: "e.g. Payments are checked every day by 8 pm.", class: input %>

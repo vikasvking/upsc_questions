@@ -28,7 +28,7 @@ class ConsentsController < ApplicationController
     @pending.destroy!
     start_new_session_for(user) unless authenticated? && Current.user == user
     AccountMailer.confirm_email(user).deliver_later if Mailing.enabled? && !user.email_confirmed?
-    redirect_to dashboard_path, notice: "Thank you — your parent's consent is recorded. Welcome to Rankwise!"
+    redirect_to dashboard_path, notice: "Thank you — your parent's consent is recorded. Welcome to Lakshyank!"
   end
 
   # POST /consent/:token/resend

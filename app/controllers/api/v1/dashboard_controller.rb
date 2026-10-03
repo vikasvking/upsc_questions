@@ -64,7 +64,7 @@ module Api
               price: warrior ? "₹#{warrior.price_month_inr}/month or ₹#{warrior.price_year_inr}/year" : "Coming soon",
               points: ["Every exam: UPSC, JEE, NEET, SSC, IBPS, CBSE", "All public tests and practice", "Everything in Plus"] }
           ],
-          how_to_upgrade: "Online payment is coming soon. To become a Warrior now, contact the Rankwise admin. For Plus, ask your school to join Rankwise."
+          how_to_upgrade: "Online payment is coming soon. To become a Warrior now, contact the Lakshyank admin. For Plus, ask your school to join Lakshyank."
         }
       end
 

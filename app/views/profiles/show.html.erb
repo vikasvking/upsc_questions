@@ -59,7 +59,7 @@
             <p class="text-xs font-bold text-slate-400">Parent's consent</p>
             <% if @consent %>
               <p class="mt-1 text-slate-900 dark:text-white">Given on <%= l(@consent.consented_at.to_date, format: :long) %> by <%= mask(@consent.parent_email) %></p>
-              <p class="text-xs text-slate-500">To change your parent's details, ask the Rankwise admin.</p>
+              <p class="text-xs text-slate-500">To change your parent's details, ask the Lakshyank admin.</p>
             <% else %>
               <p class="mt-1 text-amber-700 dark:text-amber-400">Not given yet. <%= link_to "Ask your parent", new_parent_consent_path, class: "underline" %></p>
             <% end %>

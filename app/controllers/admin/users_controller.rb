@@ -92,7 +92,7 @@ class Admin::UsersController < Admin::BaseController
       return
     end
     if @user.admin? && User.admin.count <= 1
-      redirect_to edit_admin_user_path(@user), alert: "Rankwise needs at least one admin."
+      redirect_to edit_admin_user_path(@user), alert: "Lakshyank needs at least one admin."
       return
     end
     if has_results?(@user) && !confirmed?(@user.email_address)
@@ -131,7 +131,7 @@ class Admin::UsersController < Admin::BaseController
     return nil if new_role.blank? || new_role == @user.role
     return "cannot be changed to #{new_role.humanize.downcase} by you" unless assignable_roles.include?(new_role)
     return "cannot be removed from your own account" if @user == Current.user
-    return "cannot be changed: Rankwise needs at least one admin" if @user.admin? && User.admin.count <= 1
+    return "cannot be changed: Lakshyank needs at least one admin" if @user.admin? && User.admin.count <= 1
     nil
   end
 

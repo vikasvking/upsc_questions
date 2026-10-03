@@ -1,6 +1,6 @@
 require "net/http"
 
-# The two Razorpay calls Rankwise needs: create an order, and check the signature Razorpay
+# The two Razorpay calls Lakshyank needs: create an order, and check the signature Razorpay
 # returns after the payer pays (https://razorpay.com/docs/payments/server-integration/).
 module RazorpayClient
   class Error < StandardError; end

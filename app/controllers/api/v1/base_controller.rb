@@ -1,4 +1,4 @@
-# JSON API for the Rankwise mobile app.
+# JSON API for the Lakshyank mobile app.
 #
 # Signing in (POST /api/v1/session) returns a token. Every other request sends it as
 #   Authorization: Bearer <token>
@@ -60,9 +60,9 @@ module Api
         if user.missing_profile_items.any?
           { code: "profile_incomplete", message: "Please add #{user.missing_profile_items.to_sentence} to continue." }
         elsif user.needs_parent_consent?
-          { code: "parent_consent_needed", message: "Students under 18 need a parent's consent. Finish this on the Rankwise website." }
+          { code: "parent_consent_needed", message: "Students under 18 need a parent's consent. Finish this on the Lakshyank website." }
         elsif user.pending_teacher?
-          { code: "pending_approval", message: "Your teacher account is waiting for approval by the Rankwise admin." }
+          { code: "pending_approval", message: "Your teacher account is waiting for approval by the Lakshyank admin." }
         end
       end
 

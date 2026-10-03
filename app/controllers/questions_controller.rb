@@ -65,7 +65,7 @@ class QuestionsController < ApplicationController
     headers = ["Topic", "Question", "Option A", "Option B", "Option C", "Option D", "Correct Answer", "Explanation"]
     sample_row = ["Physics", "What is the formula for Acceleration?", "MA", "MV", "v/t", "MV2", "C", "Acceleration is the change in velocity per unit time (v/t)."]
     xls_data = headers.join("\t") + "\n" + sample_row.join("\t")
-    send_data xls_data, filename: "rankwise_question_template.xls", type: "application/vnd.ms-excel; charset=utf-8"
+    send_data xls_data, filename: "lakshyank_question_template.xls", type: "application/vnd.ms-excel; charset=utf-8"
   end
 
   # Add one question by hand (goes straight into the question bank)

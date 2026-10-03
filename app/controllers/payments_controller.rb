@@ -29,7 +29,7 @@ class PaymentsController < ApplicationController
     @payment = build_payment(utr: params.dig(:payment, :utr), pay_method: "upi_qr", status: "pending")
     return if performed?
     unless @setting.qr_ready?
-      return redirect_to(membership_path, alert: "UPI payment is not set up yet. Please contact the Rankwise team.")
+      return redirect_to(membership_path, alert: "UPI payment is not set up yet. Please contact the Lakshyank team.")
     end
 
     if @payment.save
@@ -51,12 +51,12 @@ class PaymentsController < ApplicationController
     return if performed?
     return render(json: { error: payment.errors.full_messages.to_sentence }, status: :unprocessable_entity) unless payment.save
 
-    order = RazorpayClient.create_order(amount_paise: payment.amount_inr * 100, receipt: "rankwise_#{payment.id}",
+    order = RazorpayClient.create_order(amount_paise: payment.amount_inr * 100, receipt: "lakshyank_#{payment.id}",
                                         notes: { payment_id: payment.id, user: Current.user.email_address, plan: payment.plan.name })
     payment.update!(razorpay_order_id: order.fetch("id"))
     render json: {
       key: @setting.razorpay_key_id, order_id: payment.razorpay_order_id, amount: payment.amount_inr * 100, currency: "INR",
-      name: "Rankwise", description: "#{payment.what} · #{payment.period_label}",
+      name: "Lakshyank", description: "#{payment.what} · #{payment.period_label}",
       prefill: { name: Current.user.display_name, email: Current.user.email_address },
       verify_url: razorpay_verify_payment_path(payment)
     }
@@ -74,7 +74,7 @@ class PaymentsController < ApplicationController
             RazorpayClient.valid_signature?(order_id: payment.razorpay_order_id, payment_id: params[:razorpay_payment_id],
                                             signature: params[:razorpay_signature], setting: @setting)
     unless valid
-      return redirect_to(membership_path, alert: "We could not confirm this payment. If money was taken, contact the Rankwise team with your Razorpay payment ID.")
+      return redirect_to(membership_path, alert: "We could not confirm this payment. If money was taken, contact the Lakshyank team with your Razorpay payment ID.")
     end
 
     payment.update!(razorpay_payment_id: params[:razorpay_payment_id])

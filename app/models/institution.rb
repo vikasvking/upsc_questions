@@ -69,12 +69,12 @@ class Institution < ApplicationRecord
     limit = limit_for(kind)
     used = kind == :teachers ? teachers_count : students_count
     return nil if limit.nil? || used < limit
-    "#{name} has reached its plan's limit of #{limit} #{kind}. The school can upgrade its plan with the Rankwise admin."
+    "#{name} has reached its plan's limit of #{limit} #{kind}. The school can upgrade its plan with the Lakshyank admin."
   end
 
   # nil when a teacher may publish one more test for this school this month, otherwise the reason
   def test_quota_problem(now = Time.current)
-    return "#{name} has no active plan, so tests cannot be published for it yet. Ask the Rankwise admin." unless subscribed?
+    return "#{name} has no active plan, so tests cannot be published for it yet. Ask the Lakshyank admin." unless subscribed?
     limit = limit_for(:tests)
     return nil if limit.nil? || tests_this_month(now) < limit
     "#{name} has used all #{limit} tests of its plan this month. New tests can be published from #{(now.end_of_month + 1.day).to_date.strftime("%-d %B")}, or the school can upgrade."
