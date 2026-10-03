@@ -10,6 +10,7 @@
           ["Ratings & reports", admin_moderation_index_path, controller_name == "moderation", me.can_manage?(:ratings)],
           ["Plans", admin_plans_path, controller_name == "plans", me.admin?],
           ["Email", edit_admin_mail_settings_path, controller_name == "mail_settings", me.admin?],
+          ["Background work#{" (#{BackgroundJobSetting.where(enabled: false).count} off)" if me.admin? && BackgroundJobSetting.exists?(enabled: false)}", admin_background_jobs_path, controller_name == "background_jobs", me.admin?],
           ["Payments#{" (#{Payment.pending.count})" if me.admin? && Payment.pending.exists?}", admin_payments_path, %w[payments payment_settings].include?(controller_name), me.admin?],
           ["Messages#{" (#{ContactMessage.unread.count})" if me.admin? && ContactMessage.unread.exists?}", admin_contact_messages_path, controller_name == "contact_messages", me.admin?],
           ["Admin log", admin_logs_path, controller_name == "logs", me.admin?]].select(&:last)

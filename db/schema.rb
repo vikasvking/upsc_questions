@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_01_180000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_03_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -38,6 +38,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_01_180000) do
     t.datetime "updated_at", null: false
     t.index ["grantee_type", "grantee_id"], name: "index_audience_grants_on_grantee_type_and_grantee_id"
     t.index ["item_type", "item_id", "grantee_type", "grantee_id"], name: "index_audience_grants_unique", unique: true
+  end
+
+  create_table "background_job_settings", force: :cascade do |t|
+    t.string "key", null: false
+    t.boolean "enabled", default: true, null: false
+    t.datetime "last_started_at"
+    t.datetime "last_finished_at"
+    t.string "last_status"
+    t.text "last_error"
+    t.integer "last_duration_ms"
+    t.bigint "updated_by_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["key"], name: "index_background_job_settings_on_key", unique: true
+    t.index ["updated_by_id"], name: "index_background_job_settings_on_updated_by_id"
   end
 
   create_table "batch_members", force: :cascade do |t|

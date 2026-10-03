@@ -19,7 +19,8 @@ class AdminLog < ApplicationRecord
     "hide_rating_comment" => "Hid a rating comment", "unhide_rating_comment" => "Showed a rating comment again",
     "update_contact_message" => "Changed a contact message",
     "approve_payment" => "Approved a payment", "reject_payment" => "Rejected a payment",
-    "update_payment_settings" => "Changed payment settings"
+    "update_payment_settings" => "Changed payment settings",
+    "update_background_job" => "Switched a background job on or off"
   }.freeze
 
   def self.record!(admin:, action:, record: nil, label: nil, reason: nil, details: {})

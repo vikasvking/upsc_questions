@@ -2,6 +2,7 @@
 # Public open tests go to their exam's Firebase topic; school and selected tests to each student it is for.
 class NewTestNotificationJob < ApplicationJob
   queue_as :default
+  background_switch :new_test_notifications # on/off on Admin → Background work
 
   def perform(test_id)
     test = TestSession.find_by(id: test_id)

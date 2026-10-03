@@ -3,6 +3,7 @@
 # notifies the students who submitted it (first attempts, not blocked), with their rank.
 class ResultsReleasedNotificationJob < ApplicationJob
   queue_as :default
+  background_switch :results_released_notifications # on/off on Admin → Background work
 
   def perform(now = Time.current)
     TestSession.where(strict_mode: true, results_notified_at: nil, ends_at: (now - 1.day)..now).find_each do |test|

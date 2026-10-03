@@ -156,6 +156,7 @@ Rails.application.routes.draw do
       patch :subscription, on: :member
     end
     resources :plans, except: [:show, :destroy]
+    resources :background_jobs, only: [:index, :update], param: :key # scheduled jobs: on/off switches and last run
     resource :mail_settings, only: [:edit, :update] do
       post :send_test, on: :member
     end

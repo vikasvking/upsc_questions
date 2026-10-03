@@ -1,0 +1,75 @@
+<% off_count = @settings.count { |s| !s.enabled? } %>
+<div class="py-8 sm:py-10">
+  <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 space-y-6">
+    <%= render "admin/shared/header", title: "Background work",
+          subtitle: "Jobs the site runs on its own schedule. A job that is off still comes round on time but does nothing, " \
+                    "so switching it back on resumes at its next run. Admins only." %>
+
+    <div class="rounded-2xl p-4 text-sm <%= off_count.zero? ? "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300" : "bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:text-amber-200" %>">
+      <% if off_count.zero? %>
+        ✅ All <%= @settings.size %> background jobs are <strong>ON</strong>.
+      <% else %>
+        ⏸️ <strong><%= pluralize(off_count, "job") %> <%= off_count == 1 ? "is" : "are" %> OFF.</strong> See the warning under each one.
+      <% end %>
+    </div>
+
+    <div class="bg-white dark:bg-slate-900 rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 divide-y divide-slate-100 dark:divide-slate-800">
+      <% @settings.each do |s| %>
+        <div id="<%= dom_id(s) %>" class="p-5 flex flex-col sm:flex-row sm:items-start gap-4">
+          <div class="flex-1 min-w-0 space-y-1.5">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h2 class="text-sm font-semibold text-slate-900 dark:text-white"><%= s.name %></h2>
+              <% if s.enabled? %>
+                <span class="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900/60">ON</span>
+              <% else %>
+                <span class="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-800 ring-1 ring-inset ring-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900/60">OFF</span>
+              <% end %>
+            </div>
+            <p class="text-xs text-slate-500"><%= s.schedule %></p>
+            <p class="text-sm text-slate-600 dark:text-slate-400"><%= s.description %></p>
+
+            <p class="text-xs text-slate-500">
+              <% if s.running? %>
+                ⏳ Running now (started <%= time_ago_in_words(s.last_started_at) %> ago)
+              <% elsif s.last_finished_at %>
+                Last run <%= time_ago_in_words(s.last_finished_at) %> ago ·
+                <% if s.failed? %>
+                  <span class="font-semibold text-red-700 dark:text-red-400">failed</span>
+                <% else %>
+                  <span class="font-semibold text-emerald-700 dark:text-emerald-400">OK</span>
+                <% end %>
+                <% if s.last_duration_ms %>in <%= s.last_duration_ms < 1000 ? "#{s.last_duration_ms} ms" : "#{(s.last_duration_ms / 1000.0).round(1)} s" %><% end %>
+              <% else %>
+                Not run yet since this page was added.
+              <% end %>
+            </p>
+
+            <% if s.failed? && s.last_error.present? %>
+              <p class="rounded-lg bg-red-50 dark:bg-red-950/40 px-3 py-2 text-xs font-mono text-red-800 dark:text-red-300 break-words"><%= s.last_error %></p>
+            <% end %>
+
+            <% unless s.enabled? %>
+              <p class="rounded-lg bg-amber-50 dark:bg-amber-950/30 px-3 py-2 text-xs text-amber-900 dark:text-amber-200">
+                ⚠️ <%= s.warning %>
+                <span class="block mt-1 text-amber-700 dark:text-amber-300/80">
+                  Off since <%= l(s.updated_at, format: :short) %><% if s.updated_by %> by <%= s.updated_by.email_address %><% end %>.
+                </span>
+              </p>
+            <% end %>
+          </div>
+
+          <% confirm = s.enabled? && s.key == "finish_expired_attempts" ? "#{s.warning} Switch it off?" : nil %>
+          <%= button_to (s.enabled? ? "Switch off" : "Switch on"), admin_background_job_path(s.key), method: :patch,
+                params: { enabled: !s.enabled? }, form_class: "shrink-0",
+                data: { turbo_confirm: confirm },
+                class: "w-full sm:w-auto rounded-xl px-4 py-2 text-sm font-medium cursor-pointer " \
+                       "#{s.enabled? ? "ring-1 ring-slate-200 dark:ring-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800" : "bg-brand-700 hover:bg-brand-800 text-white"}" %>
+        </div>
+      <% end %>
+    </div>
+
+    <p class="text-xs text-slate-500">
+      These jobs run inside the web server. Every switch is recorded in the <%= link_to "admin log", admin_logs_path, class: "underline" %>.
+    </p>
+  </div>
+</div>

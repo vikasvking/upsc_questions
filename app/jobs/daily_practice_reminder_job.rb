@@ -3,6 +3,7 @@
 # today's target of questions. Free students are left out: they only have the few sample questions.
 class DailyPracticeReminderJob < ApplicationJob
   queue_as :default
+  background_switch :daily_practice_reminder # on/off on Admin → Background work
 
   DAILY_TARGET = Api::V1::DashboardController::DAILY_TARGET
   ACTIVE_WITHIN = 14.days
